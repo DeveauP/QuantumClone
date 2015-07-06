@@ -29,8 +29,15 @@ It is now time to install and launch the graphical user interface. In R/Rstudio 
 * install(RGtk2)
 * library(RGtk2)
 
-While the install part can be done once and for all, loading the libraries is mandatory for each session. 
+Now download the file GUI.R from the master. 
+* With R, type: source(/PATH/TO/GUI.R)
+* With RStudio, go to Code > Source file and choose GUI.R
 
+If everything went well, you should see:
+![alt tag](https://github.com/DeveauP/QuantumClone/blob/master/Images/GUI.png)
+ 
+*Note*
+While the install part can be done once and for all, loading the libraries is mandatory for each session. 
 
 ### Installation instructions (Advanced)
 
