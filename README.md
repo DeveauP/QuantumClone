@@ -107,6 +107,7 @@ One_step_clustering() has several parameters required (some have default configu
   maxit = 1 , preclustering = T, simulated = F, epsilon = 5 * (10^(-3)),
   save_plot = T, ncores = 1, plot_3D = F, plot_3D_before_clustering = F,
   restrict.to.AB = F, output_directory = NULL)
+
 * SNV_list: list of dataframes. See [previous section](#SNVD) for description.
 * FREEC_list: list of outputs from FREEC (in the same order as the SNV list). See [here](#FREECD) for added information.
 * contamination: Numeric vector giving the fraction of normal cells in each sample. Is linked to the cellularity by contamination = 1 - Cellularity
