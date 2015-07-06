@@ -10,17 +10,17 @@ Advanced instructions assume you know the basics of programming (downloading and
 
 This Readme is divided in four parts:
 
-1. Installation instructions (Beginner)
+[1. Installation instructions (Beginner)](#IIB)
 
-2. Installation instructions (Advanced)
+[2. Installation instructions (Advanced)](#IIA)
 
-3. Usage (Beginner)
+[3. Usage (Beginner)](#UB)
 
-4. Usage (Advanced) 
+[4. Usage (Advanced)](#UA) 
 
 
 
-### Installation instructions (Beginner)
+### <a name="IIB"></a> Installation instructions (Beginner)
 
 **Preliminary:** This R package has been tested on Windows 8 and Linux. Some issues may appear with Mac setups due to the rgl package apparently. Do not hesitate to contact the maintainer for troubleshooting.
 
@@ -53,12 +53,12 @@ If everything went well, you should see:
 **Note:**
 All the libraries are called by the GUI.R file, so there is no need to load them prior to the analysis.
 
-### Installation instructions (Advanced)
+### <a name="IIA"></a>  Installation instructions (Advanced)
 
 The full package is available and is maintained on [CRAN](http://cran.r-project.org/web/packages/QuantumClone/index.html). 
 You can chose to source the GUI but it may affect computation performances.
 
-### Usage (Beginner)
+### <a name="UB"></a>  Usage (Beginner)
 QuantumClone is looking for clones in your samples assuming that there is an evolutionary logic between samples, so you should use data from the same patient for one analysis (either different timepoints, or spatially separated samples, or biological replicates).
 
 
@@ -92,7 +92,7 @@ While the input file can be as large as you want, the computation time will expo
 
 
 
-### Usage (Advanced)
+### <a name="UA"></a>  Usage (Advanced)
 The QuantumClone package is divided in two:
 * The clonal reconstruction: QuantumClone / One_step_clustering functions
 * The clonal simulation: QuantumCat (not included in the GUI)
