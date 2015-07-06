@@ -40,17 +40,16 @@ You have now successfully installed the QuantumClone package!
 
 It is now time to install and launch the graphical user interface. In R/Rstudio type:
 * install(RGtk2)
-* library(RGtk2)
 
 Now download the file GUI.R from the master. 
 * With R, type: source(/PATH/TO/GUI.R)
-* With RStudio, go to Code > Source file and choose GUI.R (*to be added*)
+* With RStudio, go to Code > Source file and choose GUI.R (**to be added**)
 
 If everything went well, you should see:
 ![alt tag](https://github.com/DeveauP/QuantumClone/blob/master/Images/GUI.png)
  
-*Note*
-While the install part can be done once and for all, loading the libraries is mandatory for each session. 
+**Note:**
+All the libraries are called by the GUI.R file, so there is no need to load them prior to the analysis.
 
 ### Installation instructions (Advanced)
 
@@ -70,7 +69,15 @@ QuantumClone requires few informations in the input file:
 * Alt is the number of reads supporting the variant
 * Depth is the depth of coverage at the position of the variant (number of reads mapped at this position)
 
-While the input file can be as large as you want, the computation time will exponentially grow with the number of variants to be studied. In order to keep computation time reasonable (from a minute to an hour), a reasonable set of mutation is between 100 to 1000 variants.
+**Any additional column will not be taken into account for the analysis**
+
+While the input file can be as large as you want, the computation time will exponentially grow with the number of variants to be studied. In order to keep computation time reasonable (from a minute to an hour), a reasonable set of mutation is between **100 to 1000 variants**.
+
+* FREEC files: list of files corresponding to your samples. It is required if you do not have a Genotype column in your analysis.
+* Contamination: fraction of normal cells estimated to contaminate you samples. Needs to be separated by commas (example: 0.1, 0.2)
+* Clone range: how many clones should be looked for in the samples? "2:5" means 2 to 5, whereas "2,5" means 2 and 5.
+* Save plot: Do you want to save 2D plots?
+* Save data: Do you want to keep probabilities and estimated copy numbers in a file?
 
 
 
