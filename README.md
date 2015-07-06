@@ -85,6 +85,11 @@ While the input file can be as large as you want, the computation time will expo
 * Save plot: Do you want to save 2D plots?
 * Save data: Do you want to keep probabilities and estimated copy numbers in a file?
 
+**If Save plot is ticked you should get two outputs: one in black giving the position of ALL the possibilities for all variants (a), and the second being the result of the clustering for the most likely position of all variants (b).**
+
+(a) ![alt tag](https://github.com/DeveauP/QuantumClone/blob/master/Images/Cellularity1_1.png)
+(b) ![alt tag](https://github.com/DeveauP/QuantumClone/blob/master/Images/Cellularity_clustered1_1_1_2.png)
+
 
 
 ### Usage (Advanced)
