@@ -74,7 +74,7 @@ QuantumClone requires few informations in the input file:
 **Any additional column will not be taken into account for the analysis**
 
 You should have something similar to this:
-![alt tag](https://github.com/DeveauP/QuantumClone/blob/master/Images/Example_input.png)
+![alt tag](https://github.com/DeveauP/QuantumClone/raw/master/Images/Example_input.png)
 
 
 While the input file can be as large as you want, the computation time will exponentially grow with the number of variants to be studied. In order to keep computation time reasonable (from a minute to an hour), a reasonable set of mutation is between **100 to 1000 variants**.
@@ -87,8 +87,8 @@ While the input file can be as large as you want, the computation time will expo
 
 **If Save plot is ticked you should get two outputs: one in black giving the position of ALL the possibilities for all variants (a), and the second being the result of the clustering for the most likely position of all variants (b).**
 
-(a) ![alt tag](https://github.com/DeveauP/QuantumClone/blob/master/Images/Cellularity1_1.png)
-(b) ![alt tag](https://github.com/DeveauP/QuantumClone/blob/master/Images/Cellularity_clustered1_1_1_2.png)
+(a) ![alt tag](https://github.com/DeveauP/QuantumClone/raw/master/Images/Cellularity1_1.png)
+(b) ![alt tag](https://github.com/DeveauP/QuantumClone/raw/master/Images/Cellularity_clustered1_1_1_2.png)
 
 
 
