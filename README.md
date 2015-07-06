@@ -16,6 +16,14 @@ In R or RStudio, type (or copy/paste) the following instructions:
 * install(doSNOW)
 * install(QuantumClone)
 
+You have now successfully installed the QuantumClone package!
+
+To make all functions available in your Rsession type:
+* library(QuantumClone)
+*Optional*
+If you want to plot and save figures, also type:
+* library(ggplot2)
+
 ### Installation instructions (Advanced)
 
 The full package is available and is maintained on: [CRAN](http://cran.r-project.org/web/packages/QuantumClone/index.html). 
