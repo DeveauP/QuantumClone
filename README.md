@@ -64,7 +64,7 @@ QuantumClone is looking for clones in your samples assuming that there is an evo
 
 QuantumClone requires few informations in the input file:
 * The columns in the file MUST be separated by tabulations
-* Line 1 should be the column titles (Sample | Chr | Start | Alt | Depth ). An additional argument is required if you do not have a FREEC profile associated to your files: the Genotype. 
+* Line 1 should be the column titles (Sample | Chr | Start | Alt | Depth ). An additional argument is required if you do not have a [FREEC](http://bioinfo-out.curie.fr/projects/freec/) profile associated to your files: the Genotype. 
 * The first column needs to be the name of your sample
 * The Chr column contains the chromosome of variant (e.g. "chr2")
 * Start is the position of the variant
@@ -79,7 +79,7 @@ You should have something similar to this:
 
 While the input file can be as large as you want, the computation time will exponentially grow with the number of variants to be studied. In order to keep computation time reasonable (from a minute to an hour), a reasonable set of mutation is between **100 to 1000 variants**.
 
-* FREEC files: list of files corresponding to your samples. It is required if you do not have a Genotype column in your analysis.
+* [FREEC](http://bioinfo-out.curie.fr/projects/freec/) files: list of files corresponding to your samples. It is required if you do not have a Genotype column in your analysis. You should use the "Sample_ratio.txt" file, not the "Sample_ratio_normal.txt" 
 * Contamination: fraction of normal cells estimated to contaminate you samples. Needs to be separated by commas (example: 0.1, 0.2)
 * Clone range: how many clones should be looked for in the samples? "2:5" means 2 to 5, whereas "2,5" means 2 and 5.
 * Save plot: Do you want to save 2D plots?
