@@ -1,28 +1,36 @@
 # QuantumClone and QuantumCat
 
 R package also available on [CRAN](http://cran.r-project.org/web/packages/QuantumClone/index.html)
-Maintainer: Paul Deveau (paul.deveau@curie.fr)
+Maintainer: Paul Deveau (paul.deveau at curie.fr)
 
 ## Clonal Reconstruction from High-Throughput Sequencing data
-### Installation instructions (Beginners)
+Beginners instruction are designed so that you don't see a line of code. Use this if you are not familiar with R programming.
+Advanced instructions assume you know the basics of programming (downloading and using packages from CRAN)
+
+### Installation instructions (Beginner)
 
 QuantumClone is a method written in R (version 3.1). [R can be downloaded here](http://cran.r-project.org/mirrors.html). 
 A user-friendly environment is [RStudio](http://www.rstudio.com/products/rstudio/download/), that can be downloaded to see the data and the code.
 
 In R or RStudio, type (or copy/paste) the following instructions:
-* install(ggplot2)
-* install(fpc)
-* install(parallel)
-* install(doSNOW)
-* install(QuantumClone)
+> install(ggplot2) 
+
+> install(fpc)
+
+> install(parallel)
+
+> install(doSNOW)
+
+> install(QuantumClone)
 
 You have now successfully installed the QuantumClone package!
 
-To make all functions available in your Rsession type:
-* library(QuantumClone)
-*Optional*
-If you want to plot and save figures, also type:
-* library(ggplot2)
+It is now time to install and launch the graphical user interface. In R/Rstudio type:
+* install(RGtk2)
+* library(RGtk2)
+
+While the install part can be done once and for all, loading the libraries is mandatory for each session. 
+
 
 ### Installation instructions (Advanced)
 
