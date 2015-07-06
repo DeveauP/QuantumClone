@@ -22,6 +22,8 @@ This Readme is divided in four parts:
 
 ### Installation instructions (Beginner)
 
+**Preliminary:** This R package has been tested on Windows 8 and Linux. Some issues may appear with Mac setups due to the rgl package apparently. Do not hesitate to contact the maintainer for troubleshooting.
+
 QuantumClone is a method written in R (version 3.1). [R can be downloaded here](http://cran.r-project.org/mirrors.html). 
 A user-friendly environment is [RStudio](http://www.rstudio.com/products/rstudio/download/), that can be downloaded to see the data and the code.
 
@@ -70,6 +72,10 @@ QuantumClone requires few informations in the input file:
 * Depth is the depth of coverage at the position of the variant (number of reads mapped at this position)
 
 **Any additional column will not be taken into account for the analysis**
+
+You should have something similar to this:
+![alt tag](https://github.com/DeveauP/QuantumClone/blob/master/Images/Example_input.png)
+
 
 While the input file can be as large as you want, the computation time will exponentially grow with the number of variants to be studied. In order to keep computation time reasonable (from a minute to an hour), a reasonable set of mutation is between **100 to 1000 variants**.
 
