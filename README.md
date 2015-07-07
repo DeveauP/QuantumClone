@@ -22,7 +22,7 @@ This Readme is divided in four parts:
 
 ### <a name="IIB"></a> Installation instructions (Beginner)
 
-**Preliminary:** This R package has been tested on Windows 8 and Linux. Some issues may appear with Mac setups due to the rgl package apparently. Do not hesitate to contact the maintainer for troubleshooting.
+**Preliminary:** This R package has been tested on Windows 8 and Linux. Some issues may appear with Mac setups due to the parallel package apparently. Do not hesitate to contact the maintainer for troubleshooting.
 
 QuantumClone is a method written in R (version 3.1). [R can be downloaded here](http://cran.r-project.org/mirrors.html). 
 A user-friendly environment is [RStudio](http://www.rstudio.com/products/rstudio/download/), that can be downloaded to see the data and the code.
@@ -45,18 +45,29 @@ It is now time to install and launch the graphical user interface. In R/Rstudio 
 
 Now download the file GUI.R from the master. 
 * With R, type: source(/PATH/TO/GUI.R)
-* With RStudio, go to Code > Source file and choose GUI.R (**to be added**)
+* With RStudio, go to Code > Source file and choose GUI.R (**Available for Windows. Linux and OSX GUIs to be added**)
 
 If everything went well, you should see:
 ![alt tag](https://github.com/DeveauP/QuantumClone/blob/master/Images/GUI.png)
  
+ Once you click on the "Validate", the analysis is run and you get a popup notification:
+ ![alt tag](https://github.com/DeveauP/QuantumClone/blob/master/Images/popup.png)
+ 
+ When the analysis is complete, an "Exit" button appears, telling you that everything is fine.
+ ![alt tag](https://github.com/DeveauP/QuantumClone/blob/master/Images/popup_finished.png)
+ 
 **Note:**
 All the libraries are called by the GUI.R file, so there is no need to load them prior to the analysis.
+
+
 
 ### <a name="IIA"></a>  Installation instructions (Advanced)
 
 The full package is available and is maintained on [CRAN](http://cran.r-project.org/web/packages/QuantumClone/index.html). 
 You can chose to source the GUI but it may affect computation performances.
+
+**Note to OSX users:** parallel package seems to be unavailable for R 3.1.2
+One option is to download the tarball and use the "R CMD INSTALL QuantumClone.tar.gz" commandline.
 
 ### <a name="UB"></a>  Usage (Beginner)
 QuantumClone is looking for clones in your samples assuming that there is an evolutionary logic between samples, so you should use data from the same patient for one analysis (either different timepoints, or spatially separated samples, or biological replicates).
