@@ -22,7 +22,7 @@ This Readme is divided in four parts:
 
 ### <a name="IIB"></a> Installation instructions (Beginner)
 
-**Preliminary:** This R package has been tested on Windows 8 and Linux. Some issues may appear with Mac setups due to the parallel package apparently. Do not hesitate to contact the maintainer for troubleshooting.
+**Preliminary:** This R package has been tested on Windows 8 and Linux. Some issues may appear with OSX setups due to the parallel package apparently. Do not hesitate to contact the maintainer for troubleshooting.
 
 QuantumClone is a method written in R (version 3.1). [R can be downloaded here](http://cran.r-project.org/mirrors.html). 
 A user-friendly environment is [RStudio](http://www.rstudio.com/products/rstudio/download/), that can be downloaded to see the data and the code.
