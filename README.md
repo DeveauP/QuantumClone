@@ -150,5 +150,5 @@ This part is about generating data to test clonal reconstruction algorithms. Its
 
 For multiple testings, and calculation of the Normalized Mutual Information (NMI), see Multitest() and statistics_on_Multitest()
 
-### Aknowledgment
+### Acknowledgments
 Many thanks to the contributors of this work: my supervisors, Elodie for the features improvement and Linux debugging, Matahi for the OSX feedback, and more generally to the U830 & U900 people. This work had been funded by the Ministere de l'Enseignement Supérieur de la Recherche (AMX grant)
