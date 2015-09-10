@@ -71,7 +71,8 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
 #'
 #' Wrap up function that clusters cellularities. This is based on the most likely possibility for each mutation, give ints frequency and genotype.
 #' @param SNV_list A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample), 
-#' the chromosome "Chr",the position of the mutation "Start", the observed frequency corrected for the contamination "Frequency",
+#' the chromosome "Chr",the position of the mutation "Start", the number of reads supporting variant "Alt", as well as the total number of 
+#' reads overlapping position "Depth",
 #' and if the output from FREEC for the samples are not associated, the genotype "Genotype". 
 #' @param FREEC_list list of dataframes from FREEC for each samples (usually named Sample_ratio.txt), in the same order as SNV_list
 #' @param plot_3D_before_clustering Should a 3D plot be realized before clustering, can be useful to guess priors.
@@ -177,20 +178,15 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
       ggplot2::ggsave(plot = q, filename = paste(output_directory,'/', 'Density', Sample_name,'.png',sep=''),width = 6.04,height = 6.04)
     }
   }
-     print("post-processing output...")
+    print("post-processing output...")
   for(i in 1:length(r$filtered.data)){
     to_bind<-data.frame()
-    if(Genotype_provided){
-        commonCols<-c("Chr","Start","Depth","Alt","Genotype")
-    }else{
-        commonCols<-c("Chr","Start","Depth","Alt")
-    }
     for(chr in unique(r$filtered.data[[i]]$Chr)){
         spare<-SNV_list[[i]][SNV_list[[i]]$Chr==chr,]
     	spare<-spare[spare$Start %in% r$filtered.data[[i]]$Start,]
 	to_bind<-rbind(to_bind,spare) 
     }
-    r$filtered.data[[i]]<-merge(r$filtered.data[[i]], to_bind,by = commonCols)
+    r$filtered.data[[i]]<-merge(r$filtered.data[[i]], to_bind,by = c("Chr","Start","Depth","Alt"))
   }
   return(r)
 }
@@ -1055,11 +1051,11 @@ plot_with_margins_densities<-function(QClone_Output){
 
 
   top<-ggplot2::ggplot(QClone_Output$filtered.data[[1]],
-                       ggplot2::aes(Cellularity))+ggplot2::geom_density(alpha=.5)+ggplot2::theme_bw()+ggplot2::theme(legend.position="none",
+                       ggplot2::aes("Cellularity"))+ggplot2::geom_density(alpha=.5)+ggplot2::theme_bw()+ggplot2::theme(legend.position="none",
                                                                                                                      axis.title.x=ggplot2::element_blank())
   
   right<-ggplot2::ggplot(QClone_Output$filtered.data[[2]],
-                         ggplot2::aes(Cellularity))+ggplot2::geom_density(alpha=.5)+ggplot2::coord_flip()+ggplot2::theme_bw()+ggplot2::theme(legend.position="none",
+                         ggplot2::aes("Cellularity"))+ggplot2::geom_density(alpha=.5)+ggplot2::coord_flip()+ggplot2::theme_bw()+ggplot2::theme(legend.position="none",
                                                                                                                                 axis.title.y=ggplot2::element_blank())
   
   tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(main)) 
