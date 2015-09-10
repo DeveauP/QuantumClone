@@ -192,6 +192,7 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
     }
     r$filtered.data[[i]]<-merge(r$filtered.data[[i]], to_bind,by = commonCols)
   }
+  r$filtered.data[[1]]<-cbind(r$filtered.data[[1]],r$cluster)
   return(r)
 }
 
