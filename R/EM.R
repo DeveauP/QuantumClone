@@ -414,17 +414,16 @@ BIC_criterion<-function(EM_out_list){
     Bic[i]<-2*EM_out_list[[i]]$EM.output$val+length(EM_out_list[[i]]$EM.output$centers[[1]])*log(Mut_num)
   }
   W<-which.min(Bic)
-  H<-hard.clustering(EM_out =EM_out_list[[W]]$EM.output)
-  if(length(na.omit(unique(H)))<max(na.omit(H))){ 
-  
-    W1<-BIC_criterion(EM_out_list[-W])
-	if(W1==0){
-		return(W)
-	}
-	else{
-		return(W1)
+  L<-0
+  ORD<-order(Bic)
+  while(L<length(ORD) & !NumClust_same_ClustMax){
+	L<-L+1
+	H<-hard.clustering(EM_out =EM_out_list[[ORD[L]]]$EM.output)
+    if(length(na.omit(unique(H))) == max(na.omit(H))){
+		return(ORD[L])
 	}
   }
+  return(ORD[1])
   
 }
 #' Expectation Maximization
