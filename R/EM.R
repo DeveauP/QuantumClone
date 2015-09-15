@@ -385,7 +385,7 @@ hard.clustering<-function(EM_out){
     if(sum(z==max(z))>1){ ### Look for the multiple clones, and attribute with probability proportional to the weight
       if(max(z)>0){
 		pos<-which(z==max(z))
-		prob<-EM_out$EM.output$weights[pos]/(sum(EM_out$EM.output$weights[pos]))
+		prob<-EM_out$weights[pos]/(sum(EM_out$weights[pos]))
 		return(sample(x = pos, size = 1, prob = prob))
 	  }
 	  else{
@@ -406,6 +406,9 @@ hard.clustering<-function(EM_out){
 #' @keywords EM clustering number
 BIC_criterion<-function(EM_out_list){
   Bic<-numeric()
+  if(length(EM_out_list)==0){
+	return(0)
+  }
   Mut_num<-dim(EM_out_list[[1]]$EM.output$fik)[1]
   for(i in 1:length(EM_out_list)){
     Bic[i]<-2*EM_out_list[[i]]$EM.output$val+length(EM_out_list[[i]]$EM.output$centers[[1]])*log(Mut_num)
@@ -414,9 +417,15 @@ BIC_criterion<-function(EM_out_list){
   H<-hard.clustering(EM_out =EM_out_list[[W]]$EM.output)
   if(length(na.omit(unique(H)))<max(na.omit(H))){ 
   
-    W<-BIC_criterion(EM_out_list[-W])
+    W1<-BIC_criterion(EM_out_list[-W])
+	if(W1==0){
+		return(W)
+	}
+	else{
+		return(W1)
+	}
   }
-  return(W)
+  
 }
 #' Expectation Maximization
 #'
