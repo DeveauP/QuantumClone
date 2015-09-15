@@ -12,7 +12,8 @@ One_step_clustering(SNV_list, FREEC_list = NULL, contamination,
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
-the chromosome "Chr",the position of the mutation "Start", the observed frequency corrected for the contamination "Frequency",
+the chromosome "Chr",the position of the mutation "Start", the number of reads supporting variant "Alt", as well as the total number of
+reads overlapping position "Depth",
 and if the output from FREEC for the samples are not associated, the genotype "Genotype".}
 
 \item{FREEC_list}{list of dataframes from FREEC for each samples (usually named Sample_ratio.txt), in the same order as SNV_list}

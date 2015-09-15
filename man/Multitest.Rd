@@ -45,10 +45,12 @@ Multitest(number_of_tests, number_of_samples = 2, ploidy = 2,
 Generates multiple data with the QuantumCat function, and assesses the clustering algorithm (output)
 }
 \examples{
+\dontrun{
 print("Tests multiple conditions of data generation...")
 print("... and gives information on the clustering quality")
 Multitest(number_of_tests=1,Sample_name="Example",ploidy="AB",
 number_of_clones=2,plot_results=FALSE,depth=500,number_of_mutations=10)
+}
 }
 \keyword{Data}
 \keyword{generation}

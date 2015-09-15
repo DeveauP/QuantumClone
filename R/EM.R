@@ -178,7 +178,7 @@ EM.algo<-function(Schrod, nclust=NULL, prior_center=NULL,prior_weight=NULL,conta
   adj.factor<-Compute.adj.fact(Schrod = Schrod,contamination = contamination)
   alpha<-list_prod(L = Schrod,col = "alpha")
   
-  while(eval>=epsilon){
+  while(eval>epsilon){
     tik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,alpha,adj.factor)
     m<-m.step(fik = tik,Schrod = Schrod,previous.weights = cur.weight,
               previous.centers =cur.center, alpha =alpha, adj.factor=adj.factor )
@@ -382,8 +382,15 @@ parallelEM<-function(Schrod,nclust,epsilon,contamination,prior_center=NULL,prior
 #' @keywords EM Hard clustering
 hard.clustering<-function(EM_out){
   EM_out$clust<-apply(X = EM_out$fik,MARGIN = 1,FUN = function(z) {
-    if(sum(z==max(z))>1){
-      return(NA)
+    if(sum(z==max(z))>1){ ### Look for the multiple clones, and attribute with probability proportional to the weight
+      if(max(z)>0){
+		pos<-which(z==max(z))
+		prob<-EM_out$EM.output$weights[pos]/(sum(EM_out$EM.output$weights[pos]))
+		return(sample(x = pos, size = 1, prob = prob))
+	  }
+	  else{
+		return(sample(1:length(z),size = z))
+	  }
     }
     else{
       return(which(z==max(z)))
@@ -405,7 +412,7 @@ BIC_criterion<-function(EM_out_list){
   }
   W<-which.min(Bic)
   H<-hard.clustering(EM_out =EM_out_list[[W]]$EM.output)
-  if(length(na.omit(unique(H)))<max(na.omit(H))){
+  if(length(na.omit(unique(H)))<max(na.omit(H))){ 
   
     W<-BIC_criterion(EM_out_list[-W])
   }

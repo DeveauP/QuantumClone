@@ -71,7 +71,8 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
 #'
 #' Wrap up function that clusters cellularities. This is based on the most likely possibility for each mutation, give ints frequency and genotype.
 #' @param SNV_list A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample), 
-#' the chromosome "Chr",the position of the mutation "Start", the observed frequency corrected for the contamination "Frequency",
+#' the chromosome "Chr",the position of the mutation "Start", the number of reads supporting variant "Alt", as well as the total number of 
+#' reads overlapping position "Depth",
 #' and if the output from FREEC for the samples are not associated, the genotype "Genotype". 
 #' @param FREEC_list list of dataframes from FREEC for each samples (usually named Sample_ratio.txt), in the same order as SNV_list
 #' @param plot_3D_before_clustering Should a 3D plot be realized before clustering, can be useful to guess priors.
@@ -177,7 +178,7 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
       ggplot2::ggsave(plot = q, filename = paste(output_directory,'/', 'Density', Sample_name,'.png',sep=''),width = 6.04,height = 6.04)
     }
   }
-     print("post-processing output...")
+    print("post-processing output...")
   for(i in 1:length(r$filtered.data)){
     to_bind<-data.frame()
     if(Genotype_provided){
@@ -192,7 +193,6 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
     }
     r$filtered.data[[i]]<-merge(r$filtered.data[[i]], to_bind,by = commonCols)
   }
-  r$filtered.data[[1]]<-cbind(r$filtered.data[[1]],r$cluster)
   return(r)
 }
 

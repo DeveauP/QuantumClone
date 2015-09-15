@@ -47,11 +47,13 @@ statistics_on_Multitest(number_of_tests_per_condition = 100,
 Call the Multitest function on different parameters to evaluate the influence of each according to the model. Does not save plot results.
 }
 \examples{
+\dontrun{
 statistics_on_Multitest(number_of_tests_per_condition=2,range_clones=2:3,range_mutations=c(20),
                                  range_ploidy="AB",range_samples=2,range_depth=1000,
                                  range_contamination = 0,folder='stat',
                                  plot_results=FALSE,save_Cell=FALSE,preclustering = TRUE ,
                                  nclone_range = 2 ,maxit = 1, epsilon = 5*(10**(-3)),ncores = 1)
+}
 }
 \keyword{Data}
 \keyword{generation}
