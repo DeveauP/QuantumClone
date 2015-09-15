@@ -12,3 +12,8 @@ import(doSNOW)
 import(foreach)
 import(fpc)
 import(parallel)
+importFrom("grDevices", "colorRampPalette")
+importFrom("graphics", "par", "plot", "segments", "text")
+importFrom("stats", "aggregate", "dbinom", "frequency", "na.omit",
+             "optim", "rbinom", "rnbinom", "rpois", "runif", "sd")
+importFrom("utils", "tail", "write.table")

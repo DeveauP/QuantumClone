@@ -1056,11 +1056,11 @@ plot_with_margins_densities<-function(QClone_Output){
 
 
   top<-ggplot2::ggplot(QClone_Output$filtered.data[[1]],
-                       ggplot2::aes(Cellularity))+ggplot2::geom_density(alpha=.5)+ggplot2::theme_bw()+ggplot2::theme(legend.position="none",
+                       ggplot2::aes_string("Cellularity"))+ggplot2::geom_density(alpha=.5)+ggplot2::theme_bw()+ggplot2::theme(legend.position="none",
                                                                                                                      axis.title.x=ggplot2::element_blank())
   
   right<-ggplot2::ggplot(QClone_Output$filtered.data[[2]],
-                         ggplot2::aes(Cellularity))+ggplot2::geom_density(alpha=.5)+ggplot2::coord_flip()+ggplot2::theme_bw()+ggplot2::theme(legend.position="none",
+                         ggplot2::aes_string("Cellularity"))+ggplot2::geom_density(alpha=.5)+ggplot2::coord_flip()+ggplot2::theme_bw()+ggplot2::theme(legend.position="none",
                                                                                                                                 axis.title.y=ggplot2::element_blank())
   
   tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(main)) 
