@@ -677,7 +677,7 @@ One_D_plot<-function(EM_out,contamination){
 #' print(head(2*QC[[i]]$Alt/QC[[i]]$Depth))
 #' QC[[i]][,4]<-2*QC[[i]]$Alt/QC[[i]]$Depth
 #' QC[[i]]<-cbind(QC[[i]],alpha)
-#' 
+#' }
 #' print("Creating 3D plot")                     
 #' ThreeD_plot(QC,c(0,0))
 #' }

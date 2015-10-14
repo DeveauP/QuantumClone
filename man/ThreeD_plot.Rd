@@ -15,6 +15,8 @@ ThreeD_plot(Schrod, contamination)
 Creates density plot when two samples are given
 }
 \examples{
+### Example fails build when no monitor is available for display
+\dontrun{
 print("Generating data...")
 QC<-QuantumCat(number_of_clones = 4,number_of_mutations = 200,
                depth= 100, ploidy = "AB")
@@ -25,8 +27,9 @@ print(head(2*QC[[i]]$Alt/QC[[i]]$Depth))
 QC[[i]][,4]<-2*QC[[i]]$Alt/QC[[i]]$Depth
 QC[[i]]<-cbind(QC[[i]],alpha)
 }
- print("Creating 3D plot")
+print("Creating 3D plot")
 ThreeD_plot(QC,c(0,0))
+}
 }
 \keyword{Clonal}
 \keyword{inference}
