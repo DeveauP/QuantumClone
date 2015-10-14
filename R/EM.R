@@ -416,7 +416,7 @@ BIC_criterion<-function(EM_out_list){
   W<-which.min(Bic)
   L<-0
   ORD<-order(Bic)
-  while(L<length(ORD) & !NumClust_same_ClustMax){
+  while(L<=length(ORD)){
 	L<-L+1
 	H<-hard.clustering(EM_out =EM_out_list[[ORD[L]]]$EM.output)
     if(length(na.omit(unique(H))) == max(na.omit(H))){
