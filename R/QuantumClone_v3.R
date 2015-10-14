@@ -666,6 +666,8 @@ One_D_plot<-function(EM_out,contamination){
 #' @keywords Clonal inference phylogeny
 #' @export
 #' @examples 
+#' ### Example fails build when no monitor is available for display
+#' \dontrun{
 #' print("Generating data...")
 #' QC<-QuantumCat(number_of_clones = 4,number_of_mutations = 200, 
 #'                depth= 100, ploidy = "AB")
@@ -675,9 +677,10 @@ One_D_plot<-function(EM_out,contamination){
 #' print(head(2*QC[[i]]$Alt/QC[[i]]$Depth))
 #' QC[[i]][,4]<-2*QC[[i]]$Alt/QC[[i]]$Depth
 #' QC[[i]]<-cbind(QC[[i]],alpha)
-#' }
-#'  print("Creating 3D plot")                     
+#' 
+#' print("Creating 3D plot")                     
 #' ThreeD_plot(QC,c(0,0))
+#' }
 ThreeD_plot<-function(Schrod,contamination){
   Z<-matrix(nrow=101,ncol=101)
   alpha<-Schrod[[1]]$alpha*Schrod[[2]]$alpha
