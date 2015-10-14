@@ -1,8 +1,9 @@
-language: r
+language: R
 sudo: required
-# Be strict when checking our package
 warnings_are_errors: true
+
 r_github_packages:
   - jimhester/covr
- after_success:
+
+after_success:
   - Rscript -e 'covr::codecov()'
