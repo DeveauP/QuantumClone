@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/DeveauP/QuantumClone.svg)](https://travis-ci.org/DeveauP/QuantumClone)
+[![CRAN version](http://www.r-pkg.org/badges/version/QuantumClone)](http://www.r-pkg.org/badges/version/QuantumClone)
 # QuantumClone and QuantumCat
 
 R package also available on [CRAN](http://cran.r-project.org/web/packages/QuantumClone/index.html)
