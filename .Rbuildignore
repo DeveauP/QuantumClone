@@ -2,4 +2,4 @@
 ^\.Rproj\.user$
 ^\.travis.yml
 ^\Images
-^\GUI_windows.R
+GUI_windows.R
