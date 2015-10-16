@@ -334,8 +334,9 @@ add.to.list<-function(...){
 #' @param ncores Number of CPUs to be used
 #' @param maxit Maximal number of independant initial condition tests to be tried
 #' @import foreach
-#' @import doSNOW
-#' @import parallel
+#' @importFrom doSNOW registerDoSNOW
+#' @importFrom parallel makeCluster
+#' @importFrom parallel stopCluster
 #' @keywords EM
 
 parallelEM<-function(Schrod,nclust,epsilon,contamination,prior_center=NULL,prior_weight=NULL,maxit=1, ncores = 2){
@@ -345,7 +346,8 @@ parallelEM<-function(Schrod,nclust,epsilon,contamination,prior_center=NULL,prior
   
   result<-foreach::foreach(i=1:(maxit),.export = c("FullEM","EM.algo","create_priors",
                                           "add.to.list","e.step","m.step","list_prod",
-                                          "Compute.adj.fact","eval.fik","eval.fik.m","fik.from.al","filter_on_fik")) %dopar% {
+                                          "Compute.adj.fact","eval.fik","eval.fik.m",
+                                          "fik.from.al","filter_on_fik")) %dopar% {
                                             FullEM(Schrod = Schrod,nclust = nclust,prior_weight = prior_weight,contamination = contamination,epsilon = epsilon,
                                                    prior_center = create_priors(nclust = nclust,nsample = length(Schrod),prior = prior_center))
                                           }
@@ -438,7 +440,6 @@ BIC_criterion<-function(EM_out_list){
 #' @param ncores Number of CPUs to be used
 #' @param clone_priors If known a list of priors (cell prevalence) to be used in the clustering
 #' @keywords EM clustering number
-#' @import doSNOW
 EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NULL, maxit=8, nclone_range=2:5, epsilon=5*(10**(-3)),ncores = 2){
   list_out_EM<-list()
   for(i in 1:length(nclone_range)){

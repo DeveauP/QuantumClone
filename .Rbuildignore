@@ -1,0 +1,5 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.travis.yml
+^\Images
+^\GUI_windows.R

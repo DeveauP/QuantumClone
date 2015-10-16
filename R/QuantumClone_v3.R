@@ -443,7 +443,7 @@ strcount <- function(x, pattern='', split=''){
 #' @param ncores Number of CPUs to be used
 #' @param plot_3D_before_clustering Should a 3D plot be realized before clustering, can be useful to guess priors.
 #' @param output_directory Directory in which to save results
-#' @import fpc
+#' @importFrom fpc pamk
 #' @keywords Clonal inference
 #' 
 Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=T,
@@ -664,6 +664,7 @@ One_D_plot<-function(EM_out,contamination){
 #' @param Schrod List of 2 dataframes, output of the Schrodinger function or the EM algorithm
 #' @param contamination Numeric vector giving the proportion of normal cells in each samples
 #' @keywords Clonal inference phylogeny
+#' @import rgl
 #' @export
 #' @examples 
 #' ### Example fails build when no monitor is available for display
@@ -1035,7 +1036,7 @@ Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination
 #' @param QClone_Output Output from QuantumClone algorithm
 #' @keywords Plot Densities
 #' @export
-#' @examples 
+#' @examples
 #' require(ggplot2)
 #' require(gridExtra)
 #' print("Creating data formated as QuantumClone analysis")
@@ -1047,7 +1048,7 @@ Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination
 #'        data.frame(id=1:100,Cellularity=c(rnorm(n=50,mean=0.700,
 #'        sd=0.095),rnorm(n=50,mean=0.400,sd=0.085)))))
 #' plot_with_margins_densities(QC_out)
-#' 
+#' @importFrom gridExtra grid.arrange
 #' 
 #' 
 plot_with_margins_densities<-function(QClone_Output){
