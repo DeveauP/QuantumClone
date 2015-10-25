@@ -9,5 +9,8 @@ Description: Using HTS data, clusters mutations in order to recreate putative cl
 Depends: R (>= 3.1.0), fpc,foreach,
 Imports: doSNOW,parallel,gridExtra,rgl,
 Suggests: ggplot2,
+    knitr,
+    rmarkdown
 License: GPL-2
 LazyData: true
+VignetteBuilder: knitr
