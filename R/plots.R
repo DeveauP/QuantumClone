@@ -116,14 +116,14 @@ plot_QC_out<-function(QClone_Output,Sample_names=NULL, simulated = FALSE,sample_
 #' Evolution plot
 #' 
 #' Plots evolution in time of clones
-#' @param QC_out
+#' @param QC_out : Output from One_step_clustering
 #' @param Sample_names : character vector of the names of each sample (in the same order as the data)
 #' @export
 #' @examples 
 #' require(ggplot2)
 evolution_plot<-function(QC_out,Sample_names=NULL){
   if(is.null(Sample_names)){
-    Sample_names<-unlist(lapply(X = QClone_Output$filtered.data,FUN = function(df){
+    Sample_names<-unlist(lapply(X = QClone_Out$filtered.data,FUN = function(df){
       df[1,1]
     }))
     

@@ -27,3 +27,5 @@ Icon
 QuantumClone.Rproj
 .Rproj*
 inst/doc
+*.RData
+*.Rhistory
