@@ -16,14 +16,8 @@ Uses gridExtra package
 \examples{
 require(ggplot2)
 require(gridExtra)
-print("Creating data formated as QuantumClone analysis")
-print("Cluster 1: coordinates (0.8,0.7)")
-print("Cluster 2: coordinates (0.3,0.4)")
-QC_out<-list(cluster=rep(c(1,2),each=50),
-       filtered.data=list(data.frame(id=1:100,Cellularity=c(rnorm(n=50,mean=0.8,sd=0.1),
-       rnorm(n=50,0.3,0.08))),
-       data.frame(id=1:100,Cellularity=c(rnorm(n=50,mean=0.700,
-       sd=0.095),rnorm(n=50,mean=0.400,sd=0.085)))))
+message("Using preclustered data:")
+QC_out<-QuantumClone::QC_output
 plot_with_margins_densities(QC_out)
 }
 \keyword{Densities}

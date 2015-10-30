@@ -334,7 +334,7 @@ add.to.list<-function(...){
 #' @param ncores Number of CPUs to be used
 #' @param maxit Maximal number of independant initial condition tests to be tried
 #' @import foreach
-#' @importFrom doSNOW registerDoSNOW
+#' @importFrom doParallel registerDoParallel
 #' @importFrom parallel makeCluster
 #' @importFrom parallel stopCluster
 #' @keywords EM
@@ -342,7 +342,7 @@ add.to.list<-function(...){
 parallelEM<-function(Schrod,nclust,epsilon,contamination,prior_center=NULL,prior_weight=NULL,maxit=1, ncores = 2){
   if(ncores>1){
   cl <- parallel::makeCluster( ncores )
-  doSNOW::registerDoSNOW(cl)
+  registerDoParallel(cl)
   
   result<-foreach::foreach(i=1:(maxit),.export = c("FullEM","EM.algo","create_priors",
                                           "add.to.list","e.step","m.step","list_prod",
@@ -418,13 +418,13 @@ BIC_criterion<-function(EM_out_list){
   W<-which.min(Bic)
   L<-0
   ORD<-order(Bic)
-  while(L<=length(ORD)){
-	L<-L+1
-	H<-hard.clustering(EM_out =EM_out_list[[ORD[L]]]$EM.output)
-    if(length(na.omit(unique(H))) == max(na.omit(H))){
-		return(ORD[L])
-	}
-  }
+#  while(L<=length(ORD)){
+#	L<-L+1
+	#H<-hard.clustering(EM_out =EM_out_list[[ORD[L]]]$EM.output)
+  #  if(length(na.omit(unique(H))) == max(na.omit(H))){
+	#	return(ORD[L])
+	#}
+#  }
   return(ORD[1])
   
 }

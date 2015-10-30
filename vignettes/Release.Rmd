@@ -1,0 +1,20 @@
+---
+title: "Release"
+author: "Paul Deveau"
+date: "`r Sys.Date()`"
+output: html_document
+vignette: >
+  %\VignetteIndexEntry{Release}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+Release of 30/10/2015:
+  * Major fix *
+  - Post processing affected order of mutations but not of clustering. The clustering thus appeared erroneous in version 0.9.15 and 0.10.15
+  
+  * Minor changes *
+  - Adding vignette release
+  - Changed dependency of doSNOW to doParallel
+  - Added data to decrease loading and check time
+  - Added function to plot results from output (by 2 elements)
+  - Added function to plot cellularity of clone in each sample (for time series, with proportion of mutation in each clone)

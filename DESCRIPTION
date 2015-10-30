@@ -7,7 +7,7 @@ Author: Paul Deveau [aut, cre]
 Maintainer: Paul Deveau <paul.deveau@curie.fr>
 Description: Using HTS data, clusters mutations in order to recreate putative clones from the data provided. It requires genotype at the location of the variant as well as the depth of coverage and number of reads supporting the mutation. Additional information may be provided, such as the contamination in the tumor sample. This package also provides a function QuantumCat() which simulates data obtained from tumor sequencing. Latest version can be found at github/DeveauP/QuantumClone .
 Depends: R (>= 3.1.0), fpc,foreach,
-Imports: doSNOW,parallel,gridExtra,rgl,
+Imports: doParallel,parallel,gridExtra,rgl,
 Suggests: ggplot2,
     knitr,
     rmarkdown

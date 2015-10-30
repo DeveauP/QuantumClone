@@ -57,13 +57,13 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
                          simulated = simulated,
                          save_plot = save_plot,ncores=ncores,output_directory=output_directory)
   
-#   t<-Tree_generation(Clone_cellularities = r$pamobject$medoids,timepoints = timepoints)
-#   
-#   if(save_plot){
-#     pdf(paste(as.character(SNV_list[[1]][1,1]),'trees.pdf',sep='_'))
-#     multiplot_trees(result_list =t,d = dim(r$pamobject$medoids)[1],cex = 0.8)
-#     dev.off()
-#   }
+  #   t<-Tree_generation(Clone_cellularities = r$pamobject$medoids,timepoints = timepoints)
+  #   
+  #   if(save_plot){
+  #     pdf(paste(as.character(SNV_list[[1]][1,1]),'trees.pdf',sep='_'))
+  #     multiplot_trees(result_list =t,d = dim(r$pamobject$medoids)[1],cex = 0.8)
+  #     dev.off()
+  #   }
   return(r)
 }
 
@@ -124,11 +124,11 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
   Sample_name<-as.character(SNV_list[[1]][1,1])
   Sample_names<-lapply(SNV_list,FUN = function(z) z[1,1])
   if(is.null(FREEC_list)){
-    print("FREEC_list is empty. Checking that there is a genotype column in all samples...")
+    message("FREEC_list is empty. Checking that there is a genotype column in all samples...")
     check<-TRUE
     for(i in 1:length(SNV_list)){
       if(is.null(SNV_list[[i]][,"Genotype"])){
-        print(paste("Sample",i,"does not have a Genotype column"))
+        warning(paste("Sample",i,"does not have a Genotype column"))
         check<-FALSE
       }
     }
@@ -136,20 +136,19 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
       return(NA)
     }
     else{
-      print("Genotype is provided.")
+      message("Genotype is provided.")
       Genotype_provided<-TRUE
     }
   }
   else{
-    print("Checking that SNV_list and FREEC_list have the same number of samples...")
+    message("Checking that SNV_list and FREEC_list have the same number of samples...")
     if(length(SNV_list)!=length(FREEC_list)){
-      print("Incorrect input: number of samples different for SNV and FREEC")
-      return(NA)
+      stop("Incorrect input: number of samples different for SNV and FREEC")
     }
-    print("Passed")
+    message("Passed")
     Genotype_provided<-FALSE
   }
-  print(paste("Checking all possibilities for",Sample_name))
+  message(paste("Checking all possibilities for",Sample_name))
   
   Cell<-From_freq_to_cell(SNV_list = SNV_list, 
                           FREEC_list = FREEC_list, 
@@ -158,7 +157,7 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                           Genotype_provided = Genotype_provided, 
                           save_plot = save_plot,restrict.to.AB = restrict.to.AB,output_directory=output_directory)
   
-  print("Starting clustering...")
+  message("Starting clustering...")
   r<-Cluster_plot_from_cell(Cell = Cell,nclone_range = nclone_range,epsilon = epsilon,
                             Sample_names = Sample_names, preclustering = preclustering,
                             clone_priors = clone_priors,prior_weight = prior_weight,maxit = maxit,
@@ -166,7 +165,7 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                             ncores=ncores,plot_3D_before_clustering =plot_3D_before_clustering,
                             output_directory=output_directory)
   if(plot_3D){
-    print("Clustering done... Computing 3D structure")
+    message("Clustering done... Computing 3D structure")
     ThreeD_plot(r$filtered.data,contamination)
   }
   if(length(SNV_list)==1 & save_plot){
@@ -178,22 +177,67 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
       ggplot2::ggsave(plot = q, filename = paste(output_directory,'/', 'Density', Sample_name,'.png',sep=''),width = 6.04,height = 6.04)
     }
   }
-    print("post-processing output...")
-  for(i in 1:length(r$filtered.data)){
-    to_bind<-data.frame()
-    if(Genotype_provided){
-        commonCols<-c("Chr","Start","Depth","Alt","Genotype")
-    }else{
-        commonCols<-c("Chr","Start","Depth","Alt")
-    }
-    for(chr in unique(r$filtered.data[[i]]$Chr)){
-        spare<-SNV_list[[i]][SNV_list[[i]]$Chr==chr,]
-    	spare<-spare[spare$Start %in% r$filtered.data[[i]]$Start,]
-	to_bind<-rbind(to_bind,spare) 
-    }
-    r$filtered.data[[i]]<-merge(r$filtered.data[[i]], to_bind,by = commonCols)
+  message("post-processing output...")
+  ### Input = SNV_list
+  ### output = r
+  ### get order of variants in finish
+  #### old version
+#   for(i in 1:length(r$filtered.data)){
+#     to_bind<-data.frame()
+#     if(Genotype_provided){
+#       commonCols<-c("Chr","Start","Depth","Alt","Genotype")
+#     }else{
+#       commonCols<-c("Chr","Start","Depth","Alt")
+#     }
+#     for(chr in unique(r$filtered.data[[i]]$Chr)){
+#       spare<-SNV_list[[i]][SNV_list[[i]]$Chr==chr,]
+#       spare<-spare[spare$Start %in% r$filtered.data[[i]]$Start,] ### changes order of clustering!!!!
+#       to_bind<-rbind(to_bind,spare) 
+#     }
+#     r$filtered.data[[i]]<-merge(r$filtered.data[[i]], to_bind,by = commonCols)
+#   }
+  #### New version
+  Work_input<-SNV_list[[1]]
+  Work_output<-r$filtered.data[[1]]
+  if(Genotype_provided){
+         commonCols<-c("Chr","Start","Depth","Alt","Genotype")
+  }else{
+         commonCols<-c("Chr","Start","Depth","Alt")
   }
+  Keep<-apply(Work_input[,c("Chr","Start","Depth")],MARGIN = 1, function(z){
+    t<-apply(Work_output[,c("Chr","Start","Depth")],MARGIN = 1,function(y){
+      return(all(y == z))
+      
+    })
+    
+    if(sum(t)==0){
+      return(FALSE)
+    }
+    else{
+      return(TRUE)
+    }
+  })
+  Cell<-list()
+  for(i in 1:length(SNV_list)){
+    Cell[[i]]<-SNV_list[[i]][Keep,]
+  }
+  result<-r
+  for(i in 1:length(r$filtered.data)){  
+    result$filtered.data[[i]]<-merge(r$filtered.data[[i]], Cell[[i]],by = commonCols)
+  }
+
+  ### Extract new order of mutations:
+  Order<-apply(result$filtered.data[[1]][,c("Chr","Start","Depth")],MARGIN = 1, function(z){
+    t<-apply(r$filtered.data[[1]][,c("Chr","Start","Depth")],MARGIN = 1,function(y){
+      all(z == y)
+    })
+    
+  return(which(t))
+  })
+  result$cluster<-result$cluster[Order]
+  result$EM.output$fik<-result$EM.output$fik[Order,]
   return(r)
+
 }
 
 #' Wrap-up function
@@ -302,16 +346,16 @@ Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_pr
         L[[r]]<-1:(dim(Cell[[r]])[1])
       }
       U<-expand.grid(L) ##Table with all Cell row combinations
-         for(k in 1:(dim(U)[2])){
-              if(id==1){
-                result[[k]]<-Cell[[k]][U[,k],]
-              }
-              else{
-                result[[k]]<-rbind(result[[k]],Cell[[k]][U[,k],])
-              }
-          }
-        id<-id+1
+      for(k in 1:(dim(U)[2])){
+        if(id==1){
+          result[[k]]<-Cell[[k]][U[,k],]
+        }
+        else{
+          result[[k]]<-rbind(result[[k]],Cell[[k]][U[,k],])
+        }
       }
+      id<-id+1
+    }
   }
   if(count>0){
     warning(paste(count,'mutations exluded due to missing genotype or normalization issues'))
@@ -349,15 +393,15 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
   }
   alpha<-double()
   if(length(Genotype)==0){
-    print(paste("Genotype is not available at position",chr,position))
+    message(paste("Genotype is not available at position",chr,position))
     return(NA)
   }
   else if(is.na(Genotype)){
-    print(paste("Genotype is not available at position",chr,position))
+    message(paste("Genotype is not available at position",chr,position))
     return(NA)
   }
   else if(Genotype==-1){
-    print(paste("Genotype is not available at position",chr,position))
+    message(paste("Genotype is not available at position",chr,position))
     return(NA)
   }
   else if(restrict.to.AB & (Genotype!='A' & Genotype!='AB')){
@@ -548,9 +592,9 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=T,
         else{
           q<-ggplot2::qplot(x=Spare[,U[i,1]],y=Spare[,U[i,2]] , asp = 1,main=paste('Cellular prevalence plot',Sample_names[[U[i,1]]],Sample_names[[U[i,2]]]),
                             xlab=paste('Cellular prevalence',Sample_names[[U[i,1]]]),ylab=paste('Cellular prevalence',Sample_names[[U[i,2]]]),
-                             colour = cluster,
-                             shape=factor(result$filtered.data[[1]]$Chr))+ggplot2::theme_bw()+ggplot2::scale_shape_discrete(factor(1:max(Cell[[1]][,'Chr'])),
-                                                                                                   name='Clone \n(simulated)')+ggplot2::scale_colour_discrete(name='Cluster')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
+                            colour = cluster,
+                            shape=factor(result$filtered.data[[1]]$Chr))+ggplot2::theme_bw()+ggplot2::scale_shape_discrete(factor(1:max(Cell[[1]][,'Chr'])),
+                                                                                                                           name='Clone \n(simulated)')+ggplot2::scale_colour_discrete(name='Cluster')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
           if(is.null(output_directory)){
             ggplot2::ggsave(plot = q, filename = paste(Sample_names[1],'/', 'Cellularity_clustered', Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],"_",U[i,1],'_',U[i,2], '.png',sep=''),width = 6.04,height = 6.04)
           }
@@ -567,9 +611,9 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=T,
         q<-ggplot2::qplot(x=Spare, y=jitter(rep(0.5,times=length(Spare)),factor = 5) , asp = 1,main=paste('Cellular prevalence',Cell[[1]][1,'Sample']),
                           xlab=paste('cellularity',Sample_names),ylab='', 
                           colour = cluster)+ggplot2::scale_colour_discrete(name='Clone')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
-                                                                                                                                          axis.ticks.y=ggplot2::element_blank(),
-                                                                                                                                          panel.background  = ggplot2::element_blank(),
-                                                                                                                                          axis.text.y = ggplot2::element_blank())
+                                                                                                                                                                              axis.ticks.y=ggplot2::element_blank(),
+                                                                                                                                                                              panel.background  = ggplot2::element_blank(),
+                                                                                                                                                                              axis.text.y = ggplot2::element_blank())
         if(is.null(output_directory)){
           ggplot2::ggsave(plot = q, filename = paste(Sample_names[1],'/', 'Cellularity_clustered', Sample_names[1], '.png',sep=''),width = 6.04,height = 6.04)
         } 
@@ -582,10 +626,10 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=T,
         q<-ggplot2::qplot(x=Spare,y=jitter(rep(0.5,times=length(Spare)),factor = 5), asp = 1,main=paste('Cellular prevalence',Cell[[1]][1,'Sample']),
                           xlab=paste('Cellular prevalence',Sample_names),ylab='',
                           colour = cluster)+ggplot2::scale_colour_discrete(name='Cluster')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::scale_shape_discrete(factor(1:max(Cell[[1]][,'Chr'])),
-                                                                                                                                                name='Clone \n(simulated)')+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
-                                                                                                                                                                                  axis.ticks.y=ggplot2::element_blank(),
-                                                                                                                                                                                  panel.background  = ggplot2::element_blank(),
-                                                                                                                                                                                  axis.text.y = ggplot2::element_blank())
+                                                                                                                                                                           name='Clone \n(simulated)')+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
+                                                                                                                                                                                                                                          axis.ticks.y=ggplot2::element_blank(),
+                                                                                                                                                                                                                                          panel.background  = ggplot2::element_blank(),
+                                                                                                                                                                                                                                          axis.text.y = ggplot2::element_blank())
         if(is.null(output_directory)){
           ggplot2::ggsave(plot = q, filename = paste(Sample_names[1],'/', 'Cellularity_clustered', Sample_names[1],'.png',sep=''),width = 6.04,height = 6.04)
         }
@@ -614,8 +658,8 @@ plot_cell_from_Return_out<-function(lis,Sample_names,output_dir=NULL){
     Sample_names<-lapply(lis,FUN = function(z) z[1,1])
     for(i in 1:dim(U)[1]){
       d<-ggplot2::qplot(x = lis[[U[i,1]]][,'Cellularity'], y = lis[[U[i,2]]][,'Cellularity'],asp = 1,
-               xlab=paste('Cellular prevalence',Sample_names[[U[i,1]]]),ylab=paste('Cellular prevalence',Sample_names[[U[i,2]]]),
-               main=paste('Cellular prevalence of all possibilities'))+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
+                        xlab=paste('Cellular prevalence',Sample_names[[U[i,1]]]),ylab=paste('Cellular prevalence',Sample_names[[U[i,2]]]),
+                        main=paste('Cellular prevalence of all possibilities'))+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
       if(is.null(output_dir)){
         ggplot2::ggsave(filename = paste(Sample_names[[1]],'/', 'Cellularity', Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],'.png',sep=''),plot = d,width = 6.04,height = 6.04)
       }
@@ -627,11 +671,11 @@ plot_cell_from_Return_out<-function(lis,Sample_names,output_dir=NULL){
   }
   else{
     d<-ggplot2::qplot(x = lis[[1]][,'Cellularity'], y = jitter(rep(0.5,times=length(lis[[1]][,'Cellularity'])),factor = 10),asp = 1,
-             xlab=paste('Cellular prevalence'),ylab='',
-             main=paste(Sample_names,'Cellular prevalence of all possibilities'))
+                      xlab=paste('Cellular prevalence'),ylab='',
+                      main=paste(Sample_names,'Cellular prevalence of all possibilities'))
     d<-d+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
-                                                                                axis.ticks.y=ggplot2::element_blank(),
-                                                                                axis.text.y = ggplot2::element_blank())
+                                                                                              axis.ticks.y=ggplot2::element_blank(),
+                                                                                              axis.text.y = ggplot2::element_blank())
     if(is.null(output_dir)){
       ggplot2::ggsave(filename = paste(Sample_names[1],'/', 'Cellularity', Sample_names,'.png',sep=''),plot = d,width = 6.04,height = 6.04)
     }
@@ -687,19 +731,19 @@ ThreeD_plot<-function(Schrod,contamination){
   alpha<-Schrod[[1]]$alpha*Schrod[[2]]$alpha
   for(i in 0:100){
     Z[,i+1]<-sapply(X=0:100,function(y) {
-        if(i<100){
-          S<-sum((Schrod[[1]]$Cellularity>=floor(x = i/10)/10 & Schrod[[1]]$Cellularity<floor(x = i/10+1)/10 & Schrod[[2]]$Cellularity>=floor(x = y/10)/10 & Schrod[[2]]$Cellularity<floor(x = y/10 +1)/10)*alpha)
-        }
-        else{
-          S<-sum((Schrod[[1]]$Cellularity>=floor(x = i/10)/10 & Schrod[[2]]$Cellularity>=floor(x = y/10)/10 & Schrod[[2]]$Cellularity<floor(x = y/10 +1)/10)*alpha)
-        }
-        if(is.na(S)){
-          return(0)
-        }
-        else{
-          return(S)
-        }
+      if(i<100){
+        S<-sum((Schrod[[1]]$Cellularity>=floor(x = i/10)/10 & Schrod[[1]]$Cellularity<floor(x = i/10+1)/10 & Schrod[[2]]$Cellularity>=floor(x = y/10)/10 & Schrod[[2]]$Cellularity<floor(x = y/10 +1)/10)*alpha)
       }
+      else{
+        S<-sum((Schrod[[1]]$Cellularity>=floor(x = i/10)/10 & Schrod[[2]]$Cellularity>=floor(x = y/10)/10 & Schrod[[2]]$Cellularity<floor(x = y/10 +1)/10)*alpha)
+      }
+      if(is.na(S)){
+        return(0)
+      }
+      else{
+        return(S)
+      }
+    }
     )
   }
   rgl::open3d()
@@ -757,7 +801,7 @@ Tree_generation<-function(Clone_cellularities,timepoints=NULL){
   S<-S[order(S,decreasing = F)]
   
   connexion_list<-matrix(0,nrow=(2*nr-1),ncol = (2*nr-1))
-
+  
   if(is.matrix(Clone_cellularities)){
     ###adding non mutated clones
     connexion_list<-cbind(connexion_list,rbind(Clone_cellularities,matrix(0,nrow=nr-1,ncol=nc)))
@@ -792,7 +836,7 @@ Tree_generation<-function(Clone_cellularities,timepoints=NULL){
             remove<-c(remove,k)
           }
         }
-
+        
         else if(length(t)==2 & !is.list(t[[1]])){
           connexion_list[[k]]<-t
         }
@@ -831,7 +875,7 @@ add_leaf_list<-function(leaf,connexion_list,timepoints,d,selector_position){
     Inclusion<-sapply(X = connexion_list[[1]][,(2*d)],FUN = is_included,leaf)
   }
   Inclusion[selector_position]<-F
-
+  
   S<-sum(Inclusion & !Exclude)
   if(S==0){
     return(NA)
@@ -841,18 +885,18 @@ add_leaf_list<-function(leaf,connexion_list,timepoints,d,selector_position){
     result<-list()
     t<-min(timepoints[leaf>0])
     if(dim(connexion_list[[1]])[2]-2*d>0){
-    size_at_t<-apply(X = connexion_list[[1]][,(2*d):(dim(connexion_list[[1]])[2])],MARGIN = 1,FUN = sum)
+      size_at_t<-apply(X = connexion_list[[1]][,(2*d):(dim(connexion_list[[1]])[2])],MARGIN = 1,FUN = sum)
     }
     else{
       size_at_t<-sapply(X = connexion_list[[1]][,(2*d)],FUN = sum)
     }
     prob_at_t<-size_at_t/(sum(size_at_t[w]))
     if(length(w)==1){
-        spare<-connexion_list[[1]]
-        spare[w,c(selector_position,selector_position+d-1)]<-1
-        spare[selector_position+d-1,(2*d):(dim(connexion_list[[1]])[2])]<-spare[w,(2*d):(dim(connexion_list[[1]])[2])]-leaf
-        prob<-prob_at_t[w]*connexion_list[[2]]
-        result<-list(list(spare,prob))
+      spare<-connexion_list[[1]]
+      spare[w,c(selector_position,selector_position+d-1)]<-1
+      spare[selector_position+d-1,(2*d):(dim(connexion_list[[1]])[2])]<-spare[w,(2*d):(dim(connexion_list[[1]])[2])]-leaf
+      prob<-prob_at_t[w]*connexion_list[[2]]
+      result<-list(list(spare,prob))
     }
     else{
       for(i in w){
@@ -1007,8 +1051,8 @@ Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination
       }
     }
     result<-cbind(result,proba = eval.fik(Schrod = Schrod,centers = clone_prevalence,alpha= rep(1,times=length(Schrod[[1]]$NC)),
-                                   weights= clone_weights,keep.all.poss = TRUE,
-                                   adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination)))
+                                          weights= clone_weights,keep.all.poss = TRUE,
+                                          adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination)))
   }
   else{
     result<-SNV_list[[1]]
@@ -1027,54 +1071,4 @@ Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination
                      keep.all.poss = TRUE,adj.factor = adj.fact)
   }
   return(result)
-}
-
-#'Plot with margin densities
-#'
-#'Adapted from http://stackoverflow.com/questions/11883844/inserting-a-table-under-the-legend-in-a-ggplot2-histogram
-#'Uses gridExtra package
-#' @param QClone_Output Output from QuantumClone algorithm
-#' @keywords Plot Densities
-#' @export
-#' @examples
-#' require(ggplot2)
-#' require(gridExtra)
-#' print("Creating data formated as QuantumClone analysis")
-#' print("Cluster 1: coordinates (0.8,0.7)")
-#' print("Cluster 2: coordinates (0.3,0.4)")
-#' QC_out<-list(cluster=rep(c(1,2),each=50),
-#'        filtered.data=list(data.frame(id=1:100,Cellularity=c(rnorm(n=50,mean=0.8,sd=0.1),
-#'        rnorm(n=50,0.3,0.08))),
-#'        data.frame(id=1:100,Cellularity=c(rnorm(n=50,mean=0.700,
-#'        sd=0.095),rnorm(n=50,mean=0.400,sd=0.085)))))
-#' plot_with_margins_densities(QC_out)
-#' @importFrom gridExtra grid.arrange
-#' 
-#' 
-plot_with_margins_densities<-function(QClone_Output){
-  sq<-floor(sqrt(max(QClone_Output$cluster)))+1
-  
-  
-  main<-ggplot2::qplot(x=QClone_Output$filtered.data[[1]]$Cellularity,y=QClone_Output$filtered.data[[2]]$Cellularity,color=as.character(QClone_Output$cluster),
-              xlab="Cellularity diag",ylab="Cellulariy relapse",xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()+ggplot2::scale_color_discrete(guide = ggplot2::guide_legend(title="Cluster",ncol=sq))
-
-
-  top<-ggplot2::ggplot(QClone_Output$filtered.data[[1]],
-                       ggplot2::aes_string("Cellularity"))+ggplot2::geom_density(alpha=.5)+ggplot2::theme_bw()+ggplot2::theme(legend.position="none",
-                                                                                                                     axis.title.x=ggplot2::element_blank())
-  
-  right<-ggplot2::ggplot(QClone_Output$filtered.data[[2]],
-                         ggplot2::aes_string("Cellularity"))+ggplot2::geom_density(alpha=.5)+ggplot2::coord_flip()+ggplot2::theme_bw()+ggplot2::theme(legend.position="none",
-                                                                                                                                axis.title.y=ggplot2::element_blank())
-  
-  tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(main)) 
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box") 
-  legend <- tmp$grobs[[leg]] 
-  
-  return(gridExtra::grid.arrange(top,
-               legend,
-               main+ggplot2::theme(legend.position="none"),
-               right,
-               ncol=2, nrow=2, widths=c(4, 1), heights=c(1, 4)))
-  
 }
