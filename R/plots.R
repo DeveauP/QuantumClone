@@ -4,7 +4,7 @@
 #'Uses gridExtra package
 #' @param QClone_Output Output from QuantumClone algorithm
 #' @keywords Plot Densities
-#' @export
+#' @export plot_with_margins_densities
 #' @examples
 #' require(ggplot2)
 #' require(gridExtra)
@@ -54,7 +54,7 @@ plot_with_margins_densities<-function(QClone_Output){
 #' @param sample_selected : number of the sample to be considered for plot (can be 1 or 2 samples)
 #' @param Sample_names : character vector of the names of each sample (in the same order as the data)
 #' @keywords Plot 
-#' @export
+#' @export plot_QC_out
 #' @examples
 #' require(ggplot2)
 #' message("Using preclustered data:")
@@ -118,26 +118,54 @@ plot_QC_out<-function(QClone_Output,Sample_names=NULL, simulated = FALSE,sample_
 #' Plots evolution in time of clones
 #' @param QC_out : Output from One_step_clustering
 #' @param Sample_names : character vector of the names of each sample (in the same order as the data)
-#' @export
+#' @export evolution_plot
 #' @examples 
 #' require(ggplot2)
 evolution_plot<-function(QC_out,Sample_names=NULL){
+  L<-length(QC_out$EM.output$centers)
   if(is.null(Sample_names)){
-    Sample_names<-unlist(lapply(X = QClone_Out$filtered.data,FUN = function(df){
-      df[1,1]
-    }))
+    warning(paste("Samples_names is empty, will use 1 to",L))
+    Sample_names<-1:L
     
   }
-  y<-character()
-  x<-numeric()
-  col<-rep(1:length(unique(QC_out$cluster)),times = length(QC_out$EM.output$centers))
+  x<-character()
+  y<-numeric()
+  col<-rep(1:length(unique(QC_out$cluster)),times = L)
   col<-as.factor(col)
-  for(i in 1:length(QC_out$EM.output$centers)){
-    x<-c(x,QC_out$EM.output$centers[[i]])
-    y<-c(y,rep(Sample_names[i],times = length(QC_out$EM.output$centers[[i]])))
+  clone_width<-sapply(col,FUN = function(z){
+    sum(as.factor(QC_out$cluster)==z)/length(QC_out$cluster)
+  })
+
+  for(i in 1:L){
+    y<-c(y,QC_out$EM.output$centers[[i]])
+    x<-c(x,rep(Sample_names[i],times = length(QC_out$EM.output$centers[[i]])))
   }
-  q<-ggplot2::qplot(x = x,y =y,
-                    xlab ="Cellularity",ylab = "Sample",
-                    colour = col)+ggplot2::theme_bw()+ggplot2::scale_colour_discrete("Clone")
+
+  df<-data.frame(row.names = 1:length(x))
+  df$x<-x
+  df$y<-y
+  df$col<-col
+  df$width<-clone_width
+  
+#   q<-ggplot2::qplot(data = df,
+#                     x= x,
+#                     y= y,
+#                     colour = col,
+#                     xlab ="Sample",
+#                     ylab = "Cellularity",geom = "line")+ggplot2::theme_bw()+ggplot2::scale_colour_discrete("Clone") 
+
+  q<-ggplot2::ggplot(df,ggplot2::aes_string(x ="x",y="y",
+                                            group ="col",
+                                            color = "col",
+                                            size = "width"),
+                     xlab = "Sample",
+                     ylab = "Cellularity")+
+  ggplot2::geom_line()+
+  ggplot2::scale_color_discrete("Clone")+
+  ggplot2::scale_size("Fraction of mutations",range = c(0.5,3))+
+  ggplot2::xlab("Sample")+
+  ggplot2::ylab("Cellularity")+
+  ggplot2::theme_bw()
+  
   return(q)
 }

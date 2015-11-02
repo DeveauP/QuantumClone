@@ -2,10 +2,15 @@
 title: "Use case"
 author: "Paul Deveau"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  rmarkdown::html_vignette:
+      self_contained: no
+      fig_width: 7
+      fig_height: 7
 vignette: >
   %\VignetteIndexEntry{Use case}
   %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 # QuantumClone and QuantumCat
@@ -72,11 +77,13 @@ The QuantumClone package is divided in two:
 
 #### <a name="CR"></a> Clonal reconstruction
 One_step_clustering() has several parameters required (some have default configuration):
-> One_step_clustering(SNV_list, FREEC_list = NULL, contamination,
+````{r One_step_example, eval = FALSE}
+  One_step_clustering(SNV_list, FREEC_list = NULL, contamination,
   nclone_range = 2:5, clone_priors = NULL, prior_weight = NULL,
   maxit = 1 , preclustering = T, simulated = F, epsilon = 5 * (10^(-3)),
   save_plot = T, ncores = 1, plot_3D = F, plot_3D_before_clustering = F,
   restrict.to.AB = F, output_directory = NULL)
+````
 
 * SNV_list: list of dataframes. See [previous section](#SNVD) for description.
 * FREEC_list: list of outputs from FREEC (in the same order as the SNV list). See [here](#FREECD) for added information.
@@ -93,9 +100,41 @@ One_step_clustering() has several parameters required (some have default configu
 * restrict.to.AB : should the clustering be done only on AB regions?
 * output_directory : directory in which the plots will be saved (if NULL, will create a directory with the patient name)
 
+The output should look like this:
+> QC_output$filtered.data[[1]]
+
+````{r out,echo= FALSE}
+  knitr::kable(head(QuantumClone::QC_output$filtered.data[[1]]))
+````
+
+#### Plots
+
+Output from clustering can be represented thanks to the plot_QC_out(), or plot_with_margins_densities (if 1 or two samples)
+
+> plot_QC_out(QC_output)
+
+````{r plot, echo= FALSE,warning=FALSE}
+  QuantumClone::plot_QC_out(QuantumClone::QC_output)
+````
+
+> plot_with_margins_densities(QC_output)
+
+````{r margin, echo= FALSE,warning=FALSE}
+  QuantumClone::plot_with_margins_densities(QuantumClone::QC_output)
+````
+
+For time series, using evolution_plot() is recommanded. It enables the plot of the cellularity of each clone in a single plot, with the width of a line being proportional to the fraction of mutations in the clone.
+
+> evolution_plot(QC_output,Sample_names = c("Timepoint_1","Timepoint_2"))
+
+`````{r evol, echo = FALSE, warning = FALSE}
+QuantumClone::evolution_plot(QuantumClone::QC_output,Sample_names = c("Timepoint_1","Timepoint_2"))
+
+````
 
 #### <a name="CS"></a> Clonal simulation
 This part is about generating data to test clonal reconstruction algorithms. Its core is the QuantumCat function. It will generate data for a single cancer that can be sequenced multiple times (either spatially separated or different timepoints). It thus assumes that there is an evolutionary history between samples. The "Chr" columns stores the information of the clonal attribution.
+
 > QuantumCat(number_of_clones, number_of_mutations, ploidy = 2, depth = 100,
   number_of_samples = 2, Random_clones = F, contamination = NULL)
 

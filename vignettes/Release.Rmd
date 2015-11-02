@@ -7,6 +7,9 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEngine{knitr::rmarkdown}
 ---
+Release of 2/11/2015:
+  - Correction of evolution plot
+  - Adding content to vignettes
 
 Release of 30/10/2015:
   * Major fix *
