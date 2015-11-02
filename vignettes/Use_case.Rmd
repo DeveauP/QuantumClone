@@ -142,8 +142,10 @@ Tree<-QuantumClone::Tree_generation(Cellularities)
 
 Output of Tree_generation is a list of dataframes and probabilities, as this:
 ````{r ShowTree, echo = FALSE}
-knitr::kable(head(Tree[[1]][[1]]))
+knitr::kable(Tree[[1]][[1]])
 ````
+Each row (i) corresponds to a clone. The last two columns are the cellularity of the clone in the sample.
+For the other columns (j) there is a 1 if clone j is a progeny of clone (i)
 
 #### Plot all possible phylogenetic trees:
 `````{r TreePlot, echo = TRUE, warning = FALSE,eval=TRUE}

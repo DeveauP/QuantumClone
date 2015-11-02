@@ -44,6 +44,11 @@
 #' print("The data can be accessed by Clustering_output$filtered_data")
 #' print("All plots are now saved in the working directory") 
 #' 
+#' @importFrom grDevices colorRampPalette
+#' @importFrom graphics par plot segments text 
+#' @importFrom stats aggregate dbinom frequency na.omit optim rbinom rnbinom rpois runif sd
+#' @importFrom utils tail write.table
+
 QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
                        nclone_range=2:5,clone_priors=NULL,prior_weight=NULL,
                        simulated=F,
@@ -777,7 +782,6 @@ Tree_generation<-function(Clone_cellularities,timepoints=NULL){
   }
   nr<-dim(Clone_cellularities)[1]
   nc<-dim(Clone_cellularities)[2]
-  print(Clone_cellularities)
   
   ####Creating network matrix (inclusion), 1 at line i col j means i is included in j
   M<-matrix(0,nr,nr)
@@ -789,12 +793,10 @@ Tree_generation<-function(Clone_cellularities,timepoints=NULL){
     }
   }
   ###Re-ordering so that you go from root to leaves
-  print("M:")
-  print(M)
+
   
   S<-apply(M,1,sum)
-  print("S:")
-  print(S)
+
   Clone_cellularities<-Clone_cellularities[order(S,decreasing = F),]
   S<-S[order(S,decreasing = F)]
   
@@ -809,7 +811,6 @@ Tree_generation<-function(Clone_cellularities,timepoints=NULL){
   }
   start<-min(which(S>0))
   for(i in (start-1):nr){
-    print(paste("i=",i))
     remove<-0
     if(i==(start-1)){
       connexion_list<-list(list(connexion_list,1))
@@ -817,10 +818,8 @@ Tree_generation<-function(Clone_cellularities,timepoints=NULL){
     else{
       for(k in 1:length(connexion_list)){
         if(is.matrix(Clone_cellularities)){
-          print("adding")
           t<-add_leaf_list(leaf = Clone_cellularities[i,],connexion_list = connexion_list[[k]],
                            timepoints = timepoints,d = nr,selector_position = i)
-          print(t)
         }
         else{          
           t<-add_leaf_list(leaf = Clone_cellularities[i],connexion_list = connexion_list[[k]],
@@ -862,8 +861,7 @@ Tree_generation<-function(Clone_cellularities,timepoints=NULL){
 #' @keywords Clonal inference phylogeny
 
 add_leaf_list<-function(leaf,connexion_list,timepoints,d,selector_position){
-  print("Connexion list:")
-  print(connexion_list)
+
   Exclude<-apply(X = connexion_list[[1]][,1:(2*d-1)],MARGIN = 1,FUN = sum)==2
   
   if(dim(connexion_list[[1]])[2]-2*d>0){
