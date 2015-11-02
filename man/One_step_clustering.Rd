@@ -50,25 +50,24 @@ and if the output from FREEC for the samples are not associated, the genotype "G
 Wrap up function that clusters cellularities. This is based on the most likely possibility for each mutation, give ints frequency and genotype.
 }
 \examples{
-cat("Generate data : 2 clones ; 10 observed mutation;diploid tumor ;
-                         1000x sequencing depth; 1 sample; no contamination")
-Mutations<-QuantumCat(number_of_clones=2,number_of_mutations=10,ploidy="AB",depth=1000,
-                      number_of_samples=1,Random_clones=FALSE,contamination=c(0,0))
- Mutations[[1]]<-cbind(rep(paste("Example_",1,sep=""),times=100),Mutations[[1]])
- colnames(Mutations[[1]])[1]<-"Sample"
+Mutations<-QuantumClone::Input_Example
+ for(i in 1:2){
+ Mutations[[i]]<-cbind(rep(paste("Example_",i,sep=""),times=10),Mutations[[i]])
+ colnames(Mutations[[i]])[1]<-"Sample"
+}
 print("The data should look like this:")
-print(head(Mutations[[1]][,c(1:4,8,9)]))
+print(head(Mutations[[1]]))
 
-cat("Cluster data: will try to cluster between 2 and 3 clones, with 1 maximum search each time,
+cat("Cluster data: will try to cluster between 3 and 4 clones, with 1 maximum search each time,
       and will use priors from preclustering (e.g. k-medoids on A and AB sites)")
 print("The genotype is provided in the list frame, and
           there is no associated data from FREEC to get genotype from.")
 print("The computation will run on a single CPU.")
 Clustering_output<-QuantumClone(SNV_list = Mutations,
-FREEC_list = NULL,contamination = 0,nclone_range = 2:3,
+FREEC_list = NULL,contamination = c(0,0),nclone_range = 3:4,
 clone_priors = NULL,prior_weight = NULL ,
 maxit = 1,preclustering = TRUE, simulated = TRUE,
-save_plot = FALSE,ncores=1,output_directory="Example")
+save_plot = TRUE,ncores=1,output_directory="Example")
 print("The data can be accessed by Clustering_output$filtered_data")
 print("All plots are now saved in the working directory")
 }

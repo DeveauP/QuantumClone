@@ -10,6 +10,7 @@ vignette: >
 Release of 2/11/2015:
   - Correction of evolution plot
   - Adding content to vignettes
+  - Added phylogenetic tree reconstruction and representation, along with examples
 
 Release of 30/10/2015:
   * Major fix *

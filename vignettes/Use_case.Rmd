@@ -132,6 +132,25 @@ QuantumClone::evolution_plot(QuantumClone::QC_output,Sample_names = c("Timepoint
 
 ````
 
+
+#### Recreate phylogenetic tree (when possible)
+`````{r Tree, echo = TRUE, warning = FALSE,eval=TRUE}
+Cellularities<-cbind(QuantumClone::QC_output$EM.output$centers[[1]],QuantumClone::QC_output$EM.output$centers[[2]])
+Tree<-QuantumClone::Tree_generation(Cellularities)
+
+````
+
+Output of Tree_generation is a list of dataframes and probabilities, as this:
+````{r ShowTree, echo = FALSE}
+knitr::kable(head(Tree[[1]][[1]]))
+````
+
+#### Plot all possible phylogenetic trees:
+`````{r TreePlot, echo = TRUE, warning = FALSE,eval=TRUE}
+QuantumClone::multiplot_trees(Tree,d = 4)
+
+````
+
 #### <a name="CS"></a> Clonal simulation
 This part is about generating data to test clonal reconstruction algorithms. Its core is the QuantumCat function. It will generate data for a single cancer that can be sequenced multiple times (either spatially separated or different timepoints). It thus assumes that there is an evolutionary history between samples. The "Chr" columns stores the information of the clonal attribution.
 

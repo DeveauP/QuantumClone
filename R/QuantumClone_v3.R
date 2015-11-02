@@ -22,24 +22,22 @@
 #' @keywords Clonal inference Cancer phylogeny
 #' @export
 #' @examples 
-#' cat("Generate data : 2 clones ; 10 observed mutations; diploid tumor ; 
-#'                          1000x sequencing depth; 2 samples; no contamination")
-#' Mutations<-QuantumCat(number_of_clones=2,number_of_mutations=10,ploidy="AB",depth=1000,
-#'                       number_of_samples=2,Random_clones=FALSE,contamination=c(0,0))
+#' 
+#' Mutations<-QuantumClone::Input_Example
 #'  for(i in 1:2){
 #'  Mutations[[i]]<-cbind(rep(paste("Example_",i,sep=""),times=10),Mutations[[i]])
 #'  colnames(Mutations[[i]])[1]<-"Sample"
 #' }
 #' print("The data should look like this:")
-#' print(head(Mutations[[1]][,c(1:4,8,9)]))
+#' print(head(Mutations[[1]]))
 #' 
-#' cat("Cluster data: will try to cluster between 2 and 3 clones, with 1 maximum search each time, 
+#' cat("Cluster data: will try to cluster between 3 and 4 clones, with 1 maximum search each time, 
 #'       and will use priors from preclustering (e.g. k-medoids on A and AB sites)")
 #' print("The genotype is provided in the list frame, and 
 #'           there is no associated data from FREEC to get genotype from.")
 #' print("The computation will run on a single CPU.")
 #' Clustering_output<-QuantumClone(SNV_list = Mutations,
-#' FREEC_list = NULL,contamination = c(0,0),nclone_range = 2:3,
+#' FREEC_list = NULL,contamination = c(0,0),nclone_range = 3:4,
 #' clone_priors = NULL,prior_weight = NULL , 
 #' maxit = 1,preclustering = TRUE, simulated = TRUE,
 #' save_plot = TRUE,ncores=1,output_directory="Example")
@@ -92,28 +90,27 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
 #' @keywords Clonal inference
 #' @export
 #' @examples
-#' cat("Generate data : 2 clones ; 10 observed mutation;diploid tumor ; 
-#'                          1000x sequencing depth; 1 sample; no contamination")
-#' Mutations<-QuantumCat(number_of_clones=2,number_of_mutations=10,ploidy="AB",depth=1000,
-#'                       number_of_samples=1,Random_clones=FALSE,contamination=c(0,0))
-#'  Mutations[[1]]<-cbind(rep(paste("Example_",1,sep=""),times=100),Mutations[[1]])
-#'  colnames(Mutations[[1]])[1]<-"Sample"
-
+#' Mutations<-QuantumClone::Input_Example
+#'  for(i in 1:2){
+#'  Mutations[[i]]<-cbind(rep(paste("Example_",i,sep=""),times=10),Mutations[[i]])
+#'  colnames(Mutations[[i]])[1]<-"Sample"
+#' }
 #' print("The data should look like this:")
-#' print(head(Mutations[[1]][,c(1:4,8,9)]))
+#' print(head(Mutations[[1]]))
 #' 
-#' cat("Cluster data: will try to cluster between 2 and 3 clones, with 1 maximum search each time, 
+#' cat("Cluster data: will try to cluster between 3 and 4 clones, with 1 maximum search each time, 
 #'       and will use priors from preclustering (e.g. k-medoids on A and AB sites)")
 #' print("The genotype is provided in the list frame, and 
 #'           there is no associated data from FREEC to get genotype from.")
 #' print("The computation will run on a single CPU.")
 #' Clustering_output<-QuantumClone(SNV_list = Mutations,
-#' FREEC_list = NULL,contamination = 0,nclone_range = 2:3,
+#' FREEC_list = NULL,contamination = c(0,0),nclone_range = 3:4,
 #' clone_priors = NULL,prior_weight = NULL , 
 #' maxit = 1,preclustering = TRUE, simulated = TRUE,
-#' save_plot = FALSE,ncores=1,output_directory="Example")
+#' save_plot = TRUE,ncores=1,output_directory="Example")
 #' print("The data can be accessed by Clustering_output$filtered_data")
 #' print("All plots are now saved in the working directory") 
+#' 
 #' 
 One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                               contamination,nclone_range=2:5,
@@ -761,8 +758,9 @@ ThreeD_plot<-function(Schrod,contamination){
 #' Assumption is made the different clones are on different lines of the matrix
 #' @param Clone_cellularities A dataframe with cellularities (ranging from 0 to 1) of each clone (rows) in each sample (columns)
 #' @param timepoints A numeric vector giving the spatial and/or temporal distribution of the samples
+#' @export
 #' @keywords Clonal inference phylogeny
-# Clone_cell<-data.frame(cbind(c(1,0.5,0.3,0.8),c(1,0.05,0.6,0.7)))
+# Clone_cell<-cbind(QuantumClone::QC_output$EM.output$centers[[1]],QuantumClone::QC_output$EM.output$centers[[2]])
 # print("Using clone cellularities:")
 # print(Clone_cell)
 # Tree_generation(Clone_cell)
@@ -901,9 +899,6 @@ add_leaf_list<-function(leaf,connexion_list,timepoints,d,selector_position){
     else{
       for(i in w){
         spare<-connexion_list[[1]]
-        print(spare)
-        print(i)
-        print(w)
         spare[i,c(selector_position,selector_position+d-1)]<-1
         spare[selector_position+d-1,(2*d):(dim(connexion_list[[1]])[2])]<-spare[i,(2*d):(dim(connexion_list[[1]])[2])]-leaf
         prob<-prob_at_t[i]*connexion_list[[2]]
@@ -930,61 +925,7 @@ longueur<-function(matrix,n){
   }
 }
 
-#' Plots multiple trees 
-#'
-#' Plots all trees created by the function Tree_generation. The red line means that mutations occured.
-#' @param result_list List of lists (tree generated and the probability associated with each tree)
-#' @param d Initial number of clones
-#' @param cex Coefficient of expansion for the texts in phylogenetic tree plots. Default is 0.8
-#' @keywords Clonal inference phylogeny
 
-multiplot_trees<-function(result_list,d,cex=0.8){
-  if(length(result_list)%%2==0){
-    L<-length(result_list)%/%2
-  }
-  else{
-    L<-length(result_list)%/%2+1
-  }
-  if(L>1){
-    op<-par(mfrow = c(2,L),mar = rep(2, 4))
-  }
-  for(i in 1:length(result_list)){
-    manual_plot_trees(result_list[[i]][[1]],d,cex,result_list[[i]][[2]])
-  }
-}
-
-#' Plot tree 
-#'
-#' Creates a visual output for the phylogeny created by Tree_generation()
-#' @param connexion_list Data frame of the concatenation of the interaction matrix and the cellularity of each clone at different time points.
-#' @param d Initial number of clones
-#' @param cex Coefficient of expansion for the texts in phylogenetic tree plots. Default is 0.8
-#' @param p Probability of a tree
-#' @keywords Clonal inference phylogeny
-manual_plot_trees<-function(connexion_list,d,cex=0.8,p){
-  s<-dim(connexion_list[[1]][2])
-  V<-numeric()
-  X<-numeric()
-  for(i in 1:(2*d-1)){
-    V[i]<-longueur(connexion_list[1:(2*d-1),1:(2*d-1)],i)
-    X[i]<-find_x_position(connexion_list[1:(2*d-1),1:(2*d-1)],i,d)
-  }
-  Y<-1-V/(max(V))
-  plot(x=X,y=Y,xlim=c(-1,1),ylim=c(min(Y),1),cex=0, axes = F,xlab='',ylab='',main = paste('p = ',round(p,digits=5)))
-  for(i in which(apply(X = connexion_list[1:(2*d-1),1:(2*d-1)],MARGIN = 1,FUN = sum)==2)){
-    segments(x0=X[i],x1=X[i],y0=Y[i],y1=Y[i]-1/(max(V)))
-    segments(x0=X[which(connexion_list[i,]==1)[1]],x1=X[i],y0=Y[i]-1/(max(V)),y1=Y[i]-1/(max(V)),col='red')
-    segments(x0=X[i],x1=X[which(connexion_list[i,]==1)[2]],y0=Y[i]-1/(max(V)),y1=Y[i]-1/(max(V))) 
-  }
-  if(2*d<dim(connexion_list)[2]){
-    LABELS<-apply(X = apply(X = connexion_list[1:(2*d-1),(2*d):(dim(connexion_list)[2])],2,FUN = round,digit=3),1,paste,collapse='\n')
-    text(x=X,y=Y,labels = LABELS,pos = 3,cex = cex)
-  }
-  else{
-    LABELS<-sapply(X = connexion_list[1:(2*d-1),(2*d)],FUN = round,digit=3)
-    text(x=X,y=Y,labels = LABELS,pos = 3,cex = cex)
-  }
-}
 
 #' Graphic position 
 #'

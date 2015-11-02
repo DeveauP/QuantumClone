@@ -169,3 +169,65 @@ evolution_plot<-function(QC_out,Sample_names=NULL){
   
   return(q)
 }
+
+#' Plots multiple trees 
+#'
+#' Plots all trees created by the function Tree_generation. The red line means that mutations occured.
+#' @param result_list List of lists (tree generated and the probability associated with each tree)
+#' @param d Number of clusters found by QuantumClone
+#' @param cex Coefficient of expansion for the texts in phylogenetic tree plots. Default is 0.8
+#' @export
+#' @keywords Clonal inference phylogeny
+#' @examples multiplot_trees(QuantumClone::Tree, d= 4)
+
+multiplot_trees<-function(result_list,d,cex=0.8){
+  if(length(result_list)%%2==0){
+    L<-length(result_list)%/%2
+  }
+  else{
+    L<-length(result_list)%/%2+1
+  }
+  if(L>1){
+    op<-par(mfrow = c(2,L),mar = rep(2, 4))
+  }
+  for(i in 1:length(result_list)){
+    manual_plot_trees(result_list[[i]][[1]],d,cex,result_list[[i]][[2]])
+  }
+}
+
+#' Plot tree 
+#'
+#' Creates a visual output for the phylogeny created by Tree_generation()
+#' @param connexion_list Data frame of the concatenation of the interaction matrix and the cellularity of each clone at different time points.
+#' @param d Number of clusters found by QuantumClone
+#' @param cex Coefficient of expansion for the texts in phylogenetic tree plots. Default is 0.8
+#' @param p Probability of a tree
+#' @export
+#' @examples # Extract one tree out of the 3 available trees:
+#' Example_tree<-QuantumClone::Tree[[1]]
+#' manual_plot_trees(Example_tree[[1]], d= 4,p = Example_tree[[2]])
+#' @keywords Clonal inference phylogeny
+manual_plot_trees<-function(connexion_list,d,cex=0.8,p){
+  s<-dim(connexion_list[[1]][2])
+  V<-numeric()
+  X<-numeric()
+  for(i in 1:(2*d-1)){
+    V[i]<-longueur(connexion_list[1:(2*d-1),1:(2*d-1)],i)
+    X[i]<-find_x_position(connexion_list[1:(2*d-1),1:(2*d-1)],i,d)
+  }
+  Y<-1-V/(max(V))
+  plot(x=X,y=Y,xlim=c(-1,1),ylim=c(min(Y),1),cex=0, axes = F,xlab='',ylab='',main = paste('p = ',round(p,digits=5)))
+  for(i in which(apply(X = connexion_list[1:(2*d-1),1:(2*d-1)],MARGIN = 1,FUN = sum)==2)){
+    segments(x0=X[i],x1=X[i],y0=Y[i],y1=Y[i]-1/(max(V)))
+    segments(x0=X[which(connexion_list[i,]==1)[1]],x1=X[i],y0=Y[i]-1/(max(V)),y1=Y[i]-1/(max(V)),col='red')
+    segments(x0=X[i],x1=X[which(connexion_list[i,]==1)[2]],y0=Y[i]-1/(max(V)),y1=Y[i]-1/(max(V))) 
+  }
+  if(2*d<dim(connexion_list)[2]){
+    LABELS<-apply(X = apply(X = connexion_list[1:(2*d-1),(2*d):(dim(connexion_list)[2])],2,FUN = round,digit=3),1,paste,collapse='\n')
+    text(x=X,y=Y,labels = LABELS,pos = 3,cex = cex)
+  }
+  else{
+    LABELS<-sapply(X = connexion_list[1:(2*d-1),(2*d)],FUN = round,digit=3)
+    text(x=X,y=Y,labels = LABELS,pos = 3,cex = cex)
+  }
+}
