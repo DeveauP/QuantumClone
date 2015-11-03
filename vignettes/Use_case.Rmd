@@ -15,7 +15,7 @@ vignette: >
 
 # QuantumClone and QuantumCat
 
-R package available on [CRAN](http://cran.r-project.org/web/packages/QuantumClone/index.html)
+R package available on [CRAN](https://cran.r-project.org/package=QuantumClone)
 
 or on [github](https://github.com/DeveauP/QuantumClone)
 
