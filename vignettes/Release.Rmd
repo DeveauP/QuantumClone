@@ -7,6 +7,10 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEngine{knitr::rmarkdown}
 ---
+Release of 12/11/2015:
+  - Added release tag on github
+  - Checked for ggplot2 scheduled release
+
 Release of 2/11/2015:
   - Correction of evolution plot
   - Adding content to vignettes
@@ -16,7 +20,7 @@ Release of 2/11/2015:
 Release of 30/10/2015:
   * Major fix *
   - Post processing affected order of mutations but not of clustering. The clustering thus appeared erroneous in version 0.9.15 and 0.10.15
-  
+
   * Minor changes *
   - Adding vignette release
   - Changed dependency of doSNOW to doParallel
