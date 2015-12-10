@@ -7,6 +7,10 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEngine{knitr::rmarkdown}
 ---
+Release of 10/12/2015:
+  - Changed graph output to pdf
+  - Fixed non-clustered graph name file
+
 Release of 12/11/2015:
   - Added release tag on github
   - Checked for ggplot2 scheduled release
