@@ -17,5 +17,7 @@ Suggests: ggplot2,
     knitr,
     rmarkdown
 License: GPL-2
+URL: https://github.com/DeveauP/QuantumClone
+BugReports: https://github.com/DeveauP/QuantumClone/issues
 LazyData: true
 VignetteBuilder: knitr
