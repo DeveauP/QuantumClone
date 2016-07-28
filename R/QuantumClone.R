@@ -19,7 +19,12 @@
 #' @param ncores Number of cores to be used during EM algorithm
 #' @param output_directory Path to output directory
 #' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights between two optimization steps.
+#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx")
+#' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
+#' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
+#'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
 #' @keywords Clonal inference Cancer phylogeny
+#' @import optimx compiler knitr
 #' @export
 #' @examples
 #'
@@ -51,15 +56,17 @@
 
 QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
                        nclone_range=2:5,clone_priors=NULL,prior_weight=NULL,
-                       simulated=F,
-                       save_plot=T, epsilon = 5*(10**(-3)),
-                       maxit=8,preclustering=T,timepoints=NULL,ncores=1,output_directory=NULL){
+                       simulated=FALSE,
+                       save_plot=TRUE, epsilon = 5*(10**(-3)),
+                       maxit=8,preclustering=TRUE,timepoints=NULL,ncores=1,output_directory=NULL,
+                       model.selection = "BIC",optim = "default", keep.all.models = FALSE){
   r<-One_step_clustering(SNV_list = SNV_list,FREEC_list = FREEC_list,contamination = contamination,nclone_range = nclone_range,
                          clone_priors = clone_priors,prior_weight =prior_weight ,
                          maxit = maxit,preclustering = preclustering,
                          simulated = simulated,
-                         save_plot = save_plot,ncores=ncores,output_directory=output_directory)
-
+                         save_plot = save_plot,ncores=ncores,output_directory=output_directory,
+                         model.selection = model.selection,optim = optim, keep.all.models = keep.all.models)
+  
   #   t<-Tree_generation(Clone_cellularities = r$pamobject$medoids,timepoints = timepoints)
   #
   #   if(save_plot){
@@ -92,6 +99,10 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
 #' @param nclone_range A number or range of clusters that should be used for clustering
 #' @param restrict.to.AB Boolean: Should the analysis keep only sites located in A and AB sites in all samples?
 #' @param output_directory Directory in which to save results
+#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx")
+#' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
+#' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
+#'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
 #' @keywords Clonal inference
 #' @export
 #' @examples
@@ -119,10 +130,15 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
 #'
 One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                               contamination,nclone_range=2:5,
-                              clone_priors=NULL,prior_weight=NULL,maxit=8,preclustering=T,
-                              simulated = F, epsilon = 5*(10**(-3)),
-                              save_plot = T,ncores=1,plot_3D = F, plot_3D_before_clustering = F,
-                              restrict.to.AB = F,output_directory=NULL){
+                              clone_priors=NULL,prior_weight=NULL,maxit=8,preclustering=TRUE,
+                              simulated = FALSE, epsilon = 5*(10**(-3)),
+                              save_plot = TRUE,ncores=1,plot_3D = FALSE, plot_3D_before_clustering = FALSE,
+                              restrict.to.AB = FALSE,output_directory=NULL,
+                              model.selection = "BIC",optim = "default", keep.all.models = FALSE){
+  # if(maxit >1 && preclustering){
+  #   message("Only 1 iteration will be run if preclustering is successful")
+  # }
+  
   Sample_name<-as.character(SNV_list[[1]][1,1])
   Sample_names<-lapply(SNV_list,FUN = function(z) z[1,1])
   if(is.null(FREEC_list)){
@@ -151,21 +167,22 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
     Genotype_provided<-FALSE
   }
   message(paste("Checking all possibilities for",Sample_name))
-
+  
   Cell<-From_freq_to_cell(SNV_list = SNV_list,
                           FREEC_list = FREEC_list,
                           Sample_names = Sample_names,
                           contamination = contamination,
                           Genotype_provided = Genotype_provided,
                           save_plot = save_plot,restrict.to.AB = restrict.to.AB,output_directory=output_directory)
-
+  
   message("Starting clustering...")
   r<-Cluster_plot_from_cell(Cell = Cell,nclone_range = nclone_range,epsilon = epsilon,
                             Sample_names = Sample_names, preclustering = preclustering,
                             clone_priors = clone_priors,prior_weight = prior_weight,maxit = maxit,
                             simulated = simulated,save_plot=save_plot,contamination = contamination,
                             ncores=ncores,plot_3D_before_clustering =plot_3D_before_clustering,
-                            output_directory=output_directory)
+                            output_directory=output_directory,
+                            model.selection = model.selection,optim = optim, keep.all.models = keep.all.models)
   if(plot_3D){
     message("Clustering done... Computing 3D structure")
     ThreeD_plot(r$filtered.data,contamination)
@@ -184,34 +201,61 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
   ### output = r
   ### get order of variants in finish
   #### old version
-#   for(i in 1:length(r$filtered.data)){
-#     to_bind<-data.frame()
-#     if(Genotype_provided){
-#       commonCols<-c("Chr","Start","Depth","Alt","Genotype")
-#     }else{
-#       commonCols<-c("Chr","Start","Depth","Alt")
-#     }
-#     for(chr in unique(r$filtered.data[[i]]$Chr)){
-#       spare<-SNV_list[[i]][SNV_list[[i]]$Chr==chr,]
-#       spare<-spare[spare$Start %in% r$filtered.data[[i]]$Start,] ### changes order of clustering!!!!
-#       to_bind<-rbind(to_bind,spare)
-#     }
-#     r$filtered.data[[i]]<-merge(r$filtered.data[[i]], to_bind,by = commonCols)
-#   }
+  #   for(i in 1:length(r$filtered.data)){
+  #     to_bind<-data.frame()
+  #     if(Genotype_provided){
+  #       commonCols<-c("Chr","Start","Depth","Alt","Genotype")
+  #     }else{
+  #       commonCols<-c("Chr","Start","Depth","Alt")
+  #     }
+  #     for(chr in unique(r$filtered.data[[i]]$Chr)){
+  #       spare<-SNV_list[[i]][SNV_list[[i]]$Chr==chr,]
+  #       spare<-spare[spare$Start %in% r$filtered.data[[i]]$Start,] ### changes order of clustering!!!!
+  #       to_bind<-rbind(to_bind,spare)
+  #     }
+  #     r$filtered.data[[i]]<-merge(r$filtered.data[[i]], to_bind,by = commonCols)
+  #   }
   #### New version
+  if(keep.all.models){
+    #print(r)
+    return(lapply(r, FUN = function(z){
+      Tidy_output(r = z,
+                  Genotype_provided = Genotype_provided,
+                  SNV_list = SNV_list )
+    }
+    )
+    )
+  }
+  
+  else{
+    return(Tidy_output(r =r,
+                       Genotype_provided = Genotype_provided,
+                       SNV_list = SNV_list))
+  }
+  
+}
+
+#' Tidying output from EM
+#' 
+#' Tidying input by Chr Start
+#' @param r output from Cluster_plot_from_cell
+#' @param Genotype_provided If the FREEC_list is provided, then should be FALSE (default), otherwise TRUE
+#' @param SNV_list A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
+#' 
+Tidy_output<-function(r, Genotype_provided,SNV_list){
   Work_input<-SNV_list[[1]]
   Work_output<-r$filtered.data[[1]]
   if(Genotype_provided){
-         commonCols<-c("Chr","Start","Depth","Alt","Genotype")
+    commonCols<-c("Chr","Start","Depth","Alt","Genotype")
   }else{
-         commonCols<-c("Chr","Start","Depth","Alt")
+    commonCols<-c("Chr","Start","Depth","Alt")
   }
   Keep<-apply(Work_input[,c("Chr","Start","Depth")],MARGIN = 1, function(z){
     t<-apply(Work_output[,c("Chr","Start","Depth")],MARGIN = 1,function(y){
       return(all(y == z))
-
+      
     })
-
+    
     if(sum(t)==0){
       return(FALSE)
     }
@@ -227,19 +271,19 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
   for(i in 1:length(r$filtered.data)){
     result$filtered.data[[i]]<-merge(r$filtered.data[[i]], Cell[[i]],by = commonCols)
   }
-
+  
   ### Extract new order of mutations:
   Order<-apply(result$filtered.data[[1]][,c("Chr","Start","Depth")],MARGIN = 1, function(z){
     t<-apply(r$filtered.data[[1]][,c("Chr","Start","Depth")],MARGIN = 1,function(y){
       all(z == y)
     })
-
-  return(which(t))
+    
+    return(which(t))
   })
   result$cluster<-result$cluster[Order]
   result$EM.output$fik<-result$EM.output$fik[Order,]
-  return(r)
-
+  
+  return(result)
 }
 
 #' Wrap-up function
@@ -258,8 +302,8 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
 #' @param output_directory Directory in which to save results
 #' @keywords Clonal inference
 #'
-From_freq_to_cell<-function(SNV_list,FREEC_list=NULL,Sample_names,Genotype_provided=F,save_plot=T,
-                            contamination,ncores = 4, restrict.to.AB = F,output_directory=NULL){
+From_freq_to_cell<-function(SNV_list,FREEC_list=NULL,Sample_names,Genotype_provided=FALSE,save_plot=TRUE,
+                            contamination,ncores = 4, restrict.to.AB = FALSE,output_directory=NULL){
   if(save_plot){
     if(is.null(output_directory)){
       dir.create(path = paste(Sample_names[1]), showWarnings = FALSE)
@@ -269,18 +313,18 @@ From_freq_to_cell<-function(SNV_list,FREEC_list=NULL,Sample_names,Genotype_provi
     }
   }
   if(Genotype_provided){
-    Schrod_out<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided =T,
+    Schrod_out<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided =TRUE,
                                                   contamination = contamination, restrict.to.AB = restrict.to.AB)
   }
   else{
     Schrod_out<-Patient_schrodinger_cellularities(SNV_list = SNV_list, FREEC_list = FREEC_list,
                                                   contamination = contamination, restrict.to.AB = restrict.to.AB)
   }
-
+  
   if(save_plot){
     plot_cell_from_Return_out(Schrod_out,Sample_names,output_directory)
   }
-
+  
   return(Schrod_out)
 }
 
@@ -296,13 +340,14 @@ From_freq_to_cell<-function(SNV_list,FREEC_list=NULL,Sample_names,Genotype_provi
 #' @param restrict.to.AB Should the analysis keep only sites located in A and AB sites in all samples?
 #' @keywords Clonal inference
 
-Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_provided=F,contamination, restrict.to.AB = F){
+Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_provided=FALSE,
+                                            contamination, restrict.to.AB = F){
   result<-list()
   count<-0
   id<-1
   chr<-SNV_list[[1]][,"Chr"]
   chr_ante<-0
-  for(i in 1:dim(SNV_list[[1]])[1]){ ##Exploring all possibilities for each mutation
+  for(i in 1:nrow(SNV_list[[1]])){ ##Exploring all possibilities for each mutation
     Cell<-list()
     test<-T
     for(k in 1:length(SNV_list)){
@@ -345,10 +390,10 @@ Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_pr
     if(test){ ## Checking that genotype is available
       L<-list()
       for(r in 1:length(Cell)){
-        L[[r]]<-1:(dim(Cell[[r]])[1])
+        L[[r]]<-1:(nrow(Cell[[r]]))
       }
       U<-expand.grid(L) ##Table with all Cell row combinations
-      for(k in 1:(dim(U)[2])){
+      for(k in 1:(ncol(U))){
         if(id==1){
           result[[k]]<-Cell[[k]][U[,k],]
         }
@@ -437,7 +482,7 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
     N.sub<-nchar(subclone.genotype)
     for(j in A.sub){
       ### Keep only possibilities that have a cellularity lower than the subclonal cellularity
-
+      
       Cellularity<-as.numeric(frequency/100*N.sub/j*(1/(1-contamination)))
       if(Cellularity<=subclone.cell){
         spare<-data.frame(chr,position,Cellularity, subclone.genotype,Alt,Depth,j,N.sub)
@@ -448,7 +493,7 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
     }
   }
   if(sum(is.nan(alpha))>0){
-
+    
     return(NA)
   }
   else{
@@ -469,7 +514,7 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
 #' @keywords Text handling
 
 strcount <- function(x, pattern='', split=''){
-
+  
   unlist(lapply(strsplit(x, split),function(z) na.omit(length(grep(pattern, z)))))
 }
 #' Cellularity clustering
@@ -489,12 +534,17 @@ strcount <- function(x, pattern='', split=''){
 #' @param ncores Number of CPUs to be used
 #' @param plot_3D_before_clustering Should a 3D plot be realized before clustering, can be useful to guess priors.
 #' @param output_directory Directory in which to save results
+#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx")
+#' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
+#' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
+#'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
 #' @importFrom fpc pamk
 #' @keywords Clonal inference
 #'
-Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=T,
-                                 contamination, clone_priors,prior_weight,nclone_range,maxit,preclustering=T,
-                                 epsilon=5*(10**(-3)),ncores = 2,plot_3D_before_clustering = F,output_directory=NULL){
+Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
+                                 contamination, clone_priors,prior_weight,nclone_range,maxit,preclustering=TRUE,
+                                 epsilon=5*(10**(-3)),ncores = 2,plot_3D_before_clustering = FALSE,output_directory=NULL,
+                                 model.selection = "BIC",optim = "default", keep.all.models = FALSE){
   preclustering_success<-F
   if(plot_3D_before_clustering){
     ThreeD_plot(Cell,contamination = contamination)
@@ -527,7 +577,7 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=T,
       p_weight<-prior_weight
     }
     else{
-      if(dim(Spare)[1]<=max(nclone_range)){
+      if(nrow(Spare)<=max(nclone_range)){
         warning("Too few mutations to cluster. Will use priors / random initial conditions")
         p_clone<-clone_priors
         p_weight<-prior_weight
@@ -537,8 +587,8 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=T,
         kmeans<-fpc::pamk(Spare,krange = nclone_range,usepam = F)
         p_clone<-list()
         p_weight<-numeric()
-        create_prior_weight<- dim(Spare)[1]>=50
-        for(j in 1:(dim(kmeans$pamobject$medoids)[2])){
+        create_prior_weight<- nrow(Spare)>=50
+        for(j in 1:(ncol(kmeans$pamobject$medoids))){
           p_clone[[j]]<-as.numeric(kmeans$pamobject$medoids[,j])
           if(create_prior_weight){
             p_weight[j]<-sum(kmeans$pamobject$clustering==j)/length(kmeans$pamobject$clustering)
@@ -557,11 +607,14 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=T,
   }
   if(preclustering_success){
     result<-EM_clustering(Schrod = Cell,contamination = contamination,epsilon = epsilon,
-                          prior_weight = p_weight,clone_priors = p_clone,maxit = 1,nclone_range = nclone_range,ncores = ncores)
+                          prior_weight = p_weight,clone_priors = p_clone,maxit = maxit,nclone_range = nclone_range,ncores = ncores,
+                          model.selection = model.selection,optim = optim, keep.all.models = keep.all.models)
   }
   else{
     result<-EM_clustering(Schrod = Cell,contamination = contamination,epsilon = epsilon,
-                          prior_weight = p_weight,clone_priors = p_clone,maxit = maxit,nclone_range = nclone_range,ncores = ncores)
+                          prior_weight = p_weight,clone_priors = p_clone,maxit = maxit,
+                          nclone_range = nclone_range,ncores = ncores,
+                          model.selection = model.selection,optim = optim,keep.all.models = keep.all.models)
   }
   for(i in 1:length(Cell)){
     if(i==1){
@@ -571,394 +624,100 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=T,
       Spare<-cbind(Spare,result$filtered.data[[i]]$Cellularity)
     }
   }
-  M<-max(as.numeric(as.character(result$cluster)))
-  cluster<-factor(result$cluster)
-  if(length(Cell)>1){
-    U<-expand.grid(1:length(Cell),1:length(Cell))
-    U<-U[U[,1]<U[,2],]
-    for(i in 1:dim(U)[1]){
+  
+  #### Plots possibilities; should be migrated
+  if(!keep.all.models){
+    M<-max(as.numeric(as.character(result$cluster)))
+    cluster<-as.factor(result$cluster)
+    if(length(Cell)>1){
+      U<-expand.grid(1:length(Cell),1:length(Cell))
+      U<-U[U[,1]<U[,2],]
+      for(i in 1:nrow(U)){
+        if(save_plot){
+          if(!simulated){
+            q<-ggplot2::qplot(x=Spare[,U[i,1]],y=Spare[,U[i,2]] , asp = 1,main=paste('Cellular prevalence',Sample_names[[U[i,1]]],Sample_names[[U[i,2]]]),
+                              xlab=paste('Cellular prevalence',Sample_names[[U[i,1]]]),ylab=paste('Cellular prevalence',Sample_names[[U[i,2]]]),
+                              colour = cluster)+ggplot2::scale_colour_discrete(name='Clone')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
+            if(is.null(output_directory)){
+              ggplot2::ggsave(plot = q, filename = paste(Sample_names[1],'/', 'Cellularity_clustered',"_", Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],"_",U[i,1],'_',U[i,2], '.pdf',sep=''),width = 6.04,height = 6.04)
+            }
+            else{
+              ggplot2::ggsave(plot = q, filename = paste(output_directory,'/', 'Cellularity_clustered',"_", Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],"_",U[i,1],'_',U[i,2], '.pdf',sep=''),width = 6.04,height = 6.04)
+              
+            }
+            
+          }
+          else{
+            q<-ggplot2::qplot(x=Spare[,U[i,1]],y=Spare[,U[i,2]] , asp = 1,main=paste('Cellular prevalence plot',Sample_names[[U[i,1]]],Sample_names[[U[i,2]]]),
+                              xlab=paste('Cellular prevalence',Sample_names[[U[i,1]]]),ylab=paste('Cellular prevalence',Sample_names[[U[i,2]]]),
+                              colour = cluster,
+                              shape=factor(result$filtered.data[[1]]$Chr))+ggplot2::theme_bw()+ggplot2::scale_shape_discrete(factor(1:max(Cell[[1]][,'Chr'])),
+                                                                                                                             name='Clone \n(simulated)')+ggplot2::scale_colour_discrete(name='Cluster')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
+            if(is.null(output_directory)){
+              ggplot2::ggsave(plot = q, filename = paste(Sample_names[1],'/', 'Cellularity_clustered', Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],"_",U[i,1],'_',U[i,2], '.pdf',sep=''),width = 6.04,height = 6.04)
+            }
+            else{
+              ggplot2::ggsave(plot = q, filename = paste(output_directory,'/', 'Cellularity_clustered', Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],"_",U[i,1],'_',U[i,2], '.pdf',sep=''),width = 6.04,height = 6.04)
+            }
+          }
+        }
+      }
+    }
+    else{
       if(save_plot){
         if(!simulated){
-          q<-ggplot2::qplot(x=Spare[,U[i,1]],y=Spare[,U[i,2]] , asp = 1,main=paste('Cellular prevalence',Sample_names[[U[i,1]]],Sample_names[[U[i,2]]]),
-                            xlab=paste('Cellular prevalence',Sample_names[[U[i,1]]]),ylab=paste('Cellular prevalence',Sample_names[[U[i,2]]]),
-                            colour = cluster)+ggplot2::scale_colour_discrete(name='Clone')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
+          q<-ggplot2::qplot(x=Spare, y=jitter(rep(0.5,times=length(Spare)),factor = 5) , asp = 1,main=paste('Cellular prevalence',Cell[[1]][1,'Sample']),
+                            xlab=paste('cellularity',Sample_names),ylab='',
+                            colour = cluster)+ggplot2::scale_colour_discrete(name='Clone')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
+                                                                                                                                                                                axis.ticks.y=ggplot2::element_blank(),
+                                                                                                                                                                                panel.background  = ggplot2::element_blank(),
+                                                                                                                                                                                axis.text.y = ggplot2::element_blank())
           if(is.null(output_directory)){
-            ggplot2::ggsave(plot = q, filename = paste(Sample_names[1],'/', 'Cellularity_clustered',"_", Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],"_",U[i,1],'_',U[i,2], '.pdf',sep=''),width = 6.04,height = 6.04)
+            ggplot2::ggsave(plot = q, filename = paste(Sample_names[1],'/', 'Cellularity_clustered', Sample_names[1], '.pdf',sep=''),width = 6.04,height = 6.04)
           }
           else{
-            ggplot2::ggsave(plot = q, filename = paste(output_directory,'/', 'Cellularity_clustered',"_", Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],"_",U[i,1],'_',U[i,2], '.pdf',sep=''),width = 6.04,height = 6.04)
-
+            ggplot2::ggsave(plot = q, filename = paste(output_directory,'/', 'Cellularity_clustered', Sample_names[1], '.pdf',sep=''),width = 6.04,height = 6.04)
+            
           }
-
         }
         else{
-          q<-ggplot2::qplot(x=Spare[,U[i,1]],y=Spare[,U[i,2]] , asp = 1,main=paste('Cellular prevalence plot',Sample_names[[U[i,1]]],Sample_names[[U[i,2]]]),
-                            xlab=paste('Cellular prevalence',Sample_names[[U[i,1]]]),ylab=paste('Cellular prevalence',Sample_names[[U[i,2]]]),
-                            colour = cluster,
-                            shape=factor(result$filtered.data[[1]]$Chr))+ggplot2::theme_bw()+ggplot2::scale_shape_discrete(factor(1:max(Cell[[1]][,'Chr'])),
-                                                                                                                           name='Clone \n(simulated)')+ggplot2::scale_colour_discrete(name='Cluster')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
+          q<-ggplot2::qplot(x=Spare,y=jitter(rep(0.5,times=length(Spare)),factor = 5), asp = 1,main=paste('Cellular prevalence',Cell[[1]][1,'Sample']),
+                            xlab=paste('Cellular prevalence',Sample_names),ylab='',
+                            colour = cluster)+ggplot2::scale_colour_discrete(name='Cluster')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::scale_shape_discrete(factor(1:max(Cell[[1]][,'Chr'])),
+                                                                                                                                                                             name='Clone \n(simulated)')+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
+                                                                                                                                                                                                                                            axis.ticks.y=ggplot2::element_blank(),
+                                                                                                                                                                                                                                            panel.background  = ggplot2::element_blank(),
+                                                                                                                                                                                                                                            axis.text.y = ggplot2::element_blank())
           if(is.null(output_directory)){
-            ggplot2::ggsave(plot = q, filename = paste(Sample_names[1],'/', 'Cellularity_clustered', Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],"_",U[i,1],'_',U[i,2], '.pdf',sep=''),width = 6.04,height = 6.04)
+            ggplot2::ggsave(plot = q, filename = paste(Sample_names[1],'/', 'Cellularity_clustered', Sample_names[1],'.pdf',sep=''),width = 6.04,height = 6.04)
           }
           else{
-            ggplot2::ggsave(plot = q, filename = paste(output_directory,'/', 'Cellularity_clustered', Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],"_",U[i,1],'_',U[i,2], '.pdf',sep=''),width = 6.04,height = 6.04)
+            ggplot2::ggsave(plot = q, filename = paste(output_directory,'/', 'Cellularity_clustered', Sample_names[1],'.pdf',sep=''),width = 6.04,height = 6.04)
+            
           }
         }
       }
     }
   }
   else{
-    if(save_plot){
-      if(!simulated){
-        q<-ggplot2::qplot(x=Spare, y=jitter(rep(0.5,times=length(Spare)),factor = 5) , asp = 1,main=paste('Cellular prevalence',Cell[[1]][1,'Sample']),
-                          xlab=paste('cellularity',Sample_names),ylab='',
-                          colour = cluster)+ggplot2::scale_colour_discrete(name='Clone')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
-                                                                                                                                                                              axis.ticks.y=ggplot2::element_blank(),
-                                                                                                                                                                              panel.background  = ggplot2::element_blank(),
-                                                                                                                                                                              axis.text.y = ggplot2::element_blank())
-        if(is.null(output_directory)){
-          ggplot2::ggsave(plot = q, filename = paste(Sample_names[1],'/', 'Cellularity_clustered', Sample_names[1], '.pdf',sep=''),width = 6.04,height = 6.04)
-        }
-        else{
-          ggplot2::ggsave(plot = q, filename = paste(output_directory,'/', 'Cellularity_clustered', Sample_names[1], '.pdf',sep=''),width = 6.04,height = 6.04)
-
-        }
+    if(length(Cell)==2 && save_plot){
+      q<-plot_QC_out(QClone_Output = result,Sample_names = Sample_names)
+      if(is.null(output_directory)){
+        ggplot2::ggsave(plot = q, filename = paste0(Sample_names[1],'/', 'Cellularity_clustered', 
+                                                    Sample_names[1],'all_models.pdf'),
+                        width = 6.04,height = 6.04)
       }
       else{
-        q<-ggplot2::qplot(x=Spare,y=jitter(rep(0.5,times=length(Spare)),factor = 5), asp = 1,main=paste('Cellular prevalence',Cell[[1]][1,'Sample']),
-                          xlab=paste('Cellular prevalence',Sample_names),ylab='',
-                          colour = cluster)+ggplot2::scale_colour_discrete(name='Cluster')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::scale_shape_discrete(factor(1:max(Cell[[1]][,'Chr'])),
-                                                                                                                                                                           name='Clone \n(simulated)')+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
-                                                                                                                                                                                                                                          axis.ticks.y=ggplot2::element_blank(),
-                                                                                                                                                                                                                                          panel.background  = ggplot2::element_blank(),
-                                                                                                                                                                                                                                          axis.text.y = ggplot2::element_blank())
-        if(is.null(output_directory)){
-          ggplot2::ggsave(plot = q, filename = paste(Sample_names[1],'/', 'Cellularity_clustered', Sample_names[1],'.pdf',sep=''),width = 6.04,height = 6.04)
-        }
-        else{
-          ggplot2::ggsave(plot = q, filename = paste(output_directory,'/', 'Cellularity_clustered', Sample_names[1],'.pdf',sep=''),width = 6.04,height = 6.04)
-
-        }
+        ggplot2::ggsave(plot = q, filename = paste0(output_directory,'/', 'Cellularity_clustered',
+                                                   Sample_names[1],'all_models.pdf'),
+                        width = 6.04,height = 6.04)
       }
+      
     }
+    
   }
+  
   return(result)
-}
-
-#' Plot cellularity
-#'
-#' 2D plot of cellularity based on the output of the EM
-#' @param lis Output from Return_one_cell_by_mut, list of cellularities (one list-element per sample)
-#' @param Sample_names Name of the samples.
-#' @param output_dir Directory in which to save plots
-#' @keywords Clonal inference plot
-#'
-plot_cell_from_Return_out<-function(lis,Sample_names,output_dir=NULL){
-  if(length(lis)>1){
-    U<-expand.grid(1:length(lis),1:length(lis))
-    U<-U[U[,1]<U[,2],]
-#    Sample_names<-lapply(lis,FUN = function(z) z[1,1])
-    for(i in 1:dim(U)[1]){
-      d<-ggplot2::qplot(x = lis[[U[i,1]]][,'Cellularity'], y = lis[[U[i,2]]][,'Cellularity'],asp = 1,
-                        xlab=paste('Cellular prevalence',Sample_names[[U[i,1]]]),ylab=paste('Cellular prevalence',Sample_names[[U[i,2]]]),
-                        main=paste('Cellular prevalence of all possibilities'))+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
-      if(is.null(output_dir)){
-        ggplot2::ggsave(filename = paste(Sample_names[[1]],'/', 'Cellularity', Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],'.pdf',sep=''),plot = d,width = 6.04,height = 6.04)
-      }
-      else{
-        ggplot2::ggsave(filename = paste(output_dir,'/', 'Cellularity', Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],'.pdf',sep=''),plot = d,width = 6.04,height = 6.04)
-
-      }
-    }
-  }
-  else{
-    d<-ggplot2::qplot(x = lis[[1]][,'Cellularity'], y = jitter(rep(0.5,times=length(lis[[1]][,'Cellularity'])),factor = 10),asp = 1,
-                      xlab=paste('Cellular prevalence'),ylab='',
-                      main=paste(Sample_names,'Cellular prevalence of all possibilities'))
-    d<-d+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
-                                                                                              axis.ticks.y=ggplot2::element_blank(),
-                                                                                              axis.text.y = ggplot2::element_blank())
-    if(is.null(output_dir)){
-      ggplot2::ggsave(filename = paste(Sample_names[1],'/', 'Cellularity', Sample_names,'.pdf',sep=''),plot = d,width = 6.04,height = 6.04)
-    }
-    else{
-      ggplot2::ggsave(filename = paste(output_dir,'/', 'Cellularity', Sample_names,'.pdf',sep=''),plot = d,width = 6.04,height = 6.04)
-
-    }
-  }
-}
-
-#' Plots
-#'
-#' Creates density plot when only one sample is given
-#' @param EM_out output from the EM algorithm
-#' @param contamination Numeric vector giving the proportion of normal cells in each samples
-#' @keywords Clonal inference phylogeny
-
-One_D_plot<-function(EM_out,contamination){
-  theta=seq(from = 0,to = 1,by = 0.0001)
-  p<-outer(theta,EM_out$filtered.data[[1]]$NC*(1-contamination)/ EM_out$filtered.data[[1]]$NCh)
-  P<-choose(EM_out$filtered.data[[1]]$Depth,EM_out$filtered.data[[1]]$Alt)*p**(EM_out$filtered.data[[1]]$Alt)*(1-p)**(EM_out$filtered.data[[1]]$Depth-EM_out$filtered.data[[1]]$Alt)
-  y<-apply(X = P,MARGIN = 1,FUN = sum)
-  y<-y/sum(y)
-  r<-ggplot2::qplot(x=theta,y=y,geom = "line",main="Density of probability of presence of a clone",xlab="Cell fraction",ylab="density")+ggplot2::theme_bw()
-  return(r)
-}
-#' 3D Plot
-#'
-#' Creates density plot when two samples are given
-#' @param Schrod List of 2 dataframes, output of the Schrodinger function or the EM algorithm
-#' @param contamination Numeric vector giving the proportion of normal cells in each samples
-#' @keywords Clonal inference phylogeny
-#' @import rgl
-#' @export
-#' @examples
-#' ### Example fails build when no monitor is available for display
-#' \dontrun{
-#' print("Generating data...")
-#' QC<-QuantumCat(number_of_clones = 4,number_of_mutations = 200,
-#'                depth= 100, ploidy = "AB")
-#' print("Formating data so it can be used as input")
-#' alpha<-rep(1,time=200)
-#' for(i in 1:2){
-#' print(head(2*QC[[i]]$Alt/QC[[i]]$Depth))
-#' QC[[i]][,4]<-2*QC[[i]]$Alt/QC[[i]]$Depth
-#' QC[[i]]<-cbind(QC[[i]],alpha)
-#' }
-#' print("Creating 3D plot")
-#' ThreeD_plot(QC,c(0,0))
-#' }
-ThreeD_plot<-function(Schrod,contamination){
-  Z<-matrix(nrow=101,ncol=101)
-  alpha<-Schrod[[1]]$alpha*Schrod[[2]]$alpha
-  for(i in 0:100){
-    Z[,i+1]<-sapply(X=0:100,function(y) {
-      if(i<100){
-        S<-sum((Schrod[[1]]$Cellularity>=floor(x = i/10)/10 & Schrod[[1]]$Cellularity<floor(x = i/10+1)/10 & Schrod[[2]]$Cellularity>=floor(x = y/10)/10 & Schrod[[2]]$Cellularity<floor(x = y/10 +1)/10)*alpha)
-      }
-      else{
-        S<-sum((Schrod[[1]]$Cellularity>=floor(x = i/10)/10 & Schrod[[2]]$Cellularity>=floor(x = y/10)/10 & Schrod[[2]]$Cellularity<floor(x = y/10 +1)/10)*alpha)
-      }
-      if(is.na(S)){
-        return(0)
-      }
-      else{
-        return(S)
-      }
-    }
-    )
-  }
-  rgl::open3d()
-  palette <- colorRampPalette(c('royalblue',"blue",'cyan','grey','yellow','orange','red'))
-  col.table <- palette(1024)
-  col.ind <- cut(Z, 1024)
-  rgl::persp3d(x=(0:100)/100,y=(0:100)/100,z=Z,xlab = 'Cellularity diag',ylab = 'Cellularity relapse',
-               zlab = 'weighted number of possibilities',col=col.table[col.ind],xlim=c(0,1),ylim=c(0,1))
-}
-
-
-#' Phylogenetic tree
-#'
-#' Generates a list of possible trees based on the cellularity of each clone, and the spatial and temporal distribution of the samples.
-#' Assumption is made the different clones are on different lines of the matrix
-#' @param Clone_cellularities A dataframe with cellularities (ranging from 0 to 1) of each clone (rows) in each sample (columns)
-#' @param timepoints A numeric vector giving the spatial and/or temporal distribution of the samples
-#' @export
-#' @keywords Clonal inference phylogeny
-# Clone_cell<-cbind(QuantumClone::QC_output$EM.output$centers[[1]],QuantumClone::QC_output$EM.output$centers[[2]])
-# print("Using clone cellularities:")
-# print(Clone_cell)
-# Tree_generation(Clone_cell)
-Tree_generation<-function(Clone_cellularities,timepoints=NULL){
-  if(is.data.frame(Clone_cellularities)){
-    Clone_cellularities<-as.matrix(Clone_cellularities)
-  }
-  #Inclusion detection
-  if(is.null(timepoints)){
-    timepoints<-rep(1,times=dim(Clone_cellularities)[2])
-  }
-  else if(length(timepoints)!=dim(Clone_cellularities)[2]){
-    warning('Temporal vector and number of samples are of different sizes')
-  }
-  nr<-dim(Clone_cellularities)[1]
-  nc<-dim(Clone_cellularities)[2]
-
-  ####Creating network matrix (inclusion), 1 at line i col j means i is included in j
-  M<-matrix(0,nr,nr)
-  for(i in 1:nr){
-    for(j in 1:nr){
-      if(i!=j & is_included(Clone_cellularities[i,],Clone_cellularities[j,])){
-        M[j,i]<-1
-      }
-    }
-  }
-  ###Re-ordering so that you go from root to leaves
-
-
-  S<-apply(M,1,sum)
-
-  Clone_cellularities<-Clone_cellularities[order(S,decreasing = F),]
-  S<-S[order(S,decreasing = F)]
-
-  connexion_list<-matrix(0,nrow=(2*nr-1),ncol = (2*nr-1))
-
-  if(is.matrix(Clone_cellularities)){
-    ###adding non mutated clones
-    connexion_list<-cbind(connexion_list,rbind(Clone_cellularities,matrix(0,nrow=nr-1,ncol=nc)))
-  }
-  else{
-    connexion_list<-cbind(connexion_list,c(Clone_cellularities,rep(0,times=nc-1)))
-  }
-  start<-min(which(S>0))
-  for(i in (start-1):nr){
-    remove<-0
-    if(i==(start-1)){
-      connexion_list<-list(list(connexion_list,1))
-    }
-    else{
-      for(k in 1:length(connexion_list)){
-        if(is.matrix(Clone_cellularities)){
-          t<-add_leaf_list(leaf = Clone_cellularities[i,],connexion_list = connexion_list[[k]],
-                           timepoints = timepoints,d = nr,selector_position = i)
-        }
-        else{
-          t<-add_leaf_list(leaf = Clone_cellularities[i],connexion_list = connexion_list[[k]],
-                           timepoints = timepoints,d=nr,selector_position = i)
-        }
-        if(!is.list(t)){
-          if(remove==0){
-            remove<-k
-          }
-          else{
-            remove<-c(remove,k)
-          }
-        }
-
-        else if(length(t)==2 & !is.list(t[[1]])){
-          connexion_list[[k]]<-t
-        }
-        else{
-          connexion_list[[k]]<-t[[1]]
-          connexion_list<-c(connexion_list,t[-1])
-        }
-      }
-    }
-    if(sum(remove)>0){
-      connexion_list<-connexion_list[-remove]
-    }
-  }
-  return(connexion_list)
-}
-
-#' Phylogenetic tree leaf
-#'
-#' Adds a leaf to an already built tree. Output is a list of all possibilities.
-#' @param leaf A vector of cellularities (ranging from 0 to 1)
-#' @param connexion_list List containing 1. An interaction matrix concatenated with the cellularity of each cluster (one line per cluster)
-#' @param timepoints A numeric vector giving the spatial and/or temporal distribution of the samples
-#' @param d The initial number of clusters
-#' @param selector_position The row of the studied leaf in the data frame.
-#' @keywords Clonal inference phylogeny
-
-add_leaf_list<-function(leaf,connexion_list,timepoints,d,selector_position){
-
-  Exclude<-apply(X = connexion_list[[1]][,1:(2*d-1)],MARGIN = 1,FUN = sum)==2
-
-  if(dim(connexion_list[[1]])[2]-2*d>0){
-    Inclusion<-apply(X = connexion_list[[1]][,(2*d):(dim(connexion_list[[1]])[2])],MARGIN = 1,FUN = is_included,leaf)
-  }
-  else{
-    Inclusion<-sapply(X = connexion_list[[1]][,(2*d)],FUN = is_included,leaf)
-  }
-  Inclusion[selector_position]<-F
-
-  S<-sum(Inclusion & !Exclude)
-  if(S==0){
-    return(NA)
-  }
-  else if(S>=1){
-    w<-which(Inclusion & !Exclude)
-    result<-list()
-    t<-min(timepoints[leaf>0])
-    if(dim(connexion_list[[1]])[2]-2*d>0){
-      size_at_t<-apply(X = connexion_list[[1]][,(2*d):(dim(connexion_list[[1]])[2])],MARGIN = 1,FUN = sum)
-    }
-    else{
-      size_at_t<-sapply(X = connexion_list[[1]][,(2*d)],FUN = sum)
-    }
-    prob_at_t<-size_at_t/(sum(size_at_t[w]))
-    if(length(w)==1){
-      spare<-connexion_list[[1]]
-      spare[w,c(selector_position,selector_position+d-1)]<-1
-      spare[selector_position+d-1,(2*d):(dim(connexion_list[[1]])[2])]<-spare[w,(2*d):(dim(connexion_list[[1]])[2])]-leaf
-      prob<-prob_at_t[w]*connexion_list[[2]]
-      result<-list(list(spare,prob))
-    }
-    else{
-      for(i in w){
-        spare<-connexion_list[[1]]
-        spare[i,c(selector_position,selector_position+d-1)]<-1
-        spare[selector_position+d-1,(2*d):(dim(connexion_list[[1]])[2])]<-spare[i,(2*d):(dim(connexion_list[[1]])[2])]-leaf
-        prob<-prob_at_t[i]*connexion_list[[2]]
-        result<-c(result,list(list(spare,prob)))
-      }
-    }
-  }
-  return(result)
-}
-
-#' Length
-#'
-#' Computes the length from the clone on the n-th row of the matrix, to the most ancestral clone
-#' @param matrix The interaction matrix of the tree (1 on the i-th row j-th column means "clone j is the progeny of clone i")
-#' @param n Index of the clone in the matrix
-#' @keywords Clonal inference phylogeny
-
-longueur<-function(matrix,n){
-  if(sum(matrix[,n])==0){
-    return(0)
-  }
-  else{
-    return(longueur(matrix,which(matrix[,n]==1))+1)
-  }
-}
-
-
-
-#' Graphic position
-#'
-#' Computes the position of a node on the graph, based on the interaction matrix.
-#' @param matrix The interaction matrix of the tree (1 on the i-th row j-th column means "clone j is the progeny of clone i")
-#' @param d Initial number of clones
-#' @param n Index of the clone of interest in the matrix
-#' @keywords Clonal inference phylogeny
-
-find_x_position<-function(matrix,n,d){
-  if(sum(matrix[,n])==0){
-    return(0)
-  }
-  else if(n<=d){
-    return(find_x_position(matrix,which(matrix[,n]==1),d)-1/2**longueur(matrix,n))
-  }
-  else{
-    return(find_x_position(matrix,which(matrix[,n]==1),d)+1/2**longueur(matrix,n))
-  }
-}
-
-#' Group theory
-#'
-#' Clone2 is included in Clone1 if all values of Clone2 are lower or equal to the ones in Clone1 at the same position. Returns TRUE is Clone2 is included in Clone1.
-#' @param Clone1 Numeric vector, representing the cellularity of Clone1 in different samples
-#' @param Clone2 Numeric vector, representing the cellularity of Clone2 in different samples
-#' @keywords Clonal inference phylogeny
-
-is_included<-function(Clone1,Clone2){#Returns True if Clone2 is included in Clone1
-  for(i in 1:length(Clone1)){
-    if(Clone1[i]<Clone2[i]){
-      return(F)
-    }
-  }
-  return(T)
 }
 
 #' Probability
@@ -982,7 +741,7 @@ Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination
     clone_weights<-rep(1/length(SNV_list),times = length(SNV_list))
   }
   if(is.null(SNV_list[[1]]$NC)){
-    Schrod<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided = T,contamination = contamination)
+    Schrod<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided = TRUE,contamination = contamination)
     result<-Schrod[[1]]
     if(length(Schrod)>1){
       for(i in 2:length(Schrod)){

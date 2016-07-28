@@ -121,7 +121,7 @@ QuantumCat<-function(number_of_clones,number_of_mutations,ploidy=2,depth=100,num
         Alt_depth[j]<-rbinom(n = 1,size=SNP_depth[j],prob= frequency[j]/100)
       }
       recap[[i]]<-data.frame(Clonal_attribution,1:length(Clonal_attribution),Genotype[[i]],Cell[,i],number_of_copies[[i]],frequency,SNP_depth,Alt_depth)
-      colnames(recap[[i]])<-c("Chr","Start",'Genotype','Cellularity','number_of_copies',"Frequency",'Depth',"Alt")
+      colnames(recap[[i]])<-c("Chr","Start",'Genotype','Cellularit','number_of_copies',"Frequency",'Depth',"Alt")
     }
   }
   else if(number_of_samples==1){
@@ -133,7 +133,7 @@ QuantumCat<-function(number_of_clones,number_of_mutations,ploidy=2,depth=100,num
     }
     Observed_freq<-Alt_depth/SNP_depth*100
     recap[[1]]<-data.frame(Clonal_attribution,1:length(Clonal_attribution),Genotype[[1]],Cell,number_of_copies[[1]],frequency,SNP_depth,Alt_depth)
-    colnames(recap[[1]])<-c("Chr","Start",'Genotype','Cellularity','number_of_copies',"Frequency",'Depth',"Alt")
+    colnames(recap[[1]])<-c("Chr","Start",'Genotype','Cellularit','number_of_copies',"Frequency",'Depth',"Alt")
   }
   return(recap)
 }

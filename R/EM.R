@@ -35,7 +35,7 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=F,alpha,adj.factor){
   }
   count<-0
   for(i in 1:length(Schrod)){ ## i is a sample
-    al[[i]]<-matrix(nrow=dim(Schrod[[1]])[1],ncol=length(weights))
+    al[[i]]<-matrix(nrow=nrow(Schrod[[1]]),ncol=length(weights))
     Alt<-Schrod[[i]]$Alt
     Depth<-Schrod[[i]]$Depth
     for(k in 1:length(weights)){ ## k is a clone
@@ -87,13 +87,15 @@ fik.from.al<-function(al,id,keep.all.poss,alpha=NULL){
   if(is.null(alpha)){
     alpha<-rep(1,times=length(id))
   }
-  fik<-matrix(nrow = length(unique(id)),ncol = dim(al[[1]])[2])
+  fik<-matrix(nrow = length(unique(id)),ncol = ncol(al[[1]]))
   spare<-alpha*list_prod(al)
   u<-unique(id)
+  #tab<-table(u)
   if(keep.all.poss){
     return(spare*alpha)
   }
   else{
+    # fik<- as.data.frame(cbind(spare,id =id)) %>% group_by(id) %>% summarise_all(funs(sum)) # takes longer on matrices of 100 rows
     for(i in 1:length(u)){
       if(sum(id==u[i])>1){ ##more than one possibility for a mutation
         fik[i,]<-apply(X = spare[id==u[i],],MARGIN = 2,function(z) sum(z)) ##normalize by sum of possibilities...
@@ -102,10 +104,12 @@ fik.from.al<-function(al,id,keep.all.poss,alpha=NULL){
         fik[i,]<-spare[id==u[i],]
       }
     }
+    
   }
   fik[fik==0]<-.Machine$double.xmin ## replace by machine limit to avoid the log(0) issue
-  
-  return(fik)
+  #print(cbind(fik2,fik))
+  #return(as.matrix(fik[,-1]))
+  return(as.matrix(fik))
 }
 
 eval.fik.m<-function(Schrod,centers,weights,alpha,adj.factor){
@@ -124,24 +128,48 @@ eval.fik.m<-function(Schrod,centers,weights,alpha,adj.factor){
 #' @param alpha Weight of each possibility / normalization so that the sum of all possibilities weighs equal to 1 mutation
 #' @param adj.factor Factor to compute the probability: makes transition between the cellularity of the clone and the frequency observed
 #' @param contamination Numeric vector with the fraction of normal cells contaminating the sample
+#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx")
 #' @keywords EM Maximization
 
-m.step<-function(fik,Schrod,previous.weights,previous.centers,contamination,alpha,adj.factor){
+m.step<-function(fik,Schrod,previous.weights,
+                 previous.centers,contamination,alpha,adj.factor,
+                 optim ="default"){
   weights<-apply(X = fik,MARGIN = 2,FUN = mean)
   cur.cent<-list()
-  spare<-optim(par = unlist(previous.centers),
-               fn = function(x) -sum(fik*log(eval.fik.m(Schrod = Schrod,centers = x,alpha = alpha,adj.factor = adj.factor,
-                                                        weights = previous.weights))),
-               method = "L-BFGS-B",lower = rep(0,times = length(unlist(previous.centers))),upper=rep(1,length(unlist(previous.centers))))
-  if(!is.list(spare)){
-    return(NA)
+  fnx<-compiler::cmpfun(function(x) -sum(fik*log(eval.fik.m(Schrod = Schrod,centers = x,alpha = alpha,adj.factor = adj.factor,
+                                                            weights = previous.weights))),
+                        options = list(optimize = 3)
+  )
+  
+  if(optim == "default"){
+    spare<-optim(par = unlist(previous.centers),
+                 fn = fnx ,
+                 method = "L-BFGS-B",lower = rep(0,times = length(unlist(previous.centers))),upper=rep(1,length(unlist(previous.centers)))) 
+    if(!is.list(spare)){
+      return(NA)
+    }
+    return(list(weights=weights,centers=spare$par,val=spare$val))
   }
-  return(list(weights=weights,centers=spare$par,val=spare$val))
+  else if(optim =="optimx"){
+    spare<-optimx(par = unlist(previous.centers),
+                  fn = fnx,
+                  # fn = function(x) {
+                  #   -sum(fik*log(eval.fik.m(Schrod = Schrod,
+                  #                           centers = x,alpha = alpha,
+                  #                           adj.factor = adj.factor,
+                  #                           weights = previous.weights)))
+                  # },
+                  method = "L-BFGS-B",
+                  lower = rep(0,times = length(unlist(previous.centers))),
+                  upper=rep(1,length(unlist(previous.centers)))) 
+    return(list(weights=weights,centers=spare[1:length(unlist(previous.centers))],val=spare$value))
+  }
+  
 }
 
 Compute.adj.fact<-function(Schrod,contamination){ ##Factor used to compute the probability of the binomial distribution
   n<-length(Schrod)
-  adj.factor<-matrix(ncol = n,nrow=dim(Schrod[[1]])[1])
+  adj.factor<-matrix(ncol = n,nrow=nrow(Schrod[[1]]))
   for(i in 1:n){
     adj.factor[,i]<-Schrod[[i]]$NC*(1-contamination[i])/Schrod[[i]]$NCh
   }
@@ -156,8 +184,12 @@ Compute.adj.fact<-function(Schrod,contamination){ ##Factor used to compute the p
 #' @param prior_weight Prior on the fraction of mutation in each clone
 #' @param contamination Numeric vector with the fraction of normal cells contaminating the sample
 #' @param epsilon Stopping condition for the algorithm: what is the minimal tolerated difference of position or weighted between two steps
+#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx")
 #' @keywords EM
-EM.algo<-function(Schrod, nclust=NULL, prior_center=NULL,prior_weight=NULL,contamination, epsilon=10**(-2)){
+EM.algo<-function(Schrod, nclust=NULL,
+                  prior_center=NULL,prior_weight=NULL,
+                  contamination, epsilon=10**(-2),
+                  optim = "default"){
   if(is.null(prior_weight)){
     prior_weight<-rep(1/nclust,times = nclust)
     cur.weight<-rep(1/nclust,times = nclust)
@@ -181,7 +213,8 @@ EM.algo<-function(Schrod, nclust=NULL, prior_center=NULL,prior_weight=NULL,conta
   while(eval>epsilon){
     tik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,alpha,adj.factor)
     m<-m.step(fik = tik,Schrod = Schrod,previous.weights = cur.weight,
-              previous.centers =cur.center, alpha =alpha, adj.factor=adj.factor )
+              previous.centers =cur.center, alpha =alpha, 
+              adj.factor=adj.factor,optim = optim )
     if(!is.list(m)){
       test<-create_priors(nclust = 2,nsample = 2)
       eval_1<-max(abs(prior_center-unlist(test)))
@@ -203,7 +236,8 @@ EM.algo<-function(Schrod, nclust=NULL, prior_center=NULL,prior_weight=NULL,conta
       cur.val<-n.val
     }
   }
-  fik<-eval.fik(Schrod = Schrod,centers = cur.center,weights = cur.weight,keep.all.poss = T,alpha = alpha,adj.factor = adj.factor)
+  fik<-eval.fik(Schrod = Schrod,centers = cur.center,weights = cur.weight,
+                keep.all.poss = T,alpha = alpha,adj.factor = adj.factor)
   return(list(fik=fik,weights=cur.weight,centers=cur.center,val=cur.val))
 }
 
@@ -253,17 +287,25 @@ filter_on_fik<-function(Schrod,fik){
 #' @param prior_weight Prior on the fraction of mutation in each clone
 #' @param contamination Numeric vector with the fraction of normal cells contaminating the sample
 #' @param epsilon Stopping condition for the algorithm: what is the minimal tolerated difference of position or weighted between two steps
+#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx")
 #' @keywords EM
 
-FullEM<-function(Schrod, nclust, prior_center, prior_weight=NULL, contamination, epsilon=5*10**(-3) ){
+FullEM<-function(Schrod, nclust, prior_center, prior_weight=NULL, 
+                 contamination, epsilon=5*10**(-3),
+                 optim = "default"){
   if(length(prior_weight!=nclust)){
     prior_weight<-rep(1/nclust,times = nclust)
   }
   E_out<-EM.algo(Schrod = Schrod, nclust = nclust,
-                 prior_center = prior_center, prior_weight = prior_weight, contamination = contamination, epsilon = epsilon)
+                 prior_center = prior_center, prior_weight = prior_weight, 
+                 contamination = contamination, epsilon = epsilon,
+                 optim = optim)
   if(is.list(E_out)){
     F_out<-filter_on_fik(Schrod = Schrod,fik = E_out$fik)
-    E_out<-EM.algo(Schrod = F_out,nclust = nclust,prior_center = E_out$centers,prior_weight = E_out$weights,contamination = contamination,epsilon =epsilon )
+    E_out<-EM.algo(Schrod = F_out,nclust = nclust,
+                   prior_center = E_out$centers,prior_weight = E_out$weights,
+                   contamination = contamination,epsilon =epsilon,
+                   optim = optim)
   }
   return(list(EM.output = E_out, filtered.data=F_out))
 }
@@ -333,66 +375,95 @@ add.to.list<-function(...){
 #' @param epsilon Stopping condition for the algorithm: what is the minimal tolerated difference of position or weighted between two steps
 #' @param ncores Number of CPUs to be used
 #' @param maxit Maximal number of independant initial condition tests to be tried
+#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx")
+#' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @import foreach
-#' @importFrom doParallel registerDoParallel
-#' @importFrom parallel makeCluster
-#' @importFrom parallel stopCluster
+#' @importFrom doParallel registerDoParallel stopImplicitCluster
+#' @importFrom parallel makeCluster stopCluster
 #' @keywords EM
 
-parallelEM<-function(Schrod,nclust,epsilon,contamination,prior_center=NULL,prior_weight=NULL,maxit=1, ncores = 2){
+parallelEM<-function(Schrod,nclust,epsilon,contamination,
+                     prior_center=NULL,prior_weight=NULL,
+                     maxit=1, ncores = 2,
+                     optim = "default",
+                     keep.all.models = FALSE){
   if(ncores>1){
-  cl <- parallel::makeCluster( ncores )
-  registerDoParallel(cl)
-  
-  result<-foreach::foreach(i=1:(maxit),.export = c("FullEM","EM.algo","create_priors",
-                                          "add.to.list","e.step","m.step","list_prod",
-                                          "Compute.adj.fact","eval.fik","eval.fik.m",
-                                          "fik.from.al","filter_on_fik")) %dopar% {
-                                            FullEM(Schrod = Schrod,nclust = nclust,prior_weight = prior_weight,contamination = contamination,epsilon = epsilon,
-                                                   prior_center = create_priors(nclust = nclust,nsample = length(Schrod),prior = prior_center))
-                                          }
-  parallel::stopCluster(cl)
+    cl <- parallel::makeCluster( ncores )
+    doParallel::registerDoParallel(cl)
+    
+    result<-foreach::foreach(i=1:(maxit),.export = c("FullEM","EM.algo","create_priors",
+                                                     "add.to.list","e.step","m.step","list_prod",
+                                                     "Compute.adj.fact","eval.fik","eval.fik.m",
+                                                     "fik.from.al","filter_on_fik","optimx")) %dopar% {
+                                                       FullEM(Schrod = Schrod,nclust = nclust,prior_weight = prior_weight,
+                                                              contamination = contamination,epsilon = epsilon,
+                                                              prior_center = create_priors(nclust = nclust,
+                                                                                           nsample = length(Schrod),
+                                                                                           prior = prior_center),
+                                                              optim = optim
+                                                       )
+                                                     }
+    doParallel::stopImplicitCluster()
+    parallel::stopCluster(cl)
   }
   else{
     result<-list()
     for(i in 1:maxit){
-      result[[i]]<-FullEM(Schrod = Schrod,nclust = nclust,prior_weight = prior_weight,contamination = contamination,epsilon = epsilon,
-                                                   prior_center = create_priors(nclust = nclust,nsample = length(Schrod),prior = prior_center))
+      result[[i]]<-FullEM(Schrod = Schrod,nclust = nclust,
+                          prior_weight = prior_weight,
+                          contamination = contamination,epsilon = epsilon,
+                          prior_center = create_priors(nclust = nclust,
+                                                       nsample = length(Schrod),
+                                                       prior = prior_center),
+                          optim = optim)
     } 
   }
-#   result<-list()
-#   for(i in 1:maxit){
-#     result[[i]]<-FullEM(Schrod = Schrod,nclust = nclust,prior_weight = prior_weight,contamination = contamination,epsilon = epsilon,
-#                                      prior_center = create_priors(nclust = nclust,nsample = length(Schrod),prior = prior_center))
-#   }
-  M<-result[[1]]$EM.output$val
-  Mindex<-1
-  if(length(result)>1){
-    for(i in 2:length(result)){
-      if(result[[i]]$EM.output$val<M){
-        M<-result[[i]]$EM.output$val
-      }
+  #   result<-list()
+  #   for(i in 1:maxit){
+  #     result[[i]]<-FullEM(Schrod = Schrod,nclust = nclust,prior_weight = prior_weight,contamination = contamination,epsilon = epsilon,
+  #                                      prior_center = create_priors(nclust = nclust,nsample = length(Schrod),prior = prior_center))
+  #   }
+  if(keep.all.models){
+    if(maxit>1){
+      return(result)
+    }
+    else{
+      return(result[[1]])
     }
   }
-  return(result[[Mindex]])
+  else{
+    M<-result[[1]]$EM.output$val
+    Mindex<-1
+    if(length(result)>1){
+      for(i in 2:length(result)){
+        if(result[[i]]$EM.output$val<M){
+          M<-result[[i]]$EM.output$val
+          Mindex<-i
+        }
+      }
+    }
+    return(result[[Mindex]])
+  }
 }
 
 #' Hard clustering based on EM output
 #'
 #' Attributes a mutation to its most likely clone based on the output of the EM algorithm
 #' @param EM_out Output from EM.algo or FullEM
+#' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
+#'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
 #' @keywords EM Hard clustering
-hard.clustering<-function(EM_out){
+hard.clustering<-function(EM_out, model.selection="BIC" ){
   EM_out$clust<-apply(X = EM_out$fik,MARGIN = 1,FUN = function(z) {
     if(sum(z==max(z))>1){ ### Look for the multiple clones, and attribute with probability proportional to the weight
       if(max(z)>0){
-		pos<-which(z==max(z))
-		prob<-EM_out$weights[pos]/(sum(EM_out$weights[pos]))
-		return(sample(x = pos, size = 1, prob = prob))
-	  }
-	  else{
-		return(sample(1:length(z),size = z))
-	  }
+        pos<-which(z==max(z))
+        prob<-EM_out$weights[pos]/(sum(EM_out$weights[pos]))
+        return(sample(x = pos, size = 1, prob = prob))
+      }
+      else{
+        return(sample(1:length(z),size = z))
+      }
     }
     else{
       return(which(z==max(z)))
@@ -405,28 +476,67 @@ hard.clustering<-function(EM_out){
 #'
 #' Computes BIC from a list of outputs of EM algorithm, then returns the position with minimal BIC
 #' @param EM_out_list list of outputs from EM.algo or FullEM
+#' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
 #' @keywords EM clustering number
-BIC_criterion<-function(EM_out_list){
-  Bic<-numeric()
-  if(length(EM_out_list)==0){
-	return(0)
-  }
-  Mut_num<-dim(EM_out_list[[1]]$EM.output$fik)[1]
-  for(i in 1:length(EM_out_list)){
-    Bic[i]<-2*EM_out_list[[i]]$EM.output$val+length(EM_out_list[[i]]$EM.output$centers[[1]])*log(Mut_num)
-  }
-  W<-which.min(Bic)
-  L<-0
-  ORD<-order(Bic)
-#  while(L<=length(ORD)){
-#	L<-L+1
-	#H<-hard.clustering(EM_out =EM_out_list[[ORD[L]]]$EM.output)
-  #  if(length(na.omit(unique(H))) == max(na.omit(H))){
-	#	return(ORD[L])
-	#}
-#  }
-  return(ORD[1])
+BIC_criterion<-function(EM_out_list,model.selection){
+  ### Criterion should be minimized
+  # Here we assimilate EM.output$val to -ln(L) where L is the likelihood of the model
+  # BIC is written -2*ln(L)+k*ln(k)
+  # Generalized BIC is written -2*ln(L)+q * k*ln(k)
+  # AIC is written 2*k - 2*ln(L)
   
+  if(is.numeric(model.selection)){
+    ### Modified BIC to relax or add constraints on model selection
+    # if q > 1 adding explicative variables should explain observed values better => control overfitting
+    # if q = 1 BIC
+    # if q < 1 adding explicative variables is less costly
+    
+    
+    Bic<-numeric()
+    if(length(EM_out_list)==0){
+      return(0)
+    }
+    Mut_num<-nrow(EM_out_list[[1]]$EM.output$fik)
+    for(i in 1:length(EM_out_list)){
+      k<-length(EM_out_list[[i]]$EM.output$centers[[1]])
+      Bic[i]<-2*EM_out_list[[i]]$EM.output$val+model.selection * k *log(Mut_num)
+    }
+    W<-which.min(Bic)
+    L<-0
+    return(Bic)
+  }
+  else if(model.selection == "BIC"){
+    Bic<-numeric()
+    if(length(EM_out_list)==0){
+      return(0)
+    }
+    Mut_num<-nrow(EM_out_list[[1]]$EM.output$fik)
+    
+    for(i in 1:length(EM_out_list)){
+      k<-length(EM_out_list[[i]]$EM.output$centers[[1]])
+      Bic[i]<-2*EM_out_list[[i]]$EM.output$val+k*log(Mut_num)
+    }
+    return(Bic)
+  }
+  else if(model.selection == "AIC"){
+    Aic<-numeric()
+    if(length(EM_out_list)==0){
+      return(0)
+    }
+    for(i in 1:length(EM_out_list)){
+      Aic[i]<-2*EM_out_list[[i]]$EM.output$val+2*length(EM_out_list[[i]]$EM.output$centers[[1]])
+    }
+    return(Aic)
+    
+  }
+  
+  #  while(L<=length(ORD)){
+  #	L<-L+1
+  #H<-hard.clustering(EM_out =EM_out_list[[ORD[L]]]$EM.output)
+  #  if(length(na.omit(unique(H))) == max(na.omit(H))){
+  #	return(ORD[L])
+  #}
+  #  }
 }
 #' Expectation Maximization
 #'
@@ -439,15 +549,65 @@ BIC_criterion<-function(EM_out_list){
 #' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights between two optimization steps.
 #' @param ncores Number of CPUs to be used
 #' @param clone_priors If known a list of priors (cell prevalence) to be used in the clustering
+#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx")
+#' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
+#' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
+#'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
 #' @keywords EM clustering number
-EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NULL, maxit=8, nclone_range=2:5, epsilon=5*(10**(-3)),ncores = 2){
+EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NULL, maxit=8,
+                        nclone_range=2:5, epsilon=5*(10**(-3)),ncores = 2,
+                        model.selection = "BIC",optim = "default",keep.all.models = FALSE){
+  
   list_out_EM<-list()
-  for(i in 1:length(nclone_range)){
-    list_out_EM[[i]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],epsilon = epsilon,
-                                 contamination = contamination,prior_center = clone_priors,
-                                 prior_weight = prior_weight,maxit = maxit , ncores = ncores)
+  if(length(nclone_range)>maxit && ncores >1){
+    cl <- parallel::makeCluster( ncores )
+    doParallel::registerDoParallel(cl)
+    
+    list_out_EM<-foreach::foreach(i=nclone_range,.export = c("parallelEM","FullEM","EM.algo","create_priors",
+                                                             "add.to.list","e.step","m.step","list_prod",
+                                                             "Compute.adj.fact","eval.fik","eval.fik.m",
+                                                             "fik.from.al","filter_on_fik","optimx")) %dopar% {
+                                                               parallelEM(Schrod = Schrod,nclust = i,epsilon = epsilon,
+                                                                          contamination = contamination,prior_center = clone_priors,
+                                                                          prior_weight = prior_weight,maxit = maxit , ncores = 1,
+                                                                          optim = optim,keep.all.models = keep.all.models)
+                                                             }
+    doParallel::stopImplicitCluster()
+    parallel::stopCluster(cl)
   }
-  result<-list_out_EM[[BIC_criterion(EM_out_list = list_out_EM)]]
-  result$cluster<-hard.clustering(EM_out = result$EM.output)
-  return(result)
+  else{
+    for(i in 1:length(nclone_range)){
+      list_out_EM[[i]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],epsilon = epsilon,
+                                   contamination = contamination,prior_center = clone_priors,
+                                   prior_weight = prior_weight,maxit = maxit , ncores = ncores,
+                                   optim = optim,
+                                   keep.all.models = keep.all.models)
+    }
+  }
+  if(!keep.all.models){
+    result<-list_out_EM[[which.min(BIC_criterion(EM_out_list = list_out_EM, model.selection = model.selection))]]
+    result$cluster<-hard.clustering(EM_out = result$EM.output)
+    return(result)
+  }
+  else{
+    if(maxit>1){
+      ### Clean fact that it is a list of normal results (for each clone)
+      spare<-list_out_EM
+      list_out_EM<-list()
+      index<-0
+      for(i in 1:length(spare)){
+        for(k in 1:maxit){
+          index<-index+1
+          list_out_EM[[index]]<-spare[[i]][[k]]
+        }
+      }
+      rm(spare)
+    }
+    Crit<-BIC_criterion(EM_out_list = list_out_EM, model.selection = model.selection)
+    for(i in 1:length(list_out_EM)){
+      list_out_EM[[i]]$cluster<-hard.clustering(EM_out = list_out_EM[[i]]$EM.output)
+      list_out_EM[[i]]$Crit<-Crit[i]
+    }
+    return(list_out_EM)
+  }
 }

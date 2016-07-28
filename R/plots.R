@@ -1,3 +1,114 @@
+#' Plot cellularity
+#'
+#' 2D plot of cellularity based on the output of the EM
+#' @param lis Output from Return_one_cell_by_mut, list of cellularities (one list-element per sample)
+#' @param Sample_names Name of the samples.
+#' @param output_dir Directory in which to save plots
+#' @keywords Clonal inference plot
+#'
+plot_cell_from_Return_out<-function(lis,Sample_names,output_dir=NULL){
+  if(length(lis)>1){
+    U<-expand.grid(1:length(lis),1:length(lis))
+    U<-U[U[,1]<U[,2],]
+    #    Sample_names<-lapply(lis,FUN = function(z) z[1,1])
+    for(i in 1:nrow(U)){
+      d<-ggplot2::qplot(x = lis[[U[i,1]]][,'Cellularity'], y = lis[[U[i,2]]][,'Cellularity'],asp = 1,
+                        xlab=paste('Cellular prevalence',Sample_names[[U[i,1]]]),ylab=paste('Cellular prevalence',Sample_names[[U[i,2]]]),
+                        main=paste('Cellular prevalence of all possibilities'))+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
+      if(is.null(output_dir)){
+        ggplot2::ggsave(filename = paste(Sample_names[[1]],'/', 'Cellularity', Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],'.pdf',sep=''),plot = d,width = 6.04,height = 6.04)
+      }
+      else{
+        ggplot2::ggsave(filename = paste(output_dir,'/', 'Cellularity', Sample_names[[U[i,1]]],"_",Sample_names[[U[i,2]]],'.pdf',sep=''),plot = d,width = 6.04,height = 6.04)
+        
+      }
+    }
+  }
+  else{
+    d<-ggplot2::qplot(x = lis[[1]][,'Cellularity'], y = jitter(rep(0.5,times=length(lis[[1]][,'Cellularity'])),factor = 10),asp = 1,
+                      xlab=paste('Cellular prevalence'),ylab='',
+                      main=paste(Sample_names,'Cellular prevalence of all possibilities'))
+    d<-d+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
+                                                                                              axis.ticks.y=ggplot2::element_blank(),
+                                                                                              axis.text.y = ggplot2::element_blank())
+    if(is.null(output_dir)){
+      ggplot2::ggsave(filename = paste(Sample_names[1],'/', 'Cellularity', Sample_names,'.pdf',sep=''),plot = d,width = 6.04,height = 6.04)
+    }
+    else{
+      ggplot2::ggsave(filename = paste(output_dir,'/', 'Cellularity', Sample_names,'.pdf',sep=''),plot = d,width = 6.04,height = 6.04)
+      
+    }
+  }
+}
+
+#' Plots
+#'
+#' Creates density plot when only one sample is given
+#' @param EM_out output from the EM algorithm
+#' @param contamination Numeric vector giving the proportion of normal cells in each samples
+#' @keywords Clonal inference phylogeny
+
+One_D_plot<-function(EM_out,contamination){
+  theta=seq(from = 0,to = 1,by = 0.0001)
+  p<-outer(theta,EM_out$filtered.data[[1]]$NC*(1-contamination)/ EM_out$filtered.data[[1]]$NCh)
+  P<-choose(EM_out$filtered.data[[1]]$Depth,EM_out$filtered.data[[1]]$Alt)*p**(EM_out$filtered.data[[1]]$Alt)*(1-p)**(EM_out$filtered.data[[1]]$Depth-EM_out$filtered.data[[1]]$Alt)
+  y<-apply(X = P,MARGIN = 1,FUN = sum)
+  y<-y/sum(y)
+  r<-ggplot2::qplot(x=theta,y=y,geom = "line",main="Density of probability of presence of a clone",xlab="Cell fraction",ylab="density")+ggplot2::theme_bw()
+  return(r)
+}
+#' 3D Plot
+#'
+#' Creates density plot when two samples are given
+#' @param Schrod List of 2 dataframes, output of the Schrodinger function or the EM algorithm
+#' @param contamination Numeric vector giving the proportion of normal cells in each samples
+#' @keywords Clonal inference phylogeny
+#' @import rgl
+#' @export
+#' @examples
+#' ### Example fails build when no monitor is available for display
+#' \dontrun{
+#' print("Generating data...")
+#' QC<-QuantumCat(number_of_clones = 4,number_of_mutations = 200,
+#'                depth= 100, ploidy = "AB")
+#' print("Formating data so it can be used as input")
+#' alpha<-rep(1,time=200)
+#' for(i in 1:2){
+#' print(head(2*QC[[i]]$Alt/QC[[i]]$Depth))
+#' QC[[i]][,4]<-2*QC[[i]]$Alt/QC[[i]]$Depth
+#' QC[[i]]<-cbind(QC[[i]],alpha)
+#' }
+#' print("Creating 3D plot")
+#' ThreeD_plot(QC,c(0,0))
+#' }
+ThreeD_plot<-function(Schrod,contamination){
+  Z<-matrix(nrow=101,ncol=101)
+  alpha<-Schrod[[1]]$alpha*Schrod[[2]]$alpha
+  for(i in 0:100){
+    Z[,i+1]<-sapply(X=0:100,function(y) {
+      if(i<100){
+        S<-sum((Schrod[[1]]$Cellularity>=floor(x = i/10)/10 & Schrod[[1]]$Cellularity<floor(x = i/10+1)/10 & Schrod[[2]]$Cellularity>=floor(x = y/10)/10 & Schrod[[2]]$Cellularity<floor(x = y/10 +1)/10)*alpha)
+      }
+      else{
+        S<-sum((Schrod[[1]]$Cellularity>=floor(x = i/10)/10 & Schrod[[2]]$Cellularity>=floor(x = y/10)/10 & Schrod[[2]]$Cellularity<floor(x = y/10 +1)/10)*alpha)
+      }
+      if(is.na(S)){
+        return(0)
+      }
+      else{
+        return(S)
+      }
+    }
+    )
+  }
+  rgl::open3d()
+  palette <- colorRampPalette(c('royalblue',"blue",'cyan','grey','yellow','orange','red'))
+  col.table <- palette(1024)
+  col.ind <- cut(Z, 1024)
+  rgl::persp3d(x=(0:100)/100,y=(0:100)/100,z=Z,xlab = 'Cellularity diag',ylab = 'Cellularity relapse',
+               zlab = 'weighted number of possibilities',col=col.table[col.ind],xlim=c(0,1),ylim=c(0,1))
+}
+
 #'Plot with margin densities
 #'
 #'Adapted from http://stackoverflow.com/questions/11883844/inserting-a-table-under-the-legend-in-a-ggplot2-histogram
@@ -59,56 +170,96 @@ plot_with_margins_densities<-function(QClone_Output){
 #' require(ggplot2)
 #' message("Using preclustered data:")
 #' QC_out<-QuantumClone::QC_output
-#' plot_QC_out(QC_out)
+#' plot_QC_out(QC_out,Sample_names = c("Diagnosis","Relapse"))
 #' 
 plot_QC_out<-function(QClone_Output,Sample_names=NULL, simulated = FALSE,sample_selected = 1:2){
-  Cell <- QClone_Output$filtered.data
-  M<-max(as.numeric(as.character(QClone_Output$cluster)))
-  cluster<-factor(QClone_Output$cluster)
-  if(is.null(Sample_names)){
-    Sample_names<-unlist(lapply(X = QClone_Output$filtered.data,FUN = function(df){
-      df[1,1]
-    }))
+  if(is.null(names(QClone_Output)) && sum(grepl(pattern = "Crit",x = names(QClone_Output[[1]])))>0){
+    #### All models are kept
     
-  }
-  if(length(sample_selected)==2){
-    result<-list()
-    if(!simulated){
-      q<-ggplot2::qplot(x=Cell[[sample_selected[1]]]$Cellularity,y=Cell[[sample_selected[2]]]$Cellularity, asp = 1,main=paste('Cellular prevalence',Sample_names[sample_selected[1]],Sample_names[sample_selected[2]]),
-                        xlab=paste('Cellular prevalence',Sample_names[sample_selected[1]]),ylab=paste('Cellular prevalence',Sample_names[sample_selected[2]]), 
-                        colour = cluster)+ggplot2::scale_colour_discrete(name='Clone')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
+    if(is.null(Sample_names)){
+      Sample_names<-unlist(lapply(X = QClone_Output[[1]]$filtered.data,FUN = function(df){
+        df[1,1]
+      }))
       
     }
-    else{
-      q<-ggplot2::qplot(x=Cell[[sample_selected[1]]]$Cellularity,y=Cell[[sample_selected[2]]]$Cellularity, asp = 1,main=paste('Cellular prevalence plot',Sample_names[sample_selected[1]],Sample_names[sample_selected[2]]),
-                        xlab=paste('Cellular prevalence',Sample_names[sample_selected[1]]),ylab=paste('Cellular prevalence',Sample_names[sample_selected[2]]),
-                        colour = cluster,
-                        shape=factor(Cell[[sample_selected[1]]]$Chr))+ggplot2::theme_bw()+ggplot2::scale_shape_discrete(factor(1:max(Cell[[sample_selected[1]]][,'Chr'])),
-                                                                                                                        name='Clone \n(simulated)')+ggplot2::scale_colour_discrete(name='Cluster')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
+    plot_df<-data.frame()
+    for(i in 1:length(QClone_Output)){
+      plot_df<-rbind(plot_df,
+                     cbind(x = QClone_Output[[i]]$filtered.data[[1]]$Cellularity,
+                           y= QClone_Output[[i]]$filtered.data[[2]]$Cellularity,
+                           clone = QClone_Output[[i]]$cluster,
+                           Crit = QClone_Output[[i]]$Crit)
+                     )
     }
-    return(q)
+
+    plot_df$clone<-as.factor(plot_df$clone)
+
+    result<-ggplot2::ggplot(data=plot_df,
+                            ggplot2::aes_string(x = "x", y="y",
+                                colour = "clone" )
+    )+ggplot2::geom_point()+
+      ggplot2::scale_colour_discrete(name='Clone')+
+      ggplot2::theme_bw()+
+      ggplot2::facet_wrap(facets = "Crit",
+                          ncol = floor(sqrt(length(QClone_Output)))+1)+
+      ggplot2::ggtitle("Criterion comparison")+
+      ggplot2::xlim(c(0,1))+
+      ggplot2::ylim(c(0,1))+
+      ggplot2::xlab(Sample_names[1])+
+      ggplot2::ylab(Sample_names[2])
   }
-  else if(length(sample_selected)==1){
-    if(!simulated){
-      result<-ggplot2::qplot(x=Cell[[sample_selected[1]]]$Cellularity, y=jitter(rep(0.5,times=length(Cell[[sample_selected[1]]]$Cellularity)),factor = 5) , asp = 1,main=paste('Cellular prevalence',Sample_names[sample_selected[1]]),
-                             xlab=paste('cellularity',Sample_names[sample_selected[1]]),ylab='', 
-                             colour = cluster)+ggplot2::scale_colour_discrete(name='Clone')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
-                                                                                                                                                                                 axis.ticks.y=ggplot2::element_blank(),
-                                                                                                                                                                                 panel.background  = ggplot2::element_blank(),
-                                                                                                                                                                                 axis.text.y = ggplot2::element_blank())
+  else if(sum(grepl(pattern = "filtered.data",x = names(QClone_Output)))){
+    Cell <- QClone_Output$filtered.data
+    M<-max(as.numeric(as.character(QClone_Output$cluster)))
+    cluster<-factor(QClone_Output$cluster)
+    if(is.null(Sample_names)){
+      Sample_names<-unlist(lapply(X = QClone_Output$filtered.data,FUN = function(df){
+        df[1,1]
+      }))
+      
+    }
+    if(length(sample_selected)==2){
+      result<-list()
+      if(!simulated){
+        q<-ggplot2::qplot(x=Cell[[sample_selected[1]]]$Cellularity,y=Cell[[sample_selected[2]]]$Cellularity, asp = 1,main=paste('Cellular prevalence',Sample_names[sample_selected[1]],Sample_names[sample_selected[2]]),
+                          xlab=paste('Cellular prevalence',Sample_names[sample_selected[1]]),ylab=paste('Cellular prevalence',Sample_names[sample_selected[2]]), 
+                          colour = cluster)+ggplot2::scale_colour_discrete(name='Clone')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
+        
+      }
+      else{
+        q<-ggplot2::qplot(x=Cell[[sample_selected[1]]]$Cellularity,y=Cell[[sample_selected[2]]]$Cellularity, asp = 1,main=paste('Cellular prevalence plot',Sample_names[sample_selected[1]],Sample_names[sample_selected[2]]),
+                          xlab=paste('Cellular prevalence',Sample_names[sample_selected[1]]),ylab=paste('Cellular prevalence',Sample_names[sample_selected[2]]),
+                          colour = cluster,
+                          shape=factor(Cell[[sample_selected[1]]]$Chr))+ggplot2::theme_bw()+ggplot2::scale_shape_discrete(factor(1:max(Cell[[sample_selected[1]]][,'Chr'])),
+                                                                                                                          name='Clone \n(simulated)')+ggplot2::scale_colour_discrete(name='Cluster')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()
+      }
+      return(q)
+    }
+    else if(length(sample_selected)==1){
+      if(!simulated){
+        result<-ggplot2::qplot(x=Cell[[sample_selected[1]]]$Cellularity, y=jitter(rep(0.5,times=length(Cell[[sample_selected[1]]]$Cellularity)),factor = 5) , asp = 1,main=paste('Cellular prevalence',Sample_names[sample_selected[1]]),
+                               xlab=paste('cellularity',Sample_names[sample_selected[1]]),ylab='', 
+                               colour = cluster)+ggplot2::scale_colour_discrete(name='Clone')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
+                                                                                                                                                                                   axis.ticks.y=ggplot2::element_blank(),
+                                                                                                                                                                                   panel.background  = ggplot2::element_blank(),
+                                                                                                                                                                                   axis.text.y = ggplot2::element_blank())
+      }
+      else{
+        result<-ggplot2::qplot(x=Cell[[sample_selected[1]]],y=jitter(rep(0.5,times=length(Cell[[sample_selected[1]]]$Cellularity)),factor = 5), asp = 1,main=paste('Cellular prevalence',Sample_names[sample_selected[1]]),
+                               xlab=paste('Cellular prevalence',Sample_names[sample_selected[1]]),ylab='',
+                               colour = cluster)+ggplot2::scale_colour_discrete(name='Cluster')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::scale_shape_discrete(factor(1:max(Cell[[1]][,'Chr'])),
+                                                                                                                                                                                name='Clone \n(simulated)')+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
+                                                                                                                                                                                                                                               axis.ticks.y=ggplot2::element_blank(),
+                                                                                                                                                                                                                                               panel.background  = ggplot2::element_blank(),
+                                                                                                                                                                                                                                               axis.text.y = ggplot2::element_blank())
+      }
     }
     else{
-      result<-ggplot2::qplot(x=Cell[[sample_selected[1]]],y=jitter(rep(0.5,times=length(Cell[[sample_selected[1]]]$Cellularity)),factor = 5), asp = 1,main=paste('Cellular prevalence',Sample_names[sample_selected[1]]),
-                             xlab=paste('Cellular prevalence',Sample_names[sample_selected[1]]),ylab='',
-                             colour = cluster)+ggplot2::scale_colour_discrete(name='Cluster')+ggplot2::coord_cartesian(xlim=c(0,1),ylim=c(0,1))+ggplot2::scale_shape_discrete(factor(1:max(Cell[[1]][,'Chr'])),
-                                                                                                                                                                              name='Clone \n(simulated)')+ggplot2::theme_bw()+ggplot2::theme(axis.line.y=ggplot2::element_blank(),
-                                                                                                                                                                                                                                             axis.ticks.y=ggplot2::element_blank(),
-                                                                                                                                                                                                                                             panel.background  = ggplot2::element_blank(),
-                                                                                                                                                                                                                                             axis.text.y = ggplot2::element_blank())
+      stop("Number of samples can only be 1 or 2 for this function.Use sample_selected parameter.")
     }
   }
   else{
-    stop("Number of samples can only be 1 or 2 for this function.Use sample_selected parameter.")
+    stop("Incorrect input, please provide output from QuantumClone clustering")
   }
   return(result)
 }
@@ -135,37 +286,37 @@ evolution_plot<-function(QC_out,Sample_names=NULL){
   clone_width<-sapply(col,FUN = function(z){
     sum(as.factor(QC_out$cluster)==z)/length(QC_out$cluster)
   })
-
+  
   for(i in 1:L){
     y<-c(y,QC_out$EM.output$centers[[i]])
     x<-c(x,rep(Sample_names[i],times = length(QC_out$EM.output$centers[[i]])))
   }
-
+  
   df<-data.frame(row.names = 1:length(x))
   df$x<-x
   df$y<-y
   df$col<-col
   df$width<-clone_width
   
-#   q<-ggplot2::qplot(data = df,
-#                     x= x,
-#                     y= y,
-#                     colour = col,
-#                     xlab ="Sample",
-#                     ylab = "Cellularity",geom = "line")+ggplot2::theme_bw()+ggplot2::scale_colour_discrete("Clone") 
-
+  #   q<-ggplot2::qplot(data = df,
+  #                     x= x,
+  #                     y= y,
+  #                     colour = col,
+  #                     xlab ="Sample",
+  #                     ylab = "Cellularity",geom = "line")+ggplot2::theme_bw()+ggplot2::scale_colour_discrete("Clone") 
+  
   q<-ggplot2::ggplot(df,ggplot2::aes_string(x ="x",y="y",
                                             group ="col",
                                             color = "col",
                                             size = "width"),
                      xlab = "Sample",
                      ylab = "Cellularity")+
-  ggplot2::geom_line()+
-  ggplot2::scale_color_discrete("Clone")+
-  ggplot2::scale_size("Fraction of mutations",range = c(0.5,3))+
-  ggplot2::xlab("Sample")+
-  ggplot2::ylab("Cellularity")+
-  ggplot2::theme_bw()
+    ggplot2::geom_line()+
+    ggplot2::scale_color_discrete("Clone")+
+    ggplot2::scale_size("Fraction of mutations",range = c(0.5,3))+
+    ggplot2::xlab("Sample")+
+    ggplot2::ylab("Cellularity")+
+    ggplot2::theme_bw()
   
   return(q)
 }
