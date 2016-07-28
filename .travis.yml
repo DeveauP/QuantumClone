@@ -1,5 +1,10 @@
 language: R
-sudo: required
+sudo: false
+cache: packages
+r:
+  - oldrel
+  - release
+  - devel
 warnings_are_errors: false
 
 r_github_packages:
