@@ -9,7 +9,7 @@ QuantumClone(SNV_list, FREEC_list = NULL, contamination, nclone_range = 2:5,
   save_plot = TRUE, epsilon = 5 * (10^(-3)), maxit = 8,
   preclustering = TRUE, timepoints = NULL, ncores = 1,
   output_directory = NULL, model.selection = "BIC", optim = "default",
-  keep.all.models = FALSE)
+  keep.all.models = FALSE, force.single.copy = FALSE)
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
@@ -49,6 +49,8 @@ uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it wil
 \item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx")}
 
 \item{keep.all.models}{Should the function output the best model (default; FALSE), or all models tested (if set to true)}
+
+\item{force.single.copy}{Should all mutations in overdiploid regions set to single copy? Default is FALSE}
 }
 \description{
 Sequentially calls a function to test all accessible cellularities for all mutations in the samples,then cluster them, and finally draws

@@ -23,8 +23,13 @@
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
 #'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
+#' @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
 #' @keywords Clonal inference Cancer phylogeny
 #' @import optimx compiler knitr
+#' @importFrom grDevices colorRampPalette
+#' @importFrom graphics par plot segments text
+#' @importFrom stats aggregate dbinom frequency na.omit optim rbinom rnbinom rpois runif sd
+#' @importFrom utils tail write.table
 #' @export
 #' @examples
 #'
@@ -49,23 +54,23 @@
 #' print("The data can be accessed by Clustering_output$filtered_data")
 #' print("All plots are now saved in the working directory")
 #'
-#' @importFrom grDevices colorRampPalette
-#' @importFrom graphics par plot segments text
-#' @importFrom stats aggregate dbinom frequency na.omit optim rbinom rnbinom rpois runif sd
-#' @importFrom utils tail write.table
 
 QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
                        nclone_range=2:5,clone_priors=NULL,prior_weight=NULL,
                        simulated=FALSE,
                        save_plot=TRUE, epsilon = 5*(10**(-3)),
                        maxit=8,preclustering=TRUE,timepoints=NULL,ncores=1,output_directory=NULL,
-                       model.selection = "BIC",optim = "default", keep.all.models = FALSE){
+                       model.selection = "BIC",optim = "default", keep.all.models = FALSE,
+                       force.single.copy = FALSE){
+  
+  
   r<-One_step_clustering(SNV_list = SNV_list,FREEC_list = FREEC_list,contamination = contamination,nclone_range = nclone_range,
                          clone_priors = clone_priors,prior_weight =prior_weight ,
                          maxit = maxit,preclustering = preclustering,
                          simulated = simulated,
                          save_plot = save_plot,ncores=ncores,output_directory=output_directory,
-                         model.selection = model.selection,optim = optim, keep.all.models = keep.all.models)
+                         model.selection = model.selection,optim = optim, keep.all.models = keep.all.models,
+                         force.single.copy = force.single.copy)
   
   #   t<-Tree_generation(Clone_cellularities = r$pamobject$medoids,timepoints = timepoints)
   #
@@ -103,6 +108,7 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
 #'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
+#' @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
 #' @keywords Clonal inference
 #' @export
 #' @examples
@@ -134,13 +140,18 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                               simulated = FALSE, epsilon = 5*(10**(-3)),
                               save_plot = TRUE,ncores=1,plot_3D = FALSE, plot_3D_before_clustering = FALSE,
                               restrict.to.AB = FALSE,output_directory=NULL,
-                              model.selection = "BIC",optim = "default", keep.all.models = FALSE){
+                              model.selection = "BIC",optim = "default", keep.all.models = FALSE,
+                              force.single.copy = FALSE){
   # if(maxit >1 && preclustering){
   #   message("Only 1 iteration will be run if preclustering is successful")
   # }
   
+  ### Checking input arguments
   Sample_name<-as.character(SNV_list[[1]][1,1])
   Sample_names<-lapply(SNV_list,FUN = function(z) z[1,1])
+  
+  
+  ### Checking genotype input
   if(is.null(FREEC_list)){
     message("FREEC_list is empty. Checking that there is a genotype column in all samples...")
     check<-TRUE
@@ -151,7 +162,7 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
       }
     }
     if(!check){
-      return(NA)
+      stop("See warnings for more details")
     }
     else{
       message("Genotype is provided.")
@@ -166,6 +177,24 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
     message("Passed")
     Genotype_provided<-FALSE
   }
+  
+  ### Checking model selection
+  if(length(model.selection)>1){
+    stop("Model selection can only be one of BIC,AIC or a numeric value.")
+  }
+  else{
+    if(is.character(model.selection)){
+      if(model.selection != "BIC" && model.selection != "AIC" ){
+        stop("Character value for model selection can only be BIC or AIC")
+      }
+    }
+    else if(!is.numeric(model.selection)){
+      stop("Input model.selection is not numeric - and is not BIC or AIC. Please see documentation for model.selection.")
+    }
+  }
+  
+  
+  ### Pre-processing data
   message(paste("Checking all possibilities for",Sample_name))
   
   Cell<-From_freq_to_cell(SNV_list = SNV_list,
@@ -173,16 +202,27 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                           Sample_names = Sample_names,
                           contamination = contamination,
                           Genotype_provided = Genotype_provided,
-                          save_plot = save_plot,restrict.to.AB = restrict.to.AB,output_directory=output_directory)
+                          save_plot = save_plot,
+                          restrict.to.AB = restrict.to.AB,
+                          output_directory=output_directory,
+                          force.single.copy = force.single.copy)
   
   message("Starting clustering...")
-  r<-Cluster_plot_from_cell(Cell = Cell,nclone_range = nclone_range,epsilon = epsilon,
-                            Sample_names = Sample_names, preclustering = preclustering,
-                            clone_priors = clone_priors,prior_weight = prior_weight,maxit = maxit,
+  r<-Cluster_plot_from_cell(Cell = Cell,nclone_range = nclone_range,
+                            epsilon = epsilon,
+                            Sample_names = Sample_names,
+                            preclustering = preclustering,
+                            clone_priors = clone_priors,
+                            prior_weight = prior_weight,maxit = maxit,
                             simulated = simulated,save_plot=save_plot,contamination = contamination,
-                            ncores=ncores,plot_3D_before_clustering =plot_3D_before_clustering,
+                            ncores=ncores,
+                            plot_3D_before_clustering =plot_3D_before_clustering,
                             output_directory=output_directory,
-                            model.selection = model.selection,optim = optim, keep.all.models = keep.all.models)
+                            model.selection = model.selection,
+                            optim = optim,
+                            keep.all.models = keep.all.models)
+  
+  
   if(plot_3D){
     message("Clustering done... Computing 3D structure")
     ThreeD_plot(r$filtered.data,contamination)
@@ -300,10 +340,12 @@ Tidy_output<-function(r, Genotype_provided,SNV_list){
 #' @param ncores Number of cores to be used during EM algorithm
 #' @param restrict.to.AB Should the analysis keep only sites located in A and AB sites in all samples?
 #' @param output_directory Directory in which to save results
+#' @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
 #' @keywords Clonal inference
 #'
 From_freq_to_cell<-function(SNV_list,FREEC_list=NULL,Sample_names,Genotype_provided=FALSE,save_plot=TRUE,
-                            contamination,ncores = 4, restrict.to.AB = FALSE,output_directory=NULL){
+                            contamination,ncores = 4, restrict.to.AB = FALSE,output_directory=NULL,
+                            force.single.copy = FALSE){
   if(save_plot){
     if(is.null(output_directory)){
       dir.create(path = paste(Sample_names[1]), showWarnings = FALSE)
@@ -314,11 +356,13 @@ From_freq_to_cell<-function(SNV_list,FREEC_list=NULL,Sample_names,Genotype_provi
   }
   if(Genotype_provided){
     Schrod_out<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided =TRUE,
-                                                  contamination = contamination, restrict.to.AB = restrict.to.AB)
+                                                  contamination = contamination, restrict.to.AB = restrict.to.AB,
+                                                  force.single.copy = force.single.copy)
   }
   else{
     Schrod_out<-Patient_schrodinger_cellularities(SNV_list = SNV_list, FREEC_list = FREEC_list,
-                                                  contamination = contamination, restrict.to.AB = restrict.to.AB)
+                                                  contamination = contamination, restrict.to.AB = restrict.to.AB,
+                                                  force.single.copy = force.single.copy)
   }
   
   if(save_plot){
@@ -338,15 +382,19 @@ From_freq_to_cell<-function(SNV_list,FREEC_list=NULL,Sample_names,Genotype_provi
 #' @param Genotype_provided If the FREEC_list is provided, then should be FALSE (default), otherwise TRUE
 #' @param contamination Numeric vector describind the contamination in all samples (ranging from 0 to 1). Default is 0.
 #' @param restrict.to.AB Should the analysis keep only sites located in A and AB sites in all samples?
+#' @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
 #' @keywords Clonal inference
 
 Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_provided=FALSE,
-                                            contamination, restrict.to.AB = F){
+                                            contamination, restrict.to.AB = FALSE,
+                                            force.single.copy = FALSE){
   result<-list()
   count<-0
   id<-1
   chr<-SNV_list[[1]][,"Chr"]
   chr_ante<-0
+  
+  ### Compute all possible cellularities and join them
   for(i in 1:nrow(SNV_list[[1]])){ ##Exploring all possibilities for each mutation
     Cell<-list()
     test<-T
@@ -361,16 +409,25 @@ Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_pr
           subclone.geno<-SNV_list[[k]][i,"subclone.genotype"]
         }
         if(Genotype_provided){
-          Cell[[k]]<-cbind(CellularitiesFromFreq(Genotype= as.character(SNV_list[[k]][i,'Genotype']),Alt = SNV_list[[k]][i,"Alt"],
-                                                 Depth = SNV_list[[k]][i,"Depth"],subclone.genotype = subclone.geno,
+          Cell[[k]]<-cbind(CellularitiesFromFreq(Genotype= as.character(SNV_list[[k]][i,'Genotype']),
+                                                 Alt = SNV_list[[k]][i,"Alt"],
+                                                 Depth = SNV_list[[k]][i,"Depth"],
+                                                 subclone.genotype = subclone.geno,
                                                  subclone.cell = SNV_list[[k]][i,"subclone.cell"],
-                                                 chr = SNV_list[[k]][i,'Chr'], position = SNV_list[[k]][i,'Start'],
-                                                 contamination = contamination[k],restrict.to.AB = restrict.to.AB),
+                                                 chr = SNV_list[[k]][i,'Chr'],
+                                                 position = SNV_list[[k]][i,'Start'],
+                                                 contamination = contamination[k],
+                                                 restrict.to.AB = restrict.to.AB,
+                                                 force.single.copy = force.single.copy),
                            id)
         }
         else{
           if(chr[i]!=chr_ante){
-            CHR_FREEC<-lapply(FREEC_list,function(z) z[as.character(z[,"Chromosome"])==strsplit(as.character(chr[i]),split = "r")[[1]][2],])
+            CHR_FREEC<-lapply(FREEC_list,
+                              function(z){
+                                z[as.character(z[,"Chromosome"])==strsplit(as.character(chr[i]),
+                                                                           split = "r")[[1]][2],]
+                              } )
             chr_ante<-chr[i]
           }
           Cell[[k]]<-cbind(CellularitiesFromFreq(Freec_ratio = CHR_FREEC[[k]],
@@ -378,7 +435,9 @@ Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_pr
                                                  subclone.genotype = subclone.geno,
                                                  subclone.cell = SNV_list[[k]][i,"subclone.cell"],
                                                  chr = SNV_list[[k]][i,'Chr'], position = SNV_list[[k]][i,'Start'],
-                                                 contamination = contamination[k],restrict.to.AB = restrict.to.AB),
+                                                 contamination = contamination[k],
+                                                 restrict.to.AB = restrict.to.AB,
+                                                 force.single.copy = force.single.copy),
                            id)
         }
         if(sum(is.na(Cell[[k]]))>0){
@@ -404,6 +463,7 @@ Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_pr
       id<-id+1
     }
   }
+  
   if(count>0){
     warning(paste(count,'mutations exluded due to missing genotype or normalization issues'))
   }
@@ -424,11 +484,14 @@ Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_pr
 #' @param subclone.cell The cellular prevalence of the subclone which has a different Copy Number at this site
 #' @param contamination The fraction of normal cells in the sample
 #' @param restrict.to.AB Should the analysis keep only sites located in A and AB sites in all samples?
+#' @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
 #' @keywords Clonal inference
 
 CellularitiesFromFreq<-function(chr, position,Alt,Depth,
                                 Freec_ratio=NULL, Genotype=NULL,subclone.genotype=NULL,
-                                subclone.cell=NULL,contamination, restrict.to.AB = F){##For 1 mutation
+                                subclone.cell=NULL,contamination, restrict.to.AB = FALSE,
+                                force.single.copy = FALSE){
+  ##For 1 mutation
   if(!is.null(Freec_ratio)){
     if(grepl(pattern = "chr",x = chr,ignore.case = T)){
       FChr<-sapply(X = 'chr',FUN = paste, Freec_ratio[,'Chromosome'],sep='')
@@ -456,15 +519,42 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
     return(NA)
   }
   else if (is.null(subclone.genotype) | is.null(subclone.cell)){
-    result<-data.frame()
     As<-strcount(x = Genotype, pattern = 'A',split = '')
     Ns<-nchar(Genotype)
-    for(i in 1:As){
-      Cellularity<-as.numeric(Alt/Depth*Ns/(i*1-contamination))
-      spare<-data.frame(chr,position,Cellularity, Genotype,Alt,Depth,i,Ns)
-      colnames(spare)<-c('Chr','Start','Cellularity','Genotype',"Alt","Depth","NC","NCh")
-      result<-rbind(result,spare)
-      alpha<-c(alpha,choose(As,i)+choose(Ns-As,i))
+    if(force.single.copy){
+      ### Only one possibility per mutation
+      result<-data.frame(Chr = chr,
+                         Start =  position, 
+                         Cellularity = as.numeric(Alt/Depth*Ns/(1-contamination)),
+                         Genotype = Genotype,
+                         Alt = Alt,
+                         Depth = Depth,
+                         NC = 1,
+                         NCh = Ns)
+      alpha<-1
+      
+    }
+    else{
+      # for(i in 1:As){
+      #   ### T
+      #   
+      #   Cellularity<-as.numeric(Alt/Depth*Ns/(i*(1-contamination)))
+      #   spare<-data.frame(chr,position,Cellularity, Genotype,Alt,Depth,i,Ns)
+      #   colnames(spare)<-c('Chr','Start','Cellularity','Genotype',"Alt","Depth","NC","NCh")
+      #   result<-rbind(result,spare)
+      #   alpha<-c(alpha,choose(As,i)+choose(Ns-As,i))
+      # }
+      
+      ### Vectorized version:
+      result<-data.frame(Chr = chr,
+                         Start = position,
+                         Cellularity = as.numeric(Alt/Depth*Ns/((1:As)*(1-contamination))),
+                         Genotype = Genotype,
+                         Alt = Alt,
+                         Depth = Depth,
+                         NC = 1:As,
+                         NCh = Ns)
+      alpha<-choose(As,1:As)+choose(Ns-As,1:As)
     }
   }
   else{ ## Two possibilities: belong to clone or subclone
@@ -709,7 +799,7 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
       }
       else{
         ggplot2::ggsave(plot = q, filename = paste0(output_directory,'/', 'Cellularity_clustered',
-                                                   Sample_names[1],'all_models.pdf'),
+                                                    Sample_names[1],'all_models.pdf'),
                         width = 6.04,height = 6.04)
       }
       
@@ -740,25 +830,27 @@ Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination
   if(is.null(clone_weights)){
     clone_weights<-rep(1/length(SNV_list),times = length(SNV_list))
   }
-  if(is.null(SNV_list[[1]]$NC)){
-    Schrod<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided = TRUE,contamination = contamination)
+  if(is.null(SNV_list[[1]]$NC)){ ### The output has not been through clustering
+    Schrod<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided = TRUE,
+                                              contamination = contamination)
     result<-Schrod[[1]]
     if(length(Schrod)>1){
       for(i in 2:length(Schrod)){
         result<-cbind(result,Schrod[[i]]$Cell,Schrod[[i]][,c('Cellularity','Genotype',"Alt","Depth","NC")])
       }
     }
-    result<-cbind(result,proba = eval.fik(Schrod = Schrod,centers = clone_prevalence,alpha= rep(1,times=length(Schrod[[1]]$NC)),
-                                          weights= clone_weights,keep.all.poss = TRUE,
-                                          adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination)))
+    #result<-cbind(result,proba = eval.fik(Schrod = Schrod,centers = clone_prevalence,alpha= rep(1,times=nrow(Schrod[[1]])),
+    result<- eval.fik(Schrod = Schrod,centers = clone_prevalence,alpha= rep(1,times=nrow(Schrod[[1]])),
+                                         weights= clone_weights,keep.all.poss = TRUE,
+                                          adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination))
   }
   else{
     result<-SNV_list[[1]]
-    if(length(SNV_list)>1){
-      for(i in 2:length(SNV_list)){
-        result<-cbind(result,SNV_list[[i]]$Cell,SNV_list[[i]][,c('Cellularity','Genotype',"Alt","Depth","NC")])
-      }
-    }
+    # if(length(SNV_list)>1){
+    #   for(i in 2:length(SNV_list)){
+    #     result<-cbind(result,SNV_list[[i]]$Cell,SNV_list[[i]][,c('Cellularity','Genotype',"Alt","Depth","NC")])
+    #   }
+    # }
     if(is.null(SNV_list[[1]]$alpha)){
       for(a in 1:length(SNV_list)){
         SNV_list[[a]]<-rep(1,times=length(SNV_list[[a]]$NC))

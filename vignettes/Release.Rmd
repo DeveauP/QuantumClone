@@ -10,7 +10,20 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEngine{knitr::rmarkdown}
 ---
-Release of 07/2016:
+Release of /08/2016
+  - Added function to easily compute Normalized Mutual Information from QuantumClone output - for simulated data.
+
+Release of 29/07/2016:
+
+  - Option to force single copy status - i.e. integrate QuantumCloneSingle in QuantumClone
+  - Perspectives:
+
+    * tidy plot code in cluster_plot
+    * Reproducible test in R (QC only)
+    * Reproducible testing in R+bash (QC+sciclone+pyClone)
+
+Release of 28/07/2016:
+
   - Added AIC (Akaike Information Criterion)
   - Added modified BIC (user input)
   - Added possibility to use `optimx` instead of `optim` for the maximization step
@@ -20,27 +33,27 @@ Release of 07/2016:
   - Solved conflicting name in simulation: cellularity of clone is now refered to as cellularit
   - Added option to keep all iteration models
   
-  -Perspectives:
-    * tidy plot code in cluster_plot
-    * Reproducible test in R (QC only)
-    * Reproducible testing in R+bash (QC+sciclone+pyClone)
-    * Option to force single copy status - i.e. integrate QuantumCloneSingle in QuantumClone
+
 
 Release of 10/12/2015:
+
   - Changed graph output to pdf
   - Fixed non-clustered graph name file
 
 Release of 12/11/2015:
+
   - Added release tag on github
   - Checked for ggplot2 scheduled release
 
 Release of 2/11/2015:
+
   - Correction of evolution plot
   - Adding content to vignettes
   - Added phylogenetic tree reconstruction and representation, along with examples
   - Added ImportFrom according to notes from R-devel: http://win-builder.r-project.org/
 
 Release of 30/10/2015:
+
   * Major fix *
   - Post processing affected order of mutations but not of clustering. The clustering thus appeared erroneous in version 0.9.15 and 0.10.15
 

@@ -394,7 +394,7 @@ parallelEM<-function(Schrod,nclust,epsilon,contamination,
     result<-foreach::foreach(i=1:(maxit),.export = c("FullEM","EM.algo","create_priors",
                                                      "add.to.list","e.step","m.step","list_prod",
                                                      "Compute.adj.fact","eval.fik","eval.fik.m",
-                                                     "fik.from.al","filter_on_fik","optimx")) %dopar% {
+                                                     "fik.from.al","filter_on_fik")) %dopar% {
                                                        FullEM(Schrod = Schrod,nclust = nclust,prior_weight = prior_weight,
                                                               contamination = contamination,epsilon = epsilon,
                                                               prior_center = create_priors(nclust = nclust,
@@ -566,7 +566,7 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
     list_out_EM<-foreach::foreach(i=nclone_range,.export = c("parallelEM","FullEM","EM.algo","create_priors",
                                                              "add.to.list","e.step","m.step","list_prod",
                                                              "Compute.adj.fact","eval.fik","eval.fik.m",
-                                                             "fik.from.al","filter_on_fik","optimx")) %dopar% {
+                                                             "fik.from.al","filter_on_fik")) %dopar% {
                                                                parallelEM(Schrod = Schrod,nclust = i,epsilon = epsilon,
                                                                           contamination = contamination,prior_center = clone_priors,
                                                                           prior_weight = prior_weight,maxit = maxit , ncores = 1,

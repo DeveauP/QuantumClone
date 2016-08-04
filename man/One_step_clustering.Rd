@@ -10,7 +10,7 @@ One_step_clustering(SNV_list, FREEC_list = NULL, contamination,
   (10^(-3)), save_plot = TRUE, ncores = 1, plot_3D = FALSE,
   plot_3D_before_clustering = FALSE, restrict.to.AB = FALSE,
   output_directory = NULL, model.selection = "BIC", optim = "default",
-  keep.all.models = FALSE)
+  keep.all.models = FALSE, force.single.copy = FALSE)
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
@@ -54,6 +54,8 @@ uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it wil
 \item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx")}
 
 \item{keep.all.models}{Should the function output the best model (default; FALSE), or all models tested (if set to true)}
+
+\item{force.single.copy}{Should all mutations in overdiploid regions set to single copy? Default is FALSE}
 }
 \description{
 Wrap up function that clusters cellularities. This is based on the most likely possibility for each mutation, give ints frequency and genotype.

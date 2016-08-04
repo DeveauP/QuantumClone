@@ -1,0 +1,17 @@
+###Config file
+
+# Software paths
+R=/path/to/bin/R
+python=/path/to/bin/python
+
+## Package path
+pyclone=/path/to/pyClone # this is the pyClone file
+pyclone_config=${PWD}/config_pyClone.txt #path to the master config file
+
+## Directories
+input=/path/to/reproducible_testing/Comparison_other_methods/
+output=$PWD
+
+## Plot output?
+plot=TRUE #TRUE or FALSE
+

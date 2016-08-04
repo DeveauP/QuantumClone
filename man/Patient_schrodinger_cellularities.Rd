@@ -5,7 +5,8 @@
 \title{Patient Schrodinger Cellularities}
 \usage{
 Patient_schrodinger_cellularities(SNV_list, FREEC_list = NULL,
-  Genotype_provided = FALSE, contamination, restrict.to.AB = F)
+  Genotype_provided = FALSE, contamination, restrict.to.AB = FALSE,
+  force.single.copy = FALSE)
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
@@ -19,6 +20,8 @@ and if the output from FREEC for the samples are not associated, the genotype "G
 \item{contamination}{Numeric vector describind the contamination in all samples (ranging from 0 to 1). Default is 0.}
 
 \item{restrict.to.AB}{Should the analysis keep only sites located in A and AB sites in all samples?}
+
+\item{force.single.copy}{Should all mutations in overdiploid regions set to single copy? Default is FALSE}
 }
 \description{
 Computes all possible cellularities for all mutations across all samples. Calls CellularitiesFromFreq on all mutations to evaluate all possibilities

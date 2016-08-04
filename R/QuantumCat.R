@@ -50,12 +50,12 @@ QuantumCat<-function(number_of_clones,number_of_mutations,ploidy=2,depth=100,num
   i<-0
   test<-T
   if(ploidy=="disomic"){
-   for(i in 1:number_of_samples){
-     A[[i]]<-rep(1,times = number_of_mutations)
-     B[[i]]<-rep(1,times = number_of_mutations)
-     Genotype[[i]]<-rep("AB",times = number_of_mutations)
-     number_of_copies[[i]]<-rep(1,times = number_of_mutations)
-   }
+    for(i in 1:number_of_samples){
+      A[[i]]<-rep(1,times = number_of_mutations)
+      B[[i]]<-rep(1,times = number_of_mutations)
+      Genotype[[i]]<-rep("AB",times = number_of_mutations)
+      number_of_copies[[i]]<-rep(1,times = number_of_mutations)
+    }
   }
   else if(class(ploidy)=="character"){
     if(length(ploidy)==1){
@@ -106,7 +106,7 @@ QuantumCat<-function(number_of_clones,number_of_mutations,ploidy=2,depth=100,num
     }
   }
   if(number_of_samples>1){
-  Cell<-Cellularities[Clonal_attribution[1:number_of_mutations],]
+    Cell<-Cellularities[Clonal_attribution[1:number_of_mutations],]
   }
   else{
     Cell<-Cellularities[Clonal_attribution[1:number_of_mutations]]
@@ -252,7 +252,7 @@ Multitest<-function(number_of_tests,number_of_samples=2,ploidy=2,Sample_name='Mu
                             xlim=c(0,100),ylim=c(0,100),
                             xlab=paste('Exact freq',U[p,1],sep=''),ylab=paste('Exact freq',U[p,2],sep=''),colour=Cluster)
           ggplot2::ggsave(plot = q, filename = paste(Sample_name,i,'/', 'Exact_freq',U[p,1],'_',U[p,2],'.png',sep=''),width = 6.04,height = 6.04)
-        
+          
         }
       }
     }
@@ -270,86 +270,56 @@ Multitest<-function(number_of_tests,number_of_samples=2,ploidy=2,Sample_name='Mu
     else{
       Cell<-data.frame(data_generated[[1]][,'Cellularity'])
     }
+    
+    NMI<-Compute_NMI(t)
+    
     if(i==1){
-      statistics<-data.frame(number_of_clones,max(t$cluster))
-      P_cluster<-table(t$cluster)/length(t$cluster)
-      P_clone<-table(t$filtered.data[[1]]$Chr)/length(t$filtered.data[[1]]$Chr)
-      H_clone<--sum(P_clone*log(P_clone))
-      H_cluster<--sum(P_cluster*log(P_cluster))
-      A<-aggregate(rep(1, times = length(t$cluster)), by = list(x= t$cluster,y=t$filtered.data[[1]]$Chr ), sum)
-      L<-log(A[,3]/(length(t$cluster)*P_cluster[A[,1]]*P_clone[A[,2]]))
-      NMI<-2*sum(A[,3]/length(t$cluster)*L)/(H_clone+H_cluster)      
-#       for(j in 1:number_of_clones){
-#         cluster<-t$cluster[t$filtered.data[[1]]$Chr==j]
-#         corresponding_cluster<-as.numeric(names(table(cluster))[which.max(table(cluster))])
-#         #percentage_misclustered<-percentage_misclustered+sum(cluster!=corresponding_cluster)
-#         if(length(corresponding_cluster)==0){
-#           warning(paste("One unobserved clone:",cluster))
-#         }
-#         else{
-#           if(j==1){
-#             distance<-sqrt(sum((t$pamobject$medoids[corresponding_cluster,]-Cell[j,])**2))
-#           }
-#           else{
-#             distance<-c(sqrt(sum((t$pamobject$medoids[corresponding_cluster,]-Cell[j,])**2)))
-#           }
-#         }
-#       }
       
-      #percentage_misclustered<-percentage_misclustered/length(t$pamobject$clustering)*100
-#       average_distance<-mean(distance)
       statistics<-cbind(statistics,NMI)
       colnames(statistics)<-colnames(statistics)<-c("number_of_clones",'clones_observed','NMI')
     }
     else{
-      P_cluster<-table(t$cluster)/length(t$cluster)
-      P_clone<-table(t$filtered.data[[1]]$Chr)/length(t$filtered.data[[1]]$Chr)
-      H_clone<--sum(P_clone*log(P_clone))
-      H_cluster<--sum(P_cluster*log(P_cluster))
-      A<-aggregate(rep(1, length(t$cluster)), by = list(x= t$cluster,y=t$filtered.data[[1]]$Chr ), sum)
-      L<-log(A[,3]/(length(t$cluster)*P_cluster[A[,1]]*P_clone[A[,2]]))
-      NMI<-2*sum(A[,3]/length(t$cluster)*L)/(H_clone+H_cluster)
-#       for(j in 1:number_of_clones){
-#         #percentage_misclustered<-percentage_misclustered+sum(cluster!=corresponding_cluster)
-#         cluster<-t$pamobject$clustering[t$filtered.data[[1]]$Chr]==j]
-#         corresponding_cluster<-as.numeric(names(table(cluster))[which.max(table(cluster))])
-#         if(length(corresponding_cluster)==0){
-#           warning(paste("One unobserved clone:",cluster))
-#         }
-#         else{
-#           if(j==1){
-#             distance<-sqrt(sum((t$pamobject$medoids[corresponding_cluster,]-Cell[j,])**2))
-#           }
-#           else{
-#             distance<-c(sqrt(sum((t$pamobject$medoids[corresponding_cluster,]-Cell[j,])**2)))
-#           }
-#         }
-#       }
+      #       for(j in 1:number_of_clones){
+      #         #percentage_misclustered<-percentage_misclustered+sum(cluster!=corresponding_cluster)
+      #         cluster<-t$pamobject$clustering[t$filtered.data[[1]]$Chr]==j]
+      #         corresponding_cluster<-as.numeric(names(table(cluster))[which.max(table(cluster))])
+      #         if(length(corresponding_cluster)==0){
+      #           warning(paste("One unobserved clone:",cluster))
+      #         }
+      #         else{
+      #           if(j==1){
+      #             distance<-sqrt(sum((t$pamobject$medoids[corresponding_cluster,]-Cell[j,])**2))
+      #           }
+      #           else{
+      #             distance<-c(sqrt(sum((t$pamobject$medoids[corresponding_cluster,]-Cell[j,])**2)))
+      #           }
+      #         }
+      #       }
       #percentage_misclustered<-percentage_misclustered/length(t$pamobject$clustering)*100
       #average_distance<-mean(distance)
       statistics<-rbind(statistics,c(number_of_clones,max(t$cluster),NMI))
     }
-#     if(plot_results){
-#       if(number_of_samples>1){
-#         for(p in 1:dim(U)[1]){
-#           q<-ggplot2::qplot(x=c(t$pamobject$medoids[,U[p,1]],Cell[,U[p,1]]),y=c(t$pamobject$medoids[,U[p,2]],Cell[,U[p,2]]),
-#                             xlab=paste('Cellularity of centers, sample',U[p,1]),
-#                             ylab=paste('Cellularity of centers, sample',U[p,2]),asp=1,main='Comparison of centers',
-#                             colour=factor(c(rep(1,times=dim(t$pamobject$medoids)[1]),rep(2,times=dim(Cell)[1]))),
-#                             shape=factor(c(rep(1,times=dim(t$pamobject$medoids)[1]),rep(2,times=dim(Cell)[1]))))+scale_shape_discrete(name="Centers",breaks=c(1,2),labels=c("Estimated","Real"))+scale_colour_discrete(name="Centers",breaks=c(1,2),labels=c("Estimated","Real"))+coord_cartesian(xlim=c(0,1),ylim=c(0,1))
-#           ggplot2::ggsave(plot = q, filename = paste(Sample_name,i,'/', 'Comparison_simulation', U[p,1],'_',U[p,2], '.png',sep=''),width = 6.04,height = 6.04)
-#         }
-#       }
-#       else{
-#         q<-ggplot2::qplot(x=c(t$pamobject$medoids[,1],unique(Cell[,1])/100),y=0.5,
-#                           xlab=paste('Cellularity of centers'),
-#                           ylab='',asp=1,main='Comparison of centers',
-#                           colour=factor(c(rep(1,times=dim(t$pamobject$medoids)[1]),rep(2,times=dim(unique(Cell))[1]))),
-#                           shape=factor(c(rep(1,times=dim(t$pamobject$medoids)[1]),rep(2,times=dim(unique(Cell))[1]))))+scale_shape_discrete(name="Centers",breaks=c(1,2),labels=c("Estimated","Real"))+scale_colour_discrete(name="Centers",breaks=c(1,2),labels=c("Estimated","Real"))+coord_cartesian(xlim=c(0,1),ylim=c(0,1))
-#         ggplot2::ggsave(plot = q, filename = paste(Sample_name,i,'/', 'Comparison_simulation', '.png',sep=''),width = 6.04,height = 6.04)
-#         
-#       }
-     
+    #     if(plot_results){
+    #       if(number_of_samples>1){
+    #         for(p in 1:dim(U)[1]){
+    #           q<-ggplot2::qplot(x=c(t$pamobject$medoids[,U[p,1]],Cell[,U[p,1]]),y=c(t$pamobject$medoids[,U[p,2]],Cell[,U[p,2]]),
+    #                             xlab=paste('Cellularity of centers, sample',U[p,1]),
+    #                             ylab=paste('Cellularity of centers, sample',U[p,2]),asp=1,main='Comparison of centers',
+    #                             colour=factor(c(rep(1,times=dim(t$pamobject$medoids)[1]),rep(2,times=dim(Cell)[1]))),
+    #                             shape=factor(c(rep(1,times=dim(t$pamobject$medoids)[1]),rep(2,times=dim(Cell)[1]))))+scale_shape_discrete(name="Centers",breaks=c(1,2),labels=c("Estimated","Real"))+scale_colour_discrete(name="Centers",breaks=c(1,2),labels=c("Estimated","Real"))+coord_cartesian(xlim=c(0,1),ylim=c(0,1))
+    #           ggplot2::ggsave(plot = q, filename = paste(Sample_name,i,'/', 'Comparison_simulation', U[p,1],'_',U[p,2], '.png',sep=''),width = 6.04,height = 6.04)
+    #         }
+    #       }
+    #       else{
+    #         q<-ggplot2::qplot(x=c(t$pamobject$medoids[,1],unique(Cell[,1])/100),y=0.5,
+    #                           xlab=paste('Cellularity of centers'),
+    #                           ylab='',asp=1,main='Comparison of centers',
+    #                           colour=factor(c(rep(1,times=dim(t$pamobject$medoids)[1]),rep(2,times=dim(unique(Cell))[1]))),
+    #                           shape=factor(c(rep(1,times=dim(t$pamobject$medoids)[1]),rep(2,times=dim(unique(Cell))[1]))))+scale_shape_discrete(name="Centers",breaks=c(1,2),labels=c("Estimated","Real"))+scale_colour_discrete(name="Centers",breaks=c(1,2),labels=c("Estimated","Real"))+coord_cartesian(xlim=c(0,1),ylim=c(0,1))
+    #         ggplot2::ggsave(plot = q, filename = paste(Sample_name,i,'/', 'Comparison_simulation', '.png',sep=''),width = 6.04,height = 6.04)
+    #         
+    #       }
+    
   }
   return(statistics)
 }
@@ -420,7 +390,7 @@ statistics_on_Multitest<-function(number_of_tests_per_condition=100,range_clones
                   #              sd_distance<-c(sd_distance,sd(statistics[,4]))
                   obs<-c(obs,sum((!is.na(statistics[,2]) & !is.na(statistics[,3])))
                   )
-               }
+                }
               }
             }
           }
@@ -431,4 +401,31 @@ statistics_on_Multitest<-function(number_of_tests_per_condition=100,range_clones
   result<-data.frame(Test_code,mean_clone_found,sd_clone_found,mean_percentage_misclustered,sd_percentage_misclustered,obs)
   colnames(result)<-c("Test_code",'mean_clone_found','sd_clone_found','mean_NMI','sd_NMI',"number_of_obs")
   return(result)
+}
+
+#' Normalized Mutual Information
+#' 
+#' Compute the normalized mutual information to assess clustering quality
+#' @param  QC_out output from QuantumClone clustering 
+#' @export
+#' @examples 
+#' Compute_NMI(QC_output)
+Compute_NMI<-function(QC_out){
+  # Probabilities
+  cluster<-QC_out$cluster
+  P_cluster<-table(cluster)/length(cluster)
+  P_clone<-table(QC_out$filtered.data[[1]]$Chr)/length(QC_out$filtered.data[[1]]$Chr)
+  
+  # Information entropy
+  H_clone<--sum(P_clone*log(P_clone))
+  H_cluster<--sum(P_cluster*log(P_cluster))
+  
+  A<-aggregate(rep(1, length(cluster)), 
+               by = list(x= cluster,
+                         y=QC_out$filtered.data[[1]]$Chr ),
+               sum)
+  L<-log(A[,3]/(length(cluster)*P_cluster[A[,1]]*P_clone[A[,2]]))
+  
+  NMI<-2*sum(A[,3]/length(cluster)*L)/(H_clone+H_cluster)
+  return(NMI)
 }

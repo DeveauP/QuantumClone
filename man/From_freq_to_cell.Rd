@@ -6,7 +6,8 @@
 \usage{
 From_freq_to_cell(SNV_list, FREEC_list = NULL, Sample_names,
   Genotype_provided = FALSE, save_plot = TRUE, contamination, ncores = 4,
-  restrict.to.AB = FALSE, output_directory = NULL)
+  restrict.to.AB = FALSE, output_directory = NULL,
+  force.single.copy = FALSE)
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
@@ -28,6 +29,8 @@ and if the output from FREEC for the samples are not associated, the genotype "G
 \item{restrict.to.AB}{Should the analysis keep only sites located in A and AB sites in all samples?}
 
 \item{output_directory}{Directory in which to save results}
+
+\item{force.single.copy}{Should all mutations in overdiploid regions set to single copy? Default is FALSE}
 }
 \description{
 Function that computes the most likely position for each mutation based on the genotype

@@ -6,7 +6,7 @@
 \usage{
 CellularitiesFromFreq(chr, position, Alt, Depth, Freec_ratio = NULL,
   Genotype = NULL, subclone.genotype = NULL, subclone.cell = NULL,
-  contamination, restrict.to.AB = F)
+  contamination, restrict.to.AB = FALSE, force.single.copy = FALSE)
 }
 \arguments{
 \item{chr}{The chromosome on which is the position (numeric value, not chr1 as in BED files)}
@@ -28,6 +28,8 @@ CellularitiesFromFreq(chr, position, Alt, Depth, Freec_ratio = NULL,
 \item{contamination}{The fraction of normal cells in the sample}
 
 \item{restrict.to.AB}{Should the analysis keep only sites located in A and AB sites in all samples?}
+
+\item{force.single.copy}{Should all mutations in overdiploid regions set to single copy? Default is FALSE}
 }
 \description{
 Creates all possibilities for one mutation in one sample (given a genotype), then computes
