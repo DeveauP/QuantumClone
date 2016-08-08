@@ -26,7 +26,9 @@ Imports:
     parallel,
     gridExtra,
     ggplot2,
-    rgl
+    rgl,
+    knitr,
+    rmarkdown
 License: GPL-2
 URL: https://github.com/DeveauP/QuantumClone
 BugReports: https://github.com/DeveauP/QuantumClone/issues
