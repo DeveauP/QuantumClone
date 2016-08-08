@@ -833,30 +833,30 @@ Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination
   if(is.null(SNV_list[[1]]$NC)){ ### The output has not been through clustering
     Schrod<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided = TRUE,
                                               contamination = contamination)
-    result<-Schrod[[1]]
-    if(length(Schrod)>1){
-      for(i in 2:length(Schrod)){
-        result<-cbind(result,Schrod[[i]]$Cell,Schrod[[i]][,c('Cellularity','Genotype',"Alt","Depth","NC")])
-      }
-    }
+    # result<-Schrod[[1]]
+    # if(length(Schrod)>1){
+    #   for(i in 2:length(Schrod)){
+    #     result<-cbind(result,Schrod[[i]]$Cell,Schrod[[i]][,c('Cellularity','Genotype',"Alt","Depth","NC")])
+    #   }
+    # }
     #result<-cbind(result,proba = eval.fik(Schrod = Schrod,centers = clone_prevalence,alpha= rep(1,times=nrow(Schrod[[1]])),
     result<- eval.fik(Schrod = Schrod,centers = clone_prevalence,alpha= rep(1,times=nrow(Schrod[[1]])),
                                          weights= clone_weights,keep.all.poss = TRUE,
                                           adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination))
   }
   else{
-    result<-SNV_list[[1]]
+    # result<-SNV_list[[1]]
     # if(length(SNV_list)>1){
     #   for(i in 2:length(SNV_list)){
     #     result<-cbind(result,SNV_list[[i]]$Cell,SNV_list[[i]][,c('Cellularity','Genotype',"Alt","Depth","NC")])
     #   }
     # }
-    if(is.null(SNV_list[[1]]$alpha)){
-      for(a in 1:length(SNV_list)){
-        SNV_list[[a]]<-rep(1,times=length(SNV_list[[a]]$NC))
-      }
-    }
-    adj.fact<-Compute.adj.fact(SNV_list,contamination)
+    # if(is.null(SNV_list[[1]]$alpha)){
+    #   for(a in 1:length(SNV_list)){
+    #     SNV_list[[a]]<-rep(1,times=length(SNV_list[[a]]$NC))
+    #   }
+    # }
+    # adj.fact<-Compute.adj.fact(SNV_list,contamination)
     result<-eval.fik(Schrod = SNV_list,centers = clone_prevalence,weights =clone_weights,
                      keep.all.poss = TRUE,adj.factor = adj.fact)
   }

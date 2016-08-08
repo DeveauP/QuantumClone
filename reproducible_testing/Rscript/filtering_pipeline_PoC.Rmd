@@ -1,5 +1,5 @@
 ---
-title: "Proof of concept: filtering pipeline"
+title: "Proof of concept: filtering pipeline cComputational time)"
 author: "Paul Deveau"
 date: "`r Sys.Date()`"
 output: 
@@ -25,7 +25,6 @@ if(!require(QuantumClone)){
 }
 if(!require(knitr)) install.packages("knitr")
 if(!require(ggplot2)) install.packages("ggplot2")
-if(!require(microbenchmark)) install.packages("microbenchmark")
 # Creating reproducible example
 set.seed(123)
 ndrivers <-20
@@ -33,15 +32,16 @@ strcount <- function(x, pattern='', split=''){
   
   unlist(lapply(strsplit(x, split),function(z) na.omit(length(grep(pattern, z)))))
 }
+number_iterations<-10
 
 ````
 
 We will first create a test set with 6 clones, 200 variants, diploid, with an average depth of 100X, two samples with respective purity 70% and 60%.
 
-````{r create_data}
+````{r create_data}2
 toy.data<-QuantumCat(number_of_clones = 6,number_of_mutations = 200,
-                     ploidy = "AB",depth = 100,number_of_samples = 2,
-                     contamination = c(0.3,0.4))
+ploidy = "AB",depth = 100,number_of_samples = 2,
+contamination = c(0.3,0.4))
 
 ````
 
@@ -56,12 +56,12 @@ We will remove these positions from the filtered data.
 
 `````{r filter_data}
 keep<- sapply(X = 1:nrow(toy.data[[1]]),
-              FUN = function (z){
-                toy.data[[1]][z,"Depth"]>50 && toy.data[[2]][z,"Depth"]>50
-              })
+FUN = function (z){
+toy.data[[1]][z,"Depth"]>50 && toy.data[[2]][z,"Depth"]>50
+})
 
 filtered.data<-lapply(X = toy.data, function(df){
-  df[keep,]
+df[keep,]
 })
 
 knitr::kable(head(filtered.data[[1]]))
@@ -78,33 +78,35 @@ Chr<-sample(1:6,size = 200,replace = TRUE)
 Start <- (nrow(noisy_data[[1]])+1):(nrow(noisy_data[[1]])+200)
 purity<-c(0.7,0.6)
 for(i in 1:length(toy.data)){
-  Cells<-sapply(1:6, function(z) unique(noisy_data[[i]]$Cellularit[noisy_data[[i]]$Chr==z]))
-  
-  Genotype <-rep(c("AAB","AABB"),times = c(150,50))
-  NCh<-rep(c(3,4),times = c(150,50))
-  
-  number_of_copies<-c(sample(x = 1:2,size = 150,replace = TRUE,prob = c(3/4,1/4)),
-                      sample(x = 1:2,size = 50,replace = TRUE)
-  )
-  Cellularit<-sapply(Chr,function(n) Cells[n])
-  Frequency <- Cellularit*purity[i]*number_of_copies/NCh
-  Depth<-rnbinom(n=200,size = 4.331601,mu = 100)
-  Alt<-rbinom(n=200,size = Depth,prob = Frequency/100)
-  noisy_data[[i]]<-rbind(noisy_data[[i]],
-                         data.frame(Chr = Chr,Start = Start,Genotype = Genotype,
-                                    Cellularit = Cellularit,
-                                    number_of_copies = number_of_copies,
-                                    Frequency = Frequency, Depth = Depth, Alt = Alt))
+Cells<-sapply(1:6, function(z) unique(noisy_data[[i]]$Cellularit[noisy_data[[i]]$Chr==z]))
+
+Genotype <-rep(c("AAB","AABB"),times = c(150,50))
+NCh<-rep(c(3,4),times = c(150,50))
+
+number_of_copies<-c(sample(x = 1:2,size = 150,replace = TRUE,prob = c(3/4,1/4)),
+sample(x = 1:2,size = 50,replace = TRUE)
+)
+Cellularit<-sapply(Chr,function(n) Cells[n])
+Frequency <- Cellularit*purity[i]*number_of_copies/NCh
+Depth<-rnbinom(n=200,size = 4.331601,mu = 100)
+Alt<-rbinom(n=200,size = Depth,prob = Frequency/100)
+noisy_data[[i]]<-rbind(noisy_data[[i]],
+data.frame(Chr = Chr,Start = Start,Genotype = Genotype,
+Cellularit = Cellularit,
+number_of_copies = number_of_copies,
+Frequency = Frequency, Depth = Depth, Alt = Alt))
 }
 
 
 ````
 
-Now let's select `r ndrivers` drivers among these:
+Now let's select `r ndrivers` drivers among these ($1/4$ in stringent filters and $3/4$ in more noisy data):
 
 
 ````{r select_tp}
-drivers<-sample(x = 1:nrow(noisy_data[[1]]),size = ndrivers,replace = FALSE)
+drivers<-c(sample(x = which(keep),size = round(ndrivers/4),replace = FALSE),
+sample(x = (1:nrow(noisy_data[[1]]))[!keep],size= 3*round(ndrivers/4),replace = FALSE)
+)
 
 ````
 
@@ -117,8 +119,11 @@ log_drivers[drivers]<-TRUE
 
 log_drivers_intersect_keep<-log_keep & log_drivers
 
+
 drivers_data<-lapply(noisy_data,function(df) df[drivers,])
-drivers_id<-noisy_data[[1]]$Start
+drivers_id<-drivers_data[[1]]$Start
+
+id_drivers_less_stringent<-noisy_data[[1]]$Start[log_drivers & !log_keep]
 
 ````
 
@@ -136,48 +141,51 @@ The first one will cluster variants from stringent filters and attribute drivers
 First we will set each function to work as previously described:
 ````{r set_pipelines}
 paper_pipeline<-function(cleaned.data, drivers){
-  Clusters<-One_step_clustering(SNV_list = filtered.data,
-                                contamination = c(0.3,0.4),
-                                nclone_range = 2:10,
-                                maxit = 2,
-                                save_plot = FALSE,
-                                ncores = 4
-  )
-  #print(drivers)
-  p<-Probability.to.belong.to.clone(SNV_list = drivers,
-                                    clone_prevalence = Clusters$EM.output$centers,
-                                    contamination = c(0.3,0.4),
-                                    clone_weights = Clusters$EM.output$weights
-  )
-  return(list(Clusters = Clusters,Driver_clusts = p))
+Clusters<-One_step_clustering(SNV_list = filtered.data,
+contamination = c(0.3,0.4),
+nclone_range = 2:10,
+maxit = 2,
+save_plot = FALSE,
+ncores = 4
+)
+#print(drivers)
+p<-Probability.to.belong.to.clone(SNV_list = drivers,
+clone_prevalence = Clusters$EM.output$centers,
+contamination = c(0.3,0.4),
+clone_weights = Clusters$EM.output$weights
+)
+return(list(Clusters = Clusters,Driver_clusts = p))
 }
 
 All_clustering<-function(noisy)
-  return(One_step_clustering(SNV_list = noisy,
-                             contamination = c(0.3,0.4),
-                             nclone_range = 2:10,
-                             maxit = 2,
-                             save_plot = FALSE,
-                             ncores = 4
-  )
-  )
+return(One_step_clustering(SNV_list = noisy,
+contamination = c(0.3,0.4),
+nclone_range = 2:10,
+maxit = 2,
+save_plot = FALSE,
+ncores = 4
+)
+)
 
-filter_drivers<-function(cleaned.data,drivers){
-  input<-list()
-  
-  for(i in 1:length(cleaned.data)){
-    spare<-drivers[[i]][as.numeric(row.names(drivers[[i]]))>200,]
-    row.names(spare)<-(max(as.numeric(row.names(cleaned.data[[1]])))+1):(max(as.numeric(row.names(cleaned.data[[1]])))+nrow(spare))
-    input[[i]]<-rbind(cleaned.data[[i]],spare)
-    row.names(input[[i]])<-1:nrow(input[[i]])
-  }
-  return(One_step_clustering(SNV_list = input,
-                             contamination = c(0.3,0.4),
-                             nclone_range = 2:10,
-                             maxit = 2,
-                             save_plot = FALSE,
-                             ncores = 4
-  ))
+filter_drivers<-function(cleaned.data,noisy_data,id_drivers_less_stringent){
+input<-list()
+test<-noisy_data[[1]]$Start %in% id_drivers_less_stringent
+for(i in 1:length(cleaned.data)){
+spare<-noisy_data[[i]][test,]
+#print(spare)
+#message(nrow(spare))
+#message(length(id_drivers_less_stringent))
+row.names(spare)<-(max(as.numeric(row.names(cleaned.data[[1]])))+1):(max(as.numeric(row.names(cleaned.data[[1]])))+nrow(spare))
+input[[i]]<-rbind(cleaned.data[[i]],spare)
+row.names(input[[i]])<-1:nrow(input[[i]])
+}
+return(One_step_clustering(SNV_list = input,
+contamination = c(0.3,0.4),
+nclone_range = 2:10,
+maxit = 2,
+save_plot = FALSE,
+ncores = 4
+))
 }
 
 
@@ -187,15 +195,11 @@ Let's compare computing time:
 # Change to 5 after debug
 
 ````{r mb, message = FALSE}
-mb<-microbenchmark::microbenchmark(Paper_pipeline<-paper_pipeline(cleaned.data = filtered.data,
-                                                                  drivers = drivers_data),
-                                   All<-All_clustering(noisy = noisy_data),
-                                   Filter_drivers<-filter_drivers(cleaned.data = filtered.data,
-                                                                  drivers = drivers_data),
-                                   times = 5) # Change to 5 after debug
-autoplot(mb)+theme_bw()
-
-kable(Paper_pipeline$Drivers_clusts)
+Paper_pipeline<-paper_pipeline(cleaned.data = filtered.data,drivers = drivers_data)
+All<-All_clustering(noisy = noisy_data),
+Filter_drivers<-filter_drivers(cleaned.data = filtered.data,
+                              noisy_data,
+                              id_drivers_less_stringent)
 
 ````
 
@@ -205,24 +209,24 @@ We can here see that the computing time for the pipeline in the paper and the on
 ````{r add_clustered, echo =FALSE}
 #First, we have to do some hard clustering on the probabilities
 if(nrow(Paper_pipeline$Driver_clusts)> nrow(drivers_data[[1]])){
-  # some variants have multiple possibilities
-  #colnames(Paper_pipeline$Driver_clusts)<-1:ncol(Paper_pipeline$Driver_clusts)
-  Paper_pipeline$Driver_clusts<-cbind(Paper_pipeline$Driver_clusts,
-                                      rep(drivers_data[[1]]$Start,
-                                              times = strcount(x = as.character(drivers_data[[1]]$Genotype),
-                                                               pattern  = "A")*strcount(x = as.character(drivers_data[[2]]$Genotype),
-                                                                                        pattern  = "A")
-  )
-  )
-  colnames( Paper_pipeline$Driver_clusts)<-c(1:(ncol(Paper_pipeline$Driver_clusts)-1),"Start")
-  uStart<-unique(Paper_pipeline$Driver_clusts[,"Start"])
-  cluster<-numeric(length = length(uStart))
-  index<-0
-  adjCol<-ncol(Paper_pipeline$Driver_clusts) -1 
-  for(i in uStart){
-    index<-index+1
-    cluster[index]<-which.max(Paper_pipeline$Driver_clusts[Paper_pipeline$Driver_clusts[,"Start"]==i,1:adjCol])%%adjCol
-  }
+# some variants have multiple possibilities
+#colnames(Paper_pipeline$Driver_clusts)<-1:ncol(Paper_pipeline$Driver_clusts)
+Paper_pipeline$Driver_clusts<-cbind(Paper_pipeline$Driver_clusts,
+rep(drivers_data[[1]]$Start,
+times = strcount(x = as.character(drivers_data[[1]]$Genotype),
+pattern  = "A")*strcount(x = as.character(drivers_data[[2]]$Genotype),
+pattern  = "A")
+)
+)
+colnames( Paper_pipeline$Driver_clusts)<-c(1:(ncol(Paper_pipeline$Driver_clusts)-1),"Start")
+uStart<-unique(Paper_pipeline$Driver_clusts[,"Start"])
+cluster<-numeric(length = length(uStart))
+index<-0
+adjCol<-ncol(Paper_pipeline$Driver_clusts) -1 
+for(i in uStart){
+index<-index+1
+cluster[index]<-which.max(Paper_pipeline$Driver_clusts[Paper_pipeline$Driver_clusts[,"Start"]==i,1:adjCol])%%adjCol
+}
   cluster[cluster==0]<-adjCol
   Paper_pipeline$probs<-Paper_pipeline$Driver_clusts
   Paper_pipeline$Driver_clusts<-cluster
@@ -239,12 +243,12 @@ MaxDistanceCluster<-function(centers, filtered.data){
   nclus<-length(centers[[1]])
   xclon<-sapply(1:nclones,function(z){
     filtered.data[[1]]$Cellularit[filtered.data[[1]]$Chr == z][1]/100
-  })
+    })
   yclon<-sapply(1:nclones,function(z){
     filtered.data[[2]]$Cellularit[filtered.data[[1]]$Chr == z][1]/100
   })  
   result<-matrix(nrow = nclus,ncol = nclones)
-  
+
   for(i in 1:nclus){
     result[i,]<-sqrt((as.numeric(as.character(centers[[1]][i]))-xclon)**2+(as.numeric(as.character(centers[[2]][i]))-yclon)**2)
   }
@@ -253,12 +257,23 @@ MaxDistanceCluster<-function(centers, filtered.data){
 }
 
 MaxDrivErr<-function(driv_cluster,cluster_cell,driver_data){
-  
-  xclone<-driver_data[[1]]$Cellularit/100
+
+  xclone<-driver_data[[1]]$Cellularit/100 ### True position for each
   yclone<-driver_data[[2]]$Cellularit/100
-  xclust<-cluster_cell[[1]][as.numeric(as.character(driv_cluster))]
-  yclust<-cluster_cell[[2]][as.numeric(as.character(driv_cluster))]
-  return(max(sqrt((xclone - xclust)**2 + (yclone - yclust)**2)))
+  ord<-as.numeric(as.character(driv_cluster))
+  xclust<-cluster_cell[[1]][ord]
+  yclust<-cluster_cell[[2]][ord]
+  max(sqrt((xclone - xclust)**2 + (yclone - yclust)**2))
+}
+
+MeanDrivErr<-function(driv_cluster,cluster_cell,driver_data){
+
+  xclone<-driver_data[[1]]$Cellularit/100 ### True position for each
+  yclone<-driver_data[[2]]$Cellularit/100
+  ord<-as.numeric(as.character(driv_cluster))
+  xclust<-cluster_cell[[1]][ord]
+  yclust<-cluster_cell[[2]][ord]
+  mean(sqrt((xclone - xclust)**2 + (yclone - yclust)**2))
 }
 
 ````
@@ -268,35 +283,62 @@ We can now summarize the different measures and pipelines:
 ````{r comparison,eval = TRUE,echo = FALSE}
 
 NMI<-c(Compute_NMI(Paper_pipeline$Clusters),
-       Compute_NMI(All),
-       Compute_NMI(Filter_drivers)
+      Compute_NMI(All),
+      Compute_NMI(Filter_drivers)
 )
 
 MaxDistErrClus<-c(MaxDistanceCluster(centers = Paper_pipeline$Clusters$EM.output$centers,
-                                     filtered.data = Paper_pipeline$Clusters$filtered.data),
+                                    filtered.data = Paper_pipeline$Clusters$filtered.data),
                   MaxDistanceCluster(centers = All$EM.output$centers,filtered.data = All$filtered.data),
                   MaxDistanceCluster(centers = Filter_drivers$EM.output$centers,filtered.data = Filter_drivers$filtered.data)
-                  
 )
 
 nclusters<-c(max(Paper_pipeline$Clusters$cluster),
-             max(All$cluster),
-             max(Filter_drivers$cluster))
+max(All$cluster),
+max(Filter_drivers$cluster))
+All_ord<-order(as.numeric(as.character(
+              Filter_drivers$filtered.data[[1]]$Start[All$filtered.data[[1]]$Start %in% drivers_data[[1]]$Start]
+)))
 
-MaxDrivEr <-c(MaxDrivErr(driv_cluster = Paper_pipeline$Driver_clusts,
-                         cluster_cell = Paper_pipeline$Clusters$EM.output$centers,
-                         driver_data = drivers_data),
-              MaxDrivErr(driv_cluster = All$cluster[All$filtered.data[[1]]$Start %in% drivers_data[[1]]$Start],
-                         cluster_cell = All$EM.output$centers,
-                         driver_data = drivers_data),
-              MaxDrivErr(driv_cluster = Filter_drivers$cluster[Filter_drivers$filtered.data[[1]]$Start %in% drivers_data[[1]]$Start],
-                         cluster_cell = Filter_drivers$EM.output$centers,
-                         driver_data = drivers_data)
+Filt_ord<-order(
+            Filter_drivers$filtered.data[[1]]$Start[as.numeric(as.character(Filter_drivers$filtered.data[[1]]$Start)) %in% as.numeric(as.character(drivers_data[[1]]$Start))]
 )
 
+MaxDrivEr <-c(MaxDrivErr(driv_cluster = Paper_pipeline$Driver_clusts,
+                          cluster_cell = Paper_pipeline$Clusters$EM.output$centers,
+                          driver_data = drivers_data),
+              MaxDrivErr(driv_cluster = All$cluster[All_ord],
+                          cluster_cell = All$EM.output$centers,
+                          driver_data = drivers_data),
+              MaxDrivErr(driv_cluster = Filter_drivers$cluster[Filt_ord],
+                        cluster_cell = Filter_drivers$EM.output$centers,
+                        driver_data = drivers_data)
+          )
+
+a<-MeanDrivErr(driv_cluster = Paper_pipeline$Driver_clusts,
+              cluster_cell = Paper_pipeline$Clusters$EM.output$centers,
+              driver_data = drivers_data)
+
+reordered_log_drivers<-All$filtered.data[[1]]$Start %in% drivers_id
+testb<-sqrt((All$EM.output$center[[1]][All$cluster[reordered_log_drivers]] - All$filtered.data[[1]]$Cellularit[reordered_log_drivers]/100 )**2+
+                  (All$EM.output$center[[2]][All$cluster[reordered_log_drivers]] - All$filtered.data[[2]]$Cellularit[reordered_log_drivers]/100 )**2
+                  )
+                  
+b<- MeanDrivErr(driv_cluster = All$cluster[All$filtered.data[[1]]$Start %in% drivers_data[[1]]$Start],
+                cluster_cell = All$EM.output$centers,
+                driver_data = drivers_data)
+c<-MeanDrivErr(driv_cluster = Filter_drivers$cluster[Filt_ord],
+              cluster_cell = Filter_drivers$EM.output$centers,
+              driver_data = drivers_data)
+MeanDrivEr <-c(a,
+              b,
+              c
+              )
+
 Summ<-data.frame(NMI = NMI, Maximal.Error.Cluster.Distance = MaxDistErrClus,
-                 Number.Clusters.Found = nclusters,
-                 Maximal.Error.Driver.Distance = MaxDrivEr)
+Number.Clusters.Found = nclusters,
+Maximal.Error.Driver.Distance = MaxDrivEr,
+Mean.Error.Driver.Distance = MeanDrivEr)
 row.names(Summ)<-c("Paper_pipeline","All","Filter_drivers")
 
 kable(Summ)

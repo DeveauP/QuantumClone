@@ -10,8 +10,18 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEngine{knitr::rmarkdown}
 ---
-Release of /08/2016
+Release of 8/08/2016:
+  - Removed rgl dependency (3D plots), causing QuantumClone to be unavailable on Ubuntu
+  - Updated pipeline tests
+  - Computational time test compiled
+  - Ongoing:
+    * Issue in the distance error (position of the cluster for drivers vs real position)
+    * Compile Rmd for computational clustering quality results.
+    
+
+Release of 4/08/2016
   - Added function to easily compute Normalized Mutual Information from QuantumClone output - for simulated data.
+  - Added pipelines to compare to paper pipeline
 
 Release of 29/07/2016:
 

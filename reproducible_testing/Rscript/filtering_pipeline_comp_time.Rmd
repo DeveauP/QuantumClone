@@ -1,0 +1,211 @@
+---
+title: "Proof of concept: filtering pipeline computational time"
+author: "Paul Deveau"
+date: "`r Sys.Date()`"
+output: 
+html_document:
+highlight: tango
+theme: cosmo
+self_contained: no
+fig_width: 7
+fig_height: 7
+---
+
+#Creating data
+
+This script is to show the importance of clustering high confidence variants and then attribute meaningful ones to the identified clusters
+
+````{r set_env,echo = FALSE,warning = FALSE, message = FALSE}
+# Loading libraries
+if(!require(QuantumClone)){
+  if(!require(devtools)){
+    install.packages("devtools")
+  }
+  devtools::install_github(repo = "DeveauP/QuantumClone")
+}
+if(!require(knitr)) install.packages("knitr")
+if(!require(ggplot2)) install.packages("ggplot2")
+if(!require(microbenchmark)) install.packages("microbenchmark")
+# Creating reproducible example
+set.seed(123)
+ndrivers <-20
+strcount <- function(x, pattern='', split=''){
+  
+  unlist(lapply(strsplit(x, split),function(z) na.omit(length(grep(pattern, z)))))
+}
+
+````
+
+We will first create a test set with 6 clones, 200 variants, diploid, with an average depth of 100X, two samples with respective purity 70% and 60%.
+
+````{r create_data}
+toy.data<-QuantumCat(number_of_clones = 6,number_of_mutations = 200,
+                     ploidy = "AB",depth = 100,number_of_samples = 2,
+                     contamination = c(0.3,0.4))
+
+````
+
+We check that all these variants are within the stringent filters (i.e depth > 50X):
+
+````{r check_input}
+sum(toy.data[[1]]$Depth<=50)
+sum(toy.data[[2]]$Depth<=50)
+````
+
+We will remove these positions from the filtered data.
+
+`````{r filter_data}
+keep<- sapply(X = 1:nrow(toy.data[[1]]),
+              FUN = function (z){
+                toy.data[[1]][z,"Depth"]>50 && toy.data[[2]][z,"Depth"]>50
+              })
+
+filtered.data<-lapply(X = toy.data, function(df){
+  df[keep,]
+})
+
+knitr::kable(head(filtered.data[[1]]))
+````
+
+
+According to permissive filters, variants should have at least 30X depth of coverage. A total of `r sum(toy.data[[1]][,"Depth"]<30 | toy.data[[2]][,"Depth"]<30)` positions are not meeting that requirement. We also state that if the number of variants is sufficient, only AB site are kept. We thus add 150 positions that fall inside triploid - AAB - loci (with a 3/4 chance to be at 1 copy), and 50 that fall inside a tetraploid - AABB - locus (with a 50% chance to be at 1 copy).
+
+
+`````{r noisy_data}
+noisy_data<-toy.data
+
+Chr<-sample(1:6,size = 200,replace = TRUE)
+Start <- (nrow(noisy_data[[1]])+1):(nrow(noisy_data[[1]])+200)
+purity<-c(0.7,0.6)
+for(i in 1:length(toy.data)){
+  Cells<-sapply(1:6, function(z) unique(noisy_data[[i]]$Cellularit[noisy_data[[i]]$Chr==z]))
+  
+  Genotype <-rep(c("AAB","AABB"),times = c(150,50))
+  NCh<-rep(c(3,4),times = c(150,50))
+  
+  number_of_copies<-c(sample(x = 1:2,size = 150,replace = TRUE,prob = c(3/4,1/4)),
+                      sample(x = 1:2,size = 50,replace = TRUE)
+  )
+  Cellularit<-sapply(Chr,function(n) Cells[n])
+  Frequency <- Cellularit*purity[i]*number_of_copies/NCh
+  Depth<-rnbinom(n=200,size = 4.331601,mu = 100)
+  Alt<-rbinom(n=200,size = Depth,prob = Frequency/100)
+  noisy_data[[i]]<-rbind(noisy_data[[i]],
+                         data.frame(Chr = Chr,Start = Start,Genotype = Genotype,
+                                    Cellularit = Cellularit,
+                                    number_of_copies = number_of_copies,
+                                    Frequency = Frequency, Depth = Depth, Alt = Alt))
+}
+
+
+````
+
+Now let's select `r ndrivers` drivers among these ($1/4$ in stringent filters and $3/4$ in more noisy data):
+
+
+````{r select_tp}
+drivers<-c(sample(x = which(keep),size = round(ndrivers/4),replace = FALSE),
+           sample(x = (1:nrow(noisy_data[[1]]))[!keep],size= 3*round(ndrivers/4),replace = FALSE)
+           )
+
+````
+
+````{r logical_keep, echo = FALSE}
+log_keep<-rep(FALSE,times = nrow(noisy_data[[1]]))
+log_keep[keep]<-TRUE
+
+log_drivers<-rep(FALSE,times = nrow(noisy_data[[1]]))
+log_drivers[drivers]<-TRUE
+
+log_drivers_intersect_keep<-log_keep & log_drivers
+
+
+drivers_data<-lapply(noisy_data,function(df) df[drivers,])
+drivers_id<-drivers_data[[1]]$Start
+
+id_drivers_less_stringent<-noisy_data[[1]]$Start[log_drivers & !log_keep]
+
+````
+
+`r sum(log_drivers_intersect_keep)` are inside the stringent filter, and `r ndrivers-sum(log_drivers_intersect_keep)` fall in the permissive filters.
+
+# Comparing different pipeline of clustering
+## Measures
+
+We are going to compare the computational time, the clustering quality, and the maximal error of the distance to cluster center of three different pipelines, and the maximal distance error on drivers.
+
+The first one will cluster variants from stringent filters and attribute drivers to the clusters found. The second will co-cluster all variants altogether. The final one will cluster filtered data and drivers altogether.
+
+## Reconstruction
+
+First we will set each function to work as previously described:
+````{r set_pipelines}
+paper_pipeline<-function(cleaned.data, drivers){
+  Clusters<-One_step_clustering(SNV_list = filtered.data,
+                                contamination = c(0.3,0.4),
+                                nclone_range = 2:10,
+                                maxit = 2,
+                                save_plot = FALSE,
+                                ncores = 4
+  )
+  #print(drivers)
+  p<-Probability.to.belong.to.clone(SNV_list = drivers,
+                                    clone_prevalence = Clusters$EM.output$centers,
+                                    contamination = c(0.3,0.4),
+                                    clone_weights = Clusters$EM.output$weights
+  )
+  return(list(Clusters = Clusters,Driver_clusts = p))
+}
+
+All_clustering<-function(noisy)
+  return(One_step_clustering(SNV_list = noisy,
+                             contamination = c(0.3,0.4),
+                             nclone_range = 2:10,
+                             maxit = 2,
+                             save_plot = FALSE,
+                             ncores = 4
+  )
+  )
+
+filter_drivers<-function(cleaned.data,noisy_data,id_drivers_less_stringent){
+  input<-list()
+  test<-noisy_data[[1]]$Start %in% id_drivers_less_stringent
+  for(i in 1:length(cleaned.data)){
+    spare<-noisy_data[[i]][test,]
+    #print(spare)
+    #message(nrow(spare))
+    #message(length(id_drivers_less_stringent))
+    row.names(spare)<-(max(as.numeric(row.names(cleaned.data[[1]])))+1):(max(as.numeric(row.names(cleaned.data[[1]])))+nrow(spare))
+    input[[i]]<-rbind(cleaned.data[[i]],spare)
+    row.names(input[[i]])<-1:nrow(input[[i]])
+  }
+  return(One_step_clustering(SNV_list = input,
+                             contamination = c(0.3,0.4),
+                             nclone_range = 2:10,
+                             maxit = 2,
+                             save_plot = FALSE,
+                             ncores = 4
+  ))
+}
+
+
+````
+
+Let's compare computing time:
+# Change to 5 after debug
+
+````{r mb, message = FALSE}
+mb<-microbenchmark::microbenchmark(Paper_pipeline<-paper_pipeline(cleaned.data = filtered.data,
+                                                                  drivers = drivers_data),
+                                   All<-All_clustering(noisy = noisy_data),
+                                   Filter_drivers<-filter_drivers(cleaned.data = filtered.data,
+                                                                  noisy_data,
+                                                                  id_drivers_less_stringent),
+                                   times = 5) 
+autoplot(mb)+theme_bw()
+print(mb)
+
+````
+
+We can here see that the computing time for the pipeline in the paper and the one co-clustering drivers and filtered data is similar, and much smaller that clustering all mutations together.
+
