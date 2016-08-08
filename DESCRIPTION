@@ -21,7 +21,6 @@ Depends:
     foreach,
     optimx,
     compiler
-    
 Imports:
     doParallel,
     parallel,
