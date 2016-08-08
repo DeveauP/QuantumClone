@@ -20,16 +20,17 @@ Depends:
     fpc,
     foreach,
     optimx,
-    compiler,
-    knitr
+    compiler
+    
 Imports:
     doParallel,
     parallel,
     gridExtra,
-    ggplot2
+    ggplot2,
+    rgl
 Suggests:
     rmarkdown,
-    rgl
+    knitr
 License: GPL-2
 URL: https://github.com/DeveauP/QuantumClone
 BugReports: https://github.com/DeveauP/QuantumClone/issues
