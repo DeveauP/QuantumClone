@@ -7,8 +7,7 @@
 One_step_clustering(SNV_list, FREEC_list = NULL, contamination,
   nclone_range = 2:5, clone_priors = NULL, prior_weight = NULL,
   maxit = 8, preclustering = TRUE, simulated = FALSE, epsilon = 5 *
-  (10^(-3)), save_plot = TRUE, ncores = 1, plot_3D = FALSE,
-  plot_3D_before_clustering = FALSE, restrict.to.AB = FALSE,
+  (10^(-3)), save_plot = TRUE, ncores = 1, restrict.to.AB = FALSE,
   output_directory = NULL, model.selection = "BIC", optim = "default",
   keep.all.models = FALSE, force.single.copy = FALSE)
 }
@@ -39,10 +38,6 @@ and if the output from FREEC for the samples are not associated, the genotype "G
 \item{save_plot}{Should the plots be saved? Default is TRUE}
 
 \item{ncores}{Number of cores to be used during EM algorithm}
-
-\item{plot_3D}{Should a 3D density of probability be plotted? This option is only available with 2 samples. Default is FALSE}
-
-\item{plot_3D_before_clustering}{Should a 3D plot be realized before clustering, can be useful to guess priors.}
 
 \item{restrict.to.AB}{Boolean: Should the analysis keep only sites located in A and AB sites in all samples?}
 

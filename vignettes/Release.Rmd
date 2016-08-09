@@ -10,6 +10,9 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEngine{knitr::rmarkdown}
 ---
+Release of 9/08/2016
+  - Removed 3D plots to prepare CRAN release
+
 Release of 8/08/2016:
   - Removed rgl dependency (3D plots), causing QuantumClone to be unavailable on Ubuntu
   - Updated pipeline tests

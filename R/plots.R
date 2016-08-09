@@ -57,57 +57,6 @@ One_D_plot<-function(EM_out,contamination){
   r<-ggplot2::qplot(x=theta,y=y,geom = "line",main="Density of probability of presence of a clone",xlab="Cell fraction",ylab="density")+ggplot2::theme_bw()
   return(r)
 }
-#' 3D Plot
-#'
-#' Creates density plot when two samples are given
-#' @param Schrod List of 2 dataframes, output of the Schrodinger function or the EM algorithm
-#' @param contamination Numeric vector giving the proportion of normal cells in each samples
-#' @keywords Clonal inference phylogeny
-#' @import rgl
-#' @export
-#' @examples
-#' ### Example fails build when no monitor is available for display
-#' \dontrun{
-#' print("Generating data...")
-#' QC<-QuantumCat(number_of_clones = 4,number_of_mutations = 200,
-#'                depth= 100, ploidy = "AB")
-#' print("Formating data so it can be used as input")
-#' alpha<-rep(1,time=200)
-#' for(i in 1:2){
-#' print(head(2*QC[[i]]$Alt/QC[[i]]$Depth))
-#' QC[[i]][,4]<-2*QC[[i]]$Alt/QC[[i]]$Depth
-#' QC[[i]]<-cbind(QC[[i]],alpha)
-#' }
-#' print("Creating 3D plot")
-#' ThreeD_plot(QC,c(0,0))
-#' }
-ThreeD_plot<-function(Schrod,contamination){
-  Z<-matrix(nrow=101,ncol=101)
-  alpha<-Schrod[[1]]$alpha*Schrod[[2]]$alpha
-  for(i in 0:100){
-    Z[,i+1]<-sapply(X=0:100,function(y) {
-      if(i<100){
-        S<-sum((Schrod[[1]]$Cellularity>=floor(x = i/10)/10 & Schrod[[1]]$Cellularity<floor(x = i/10+1)/10 & Schrod[[2]]$Cellularity>=floor(x = y/10)/10 & Schrod[[2]]$Cellularity<floor(x = y/10 +1)/10)*alpha)
-      }
-      else{
-        S<-sum((Schrod[[1]]$Cellularity>=floor(x = i/10)/10 & Schrod[[2]]$Cellularity>=floor(x = y/10)/10 & Schrod[[2]]$Cellularity<floor(x = y/10 +1)/10)*alpha)
-      }
-      if(is.na(S)){
-        return(0)
-      }
-      else{
-        return(S)
-      }
-    }
-    )
-  }
-  rgl::open3d()
-  palette <- colorRampPalette(c('royalblue',"blue",'cyan','grey','yellow','orange','red'))
-  col.table <- palette(1024)
-  col.ind <- cut(Z, 1024)
-  rgl::persp3d(x=(0:100)/100,y=(0:100)/100,z=Z,xlab = 'Cellularity diag',ylab = 'Cellularity relapse',
-               zlab = 'weighted number of possibilities',col=col.table[col.ind],xlim=c(0,1),ylim=c(0,1))
-}
 
 #'Plot with margin densities
 #'

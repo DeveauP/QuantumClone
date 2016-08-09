@@ -7,8 +7,8 @@
 Cluster_plot_from_cell(Cell, Sample_names, simulated, save_plot = TRUE,
   contamination, clone_priors, prior_weight, nclone_range, maxit,
   preclustering = TRUE, epsilon = 5 * (10^(-3)), ncores = 2,
-  plot_3D_before_clustering = FALSE, output_directory = NULL,
-  model.selection = "BIC", optim = "default", keep.all.models = FALSE)
+  output_directory = NULL, model.selection = "BIC", optim = "default",
+  keep.all.models = FALSE)
 }
 \arguments{
 \item{Cell}{Output from Return_one_cell_by_mut, list of cellularities (one list-element per sample)}
@@ -34,8 +34,6 @@ Cluster_plot_from_cell(Cell, Sample_names, simulated, save_plot = TRUE,
 \item{epsilon}{Stop value: maximal admitted value of the difference in cluster position and weights between two optimization steps.}
 
 \item{ncores}{Number of CPUs to be used}
-
-\item{plot_3D_before_clustering}{Should a 3D plot be realized before clustering, can be useful to guess priors.}
 
 \item{output_directory}{Directory in which to save results}
 
