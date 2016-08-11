@@ -106,7 +106,7 @@ Now let's select `r ndrivers` drivers among these ($1/4$ in stringent filters an
 ````{r select_tp}
 drivers<-c(sample(x = which(keep),size = round(ndrivers/4),replace = FALSE),
            sample(x = (1:nrow(noisy_data[[1]]))[!keep],size= 3*round(ndrivers/4),replace = FALSE)
-           )
+)
 
 ````
 
