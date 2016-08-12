@@ -40,7 +40,7 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=F,alpha,adj.factor){
     Depth<-Schrod[[i]]$Depth
     adj<-adj.factor[,i]
     for(k in 1:length(weights)){ ## k is a clone
-      index<-index+1
+      idx<-idx+1
       pro<-centers[idx]*adj
       test<-pro <1 & pro >0
       #pro_0<-pro
