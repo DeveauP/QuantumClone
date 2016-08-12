@@ -33,6 +33,7 @@ strcount <- function(x, pattern='', split=''){
   
   unlist(lapply(strsplit(x, split),function(z) na.omit(length(grep(pattern, z)))))
 }
+ncores<- 4
 
 ````
 
@@ -146,7 +147,7 @@ paper_pipeline<-function(cleaned.data, drivers){
                                 nclone_range = 2:10,
                                 maxit = 2,
                                 save_plot = FALSE,
-                                ncores = 4
+                                ncores = ncores
   )
   #print(drivers)
   p<-Probability.to.belong.to.clone(SNV_list = drivers,
@@ -163,7 +164,7 @@ All_clustering<-function(noisy)
                              nclone_range = 2:10,
                              maxit = 2,
                              save_plot = FALSE,
-                             ncores = 4
+                             ncores = ncores
   )
   )
 
@@ -184,7 +185,7 @@ filter_drivers<-function(cleaned.data,noisy_data,id_drivers_less_stringent){
                              nclone_range = 2:10,
                              maxit = 2,
                              save_plot = FALSE,
-                             ncores = 4
+                             ncores = ncores
   ))
 }
 
@@ -195,12 +196,12 @@ Let's compare computing time:
 # Change to 5 after debug
 
 ````{r mb, message = FALSE}
-mb<-microbenchmark::microbenchmark(Paper_pipeline<-paper_pipeline(cleaned.data = filtered.data,
-                                                                  drivers = drivers_data),
-                                   All<-All_clustering(noisy = noisy_data),
-                                   Filter_drivers<-filter_drivers(cleaned.data = filtered.data,
-                                                                  noisy_data,
-                                                                  id_drivers_less_stringent),
+mb<-microbenchmark::microbenchmark(paper_pipeline(filtered.data,
+                                                  drivers_data),
+                                   All_clustering(noisy_data),
+                                   filter_drivers(filtered.data,
+                                                  noisy_data,
+                                                  id_drivers_less_stringent),
                                    times = 5) 
 autoplot(mb)+theme_bw()
 print(mb)

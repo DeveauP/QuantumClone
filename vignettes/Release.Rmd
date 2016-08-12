@@ -10,6 +10,10 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEngine{knitr::rmarkdown}
 ---
+Release of 12/08/2016
+  - Computed PoC for clustering quality
+  - Changes in `eval.fik` for an expected 5-10% gain in computational speed.
+
 Release of 9/08/2016
   - Removed 3D plots to prepare CRAN release
 

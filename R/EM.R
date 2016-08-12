@@ -33,17 +33,20 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=F,alpha,adj.factor){
   if(is.list(centers)){
     centers<-unlist(centers)
   }
-  count<-0
+  idx<-0
   for(i in 1:length(Schrod)){ ## i is a sample
-    al[[i]]<-matrix(nrow=nrow(Schrod[[1]]),ncol=length(weights))
+    al[[i]]<-matrix(data = 0,nrow=nrow(Schrod[[1]]),ncol=length(weights))
     Alt<-Schrod[[i]]$Alt
     Depth<-Schrod[[i]]$Depth
+    adj<-adj.factor[,i]
     for(k in 1:length(weights)){ ## k is a clone
-      pro<-centers[(i-1)*length(weights)+k]*adj.factor[,i]
-      pro_0<-pro
-      pro_0[pro>1 | pro<0]<-0
-      al[[i]][,k]<-dbinom(x =Alt ,size = Depth,prob = pro_0)
-      al[[i]][pro>1 | pro<0,k]<-0
+      index<-index+1
+      pro<-centers[idx]*adj
+      test<-pro <1 & pro >0
+      #pro_0<-pro
+      #pro_0[pro>1 | pro<0]<-0
+      al[[i]][test,k]<-dbinom(x =Alt[test] ,size = Depth[test],prob = pro[test])
+      #al[[i]][pro>1 | pro<0,k]<-0
     }
   }
   f<-fik.from.al(al,Schrod[[1]]$id,keep.all.poss,alpha)
