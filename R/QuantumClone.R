@@ -847,8 +847,8 @@ Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination
     #   }
     # }
     adj.fact<-Compute.adj.fact(SNV_list,contamination)
-    result<-eval.fik(Schrod = SNV_list,centers = clone_prevalence,weights =clone_weights,
+    result<-eval.fik(Schrod = Schrod,centers = clone_prevalence,weights =clone_weights,
                      keep.all.poss = TRUE,adj.factor = adj.fact)
   }
-  return(result)
+  return(data.frame(result,Start = Schrod[[1]]$Start))
 }

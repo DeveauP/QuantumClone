@@ -453,23 +453,22 @@ parallelEM<-function(Schrod,nclust,epsilon,contamination,
 #'
 #' Attributes a mutation to its most likely clone based on the output of the EM algorithm
 #' @param EM_out Output from EM.algo or FullEM
-#' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
-#'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
 #' @keywords EM Hard clustering
-hard.clustering<-function(EM_out, model.selection="BIC" ){
+hard.clustering<-function(EM_out){
   EM_out$clust<-apply(X = EM_out$fik,MARGIN = 1,FUN = function(z) {
     if(sum(z==max(z))>1){ ### Look for the multiple clones, and attribute with probability proportional to the weight
       if(max(z)>0){
         pos<-which(z==max(z))
         prob<-EM_out$weights[pos]/(sum(EM_out$weights[pos]))
-        return(sample(x = pos, size = 1, prob = prob))
+        #sample(x = pos, size = 1, prob = prob))
+        return(pos[which.max(prob)])
       }
-      else{
+      else{ ### all possibilities have 0 probability, so choose one randomly
         return(sample(1:length(z),size = z))
       }
     }
-    else{
-      return(which(z==max(z)))
+    else{ # only one clone has maximal probability
+      return(which.max(z))
     }
   })
   return(EM_out$clust)

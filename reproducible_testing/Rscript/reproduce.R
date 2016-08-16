@@ -1,5 +1,5 @@
 reproduce<-function(iter = 9){
-  set.seed(345)
+  set.seed(234)
   for(z in 1:iter){
     #CREATING DATA
     toy.data<-QuantumCat(number_of_clones = 6,number_of_mutations = 200,
@@ -54,27 +54,21 @@ reproduce<-function(iter = 9){
     drivers_id<-drivers_data[[1]]$Start
     
     id_drivers_less_stringent<-noisy_data[[1]]$Start[log_drivers & !log_keep]
-
+    
     ### Clustering
     Paper_pipeline<-paper_pipeline(cleaned.data = filtered.data,drivers = drivers_data)
-    All<-All_clustering(noisy = noisy_data)
+    #All<-All_clustering(noisy = noisy_data)
+    
     Filter_drivers<-filter_drivers(cleaned.data = filtered.data,
                                    noisy_data,
                                    id_drivers_less_stringent)
-    
+    #####For faster testing
+    All<-Filter_drivers
     
     ### Post processing
     if(nrow(Paper_pipeline$Driver_clusts)> nrow(drivers_data[[1]])){
       # some variants have multiple possibilities
       #colnames(Paper_pipeline$Driver_clusts)<-1:ncol(Paper_pipeline$Driver_clusts)
-      Paper_pipeline$Driver_clusts<-cbind(Paper_pipeline$Driver_clusts,
-                                          rep(drivers_data[[1]]$Start,
-                                              times = strcount(x = as.character(drivers_data[[1]]$Genotype),
-                                                               pattern  = "A")*strcount(x = as.character(drivers_data[[2]]$Genotype),
-                                                                                        pattern  = "A")
-                                          )
-      )
-      colnames( Paper_pipeline$Driver_clusts)<-c(1:(ncol(Paper_pipeline$Driver_clusts)-1),"Start")
       uStart<-unique(Paper_pipeline$Driver_clusts[,"Start"])
       cluster<-numeric(length = length(uStart))
       index<-0
@@ -85,10 +79,17 @@ reproduce<-function(iter = 9){
         if(sum(test)>1){
           cluster[index]<-which.max(apply(X = Paper_pipeline$Driver_clusts[test,1:adjCol],
                                           MARGIN = 2,
-                                          FUN = max)
+                                          FUN = sum)
           )
         }else{
-          cluster[index]<-which.max(Paper_pipeline$Driver_clusts[test,1:adjCol])
+          w<-which(Paper_pipeline$Driver_clusts[test,1:adjCol]==max(Paper_pipeline$Driver_clusts[test,1:adjCol]))
+          if(length(w)==1){
+            cluster[index]<-w
+          }
+          else{
+            cluster[index]<-w[which.max(Paper_pipeline$Clusters$EM.output$weights[w])]
+          }
+          
         }
       }
       cluster[cluster==0]<-adjCol
@@ -120,10 +121,13 @@ reproduce<-function(iter = 9){
     
     ### Starting error distance computation (on drivers)
     
-    a<-sqrt((Paper_pipeline$Clusters$EM.output$centers[[1]][Paper_pipeline$Driver_clusts] - drivers_data[[1]]$Cellularit/100)**2
-            + (Paper_pipeline$Clusters$EM.output$centers[[2]][Paper_pipeline$Driver_clusts] - drivers_data[[2]]$Cellularit/100)**2
+    a<-sqrt((Paper_pipeline$Clusters$EM.output$centers[[1]][as.numeric(as.character(Paper_pipeline$Driver_clusts))] - 
+               drivers_data[[1]]$Cellularit/100
+    )**2
+    + (Paper_pipeline$Clusters$EM.output$centers[[2]][as.numeric(as.character(Paper_pipeline$Driver_clusts))] - 
+         drivers_data[[2]]$Cellularit/100
+    )**2
     )
-    
     reordered_log_drivers<-All$filtered.data[[1]]$Start %in% drivers_id
     b<-sqrt((All$EM.output$center[[1]][All$cluster[reordered_log_drivers]] - All$filtered.data[[1]]$Cellularit[reordered_log_drivers]/100 )**2+
               (All$EM.output$center[[2]][All$cluster[reordered_log_drivers]] - All$filtered.data[[2]]$Cellularit[reordered_log_drivers]/100 )**2)

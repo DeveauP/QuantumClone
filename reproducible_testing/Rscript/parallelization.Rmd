@@ -1,0 +1,60 @@
+---
+title: "Parallelization"
+author: "Paul Deveau"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+if(!require(QuantumClone)){
+  if(!require(devtools)){
+    install.packages("devtools")
+  }
+  devtools::install_github(repo = "DeveauP/QuantumClone")
+}
+if(!require(knitr)) install.packages("knitr");library("knitr")
+if(!require(ggplot2)) install.packages("ggplot2");library("ggplot2")
+if(!require(microbenchmark)) install.packages("microbenchmark");library("microbenchmark")
+library("parallel")
+
+
+```
+
+## Parallelization handling
+
+Only the search for expectation maximization is parallelized in QuantumClone - and used only if the number of cores set is strictly higher than 1. It parallelizes in priority the EM algorithm for different number of clusters then the iterations for a given number of clusters.
+
+The parallelization is handled through  `parallel` and `foreach` packages.
+
+## Gain of performance
+
+First we create a data set to analyze:
+```{r Creating data}
+set.seed(123)
+Start.data<-QuantumCat(4,100,"AB")
+```
+
+Then we detect the number of cores on the computer, and create a reproducible analysis of the data with a different number of cores:
+
+```{r set_ana}
+max.cores<-min(parallel::detectCores(),4)
+print(max.cores)
+
+analysis<-function(ncores = 1,Start.data){
+  set.seed(123)
+  One_step_clustering(SNV_list = Start.data,ncores = ncores,contamination = c(0,0), save_plot = FALSE
+)
+}
+
+```
+
+```{r start_ana,message=FALSE}
+mb<-microbenchmark(analysis(1,Start.data),analysis(2,Start.data),analysis(max.cores,Start.data),times = 5)
+```
+
+```{r disp_ana}
+print(mb)
+
+autoplot(mb)
+```

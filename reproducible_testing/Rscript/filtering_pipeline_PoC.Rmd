@@ -148,7 +148,7 @@ paper_pipeline<-function(cleaned.data, drivers){
                                 nclone_range = 2:10,
                                 maxit = 2,
                                 save_plot = FALSE,
-                                ncores = 4
+                                ncores = parallel::detectCores()
   )
   #print(drivers)
   p<-Probability.to.belong.to.clone(SNV_list = drivers,
@@ -165,7 +165,7 @@ All_clustering<-function(noisy){
                              nclone_range = 2:10,
                              maxit = 2,
                              save_plot = FALSE,
-                             ncores = 4
+                             ncores = parallel::detectCores()
   )
   )
 }
@@ -184,7 +184,7 @@ filter_drivers<-function(cleaned.data,noisy_data,id_drivers_less_stringent){
                              nclone_range = 2:10,
                              maxit = 2,
                              save_plot = FALSE,
-                             ncores = 4
+                             ncores = parallel::detectCores()
   ))
 }
 
@@ -210,14 +210,6 @@ Now we will compare a few things: maximal error on the cellularity of a driver, 
 if(nrow(Paper_pipeline$Driver_clusts)> nrow(drivers_data[[1]])){
   # some variants have multiple possibilities
   #colnames(Paper_pipeline$Driver_clusts)<-1:ncol(Paper_pipeline$Driver_clusts)
-  Paper_pipeline$Driver_clusts<-cbind(Paper_pipeline$Driver_clusts,
-                                      rep(drivers_data[[1]]$Start,
-                                          times = strcount(x = as.character(drivers_data[[1]]$Genotype),
-                                                           pattern  = "A")*strcount(x = as.character(drivers_data[[2]]$Genotype),
-                                                                                    pattern  = "A")
-                                      )
-  )
-  colnames( Paper_pipeline$Driver_clusts)<-c(1:(ncol(Paper_pipeline$Driver_clusts)-1),"Start")
   uStart<-unique(Paper_pipeline$Driver_clusts[,"Start"])
   cluster<-numeric(length = length(uStart))
   index<-0
@@ -231,7 +223,14 @@ if(nrow(Paper_pipeline$Driver_clusts)> nrow(drivers_data[[1]])){
                                       FUN = max)
       )
     }else{
-      cluster[index]<-which.max(Paper_pipeline$Driver_clusts[test,1:adjCol])
+      w<-which(Paper_pipeline$Driver_clusts[test,1:adjCol]==max(Paper_pipeline$Driver_clusts[test,1:adjCol]))
+      if(length(w)==1){
+        cluster[index]<-w
+      }
+      else{
+        cluster[index]<-w[which.max(Paper_pipeline$Clusters$EM.output$weights[w])]
+      }
+      
     }
   }
   cluster[cluster==0]<-adjCol
@@ -259,7 +258,7 @@ MaxDistanceCluster<-function(centers, filtered.data){
   for(i in 1:nclus){
     result[i,]<-sqrt((as.numeric(as.character(centers[[1]][i]))-xclon)**2+
                        (as.numeric(as.character(centers[[2]][i]))-yclon)**2
-                     )
+    )
   }
   minClustClon<-apply(X = result,MARGIN = 1,min) ### Find the clone that is closest to cluster
   return(max(minClustClon))
@@ -292,8 +291,8 @@ All_ord<-order(as.numeric(as.character(
 
 ### Starting error distance computation (on drivers)
 
-a<-sqrt((Paper_pipeline$Clusters$EM.output$centers[[1]][Paper_pipeline$Driver_clusts] - drivers_data[[1]]$Cellularit/100)**2
-        + (Paper_pipeline$Clusters$EM.output$centers[[2]][Paper_pipeline$Driver_clusts] - drivers_data[[2]]$Cellularit/100)**2
+a<-sqrt((Paper_pipeline$Clusters$EM.output$centers[[1]][as.numeric(as.character(Paper_pipeline$Driver_clusts))] - drivers_data[[1]]$Cellularit/100)**2
+        + (Paper_pipeline$Clusters$EM.output$centers[[2]][as.numeric(as.character(Paper_pipeline$Driver_clusts))] - drivers_data[[2]]$Cellularit/100)**2
 )
 
 reordered_log_drivers<-All$filtered.data[[1]]$Start %in% drivers_id
@@ -322,7 +321,7 @@ Summ<-data.frame(NMI = NMI,
                  Maximal.Error.Driver.Distance = MaxDrivEr,
                  Mean.Error.Driver.Distance = MeanDrivEr,
                  id = c("Paper_pipeline","All","Filter_drivers")
-                  )
+)
 
 kable(Summ)
 ````

@@ -4,13 +4,10 @@
 \alias{hard.clustering}
 \title{Hard clustering based on EM output}
 \usage{
-hard.clustering(EM_out, model.selection = "BIC")
+hard.clustering(EM_out)
 }
 \arguments{
 \item{EM_out}{Output from EM.algo or FullEM}
-
-\item{model.selection}{The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
-uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.}
 }
 \description{
 Attributes a mutation to its most likely clone based on the output of the EM algorithm
