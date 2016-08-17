@@ -40,11 +40,12 @@ QuantumCat_permissive<-function(fromQuantumCat,number_of_mutations = 200,
     error("Depth error")
   }
   clones<-1:max(fromQuantumCat[[1]]$Chr) # retrieve clones
+  
   # Now retrieve cellularity of each clone:
   cells<-list()
   for(i in 1:2){
     cells[[i]]<-sapply(clones,function(z){
-      fromQuantumCat[[1]]$Cellularit[fromQuantumCat[[1]]$Chr==z]
+      fromQuantumCat[[1]]$Cellularit[fromQuantumCat[[1]]$Chr==z][1]
     }
     )
   }

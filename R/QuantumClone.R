@@ -25,7 +25,7 @@
 #'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
 #' @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
 #' @keywords Clonal inference Cancer phylogeny
-#' @import optimx compiler knitr
+#' @import optimx compiler
 #' @importFrom grDevices colorRampPalette
 #' @importFrom graphics par plot segments text
 #' @importFrom stats aggregate dbinom frequency na.omit optim rbinom rnbinom rpois runif sd
