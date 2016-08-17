@@ -1,0 +1,68 @@
+---
+title: "Proof of concept: filtering pipeline (Clustering quality) "
+author: "Paul Deveau"
+date: "`r Sys.Date()`"
+output: 
+html_document:
+highlight: tango
+theme: cosmo
+self_contained: no
+fig_width: 7
+fig_height: 7
+---
+
+#Creating data
+
+This script is to show the importance of clustering high confidence variants and then attribute meaningful ones to the identified clusters
+
+````{r set_env,echo = FALSE,warning = FALSE, message = FALSE}
+# Loading libraries
+if(!require(QuantumClone)){
+  if(!require(devtools)){
+    install.packages("devtools")
+  }
+  devtools::install_github(repo = "DeveauP/QuantumClone")
+}
+if(!require(knitr)) install.packages("knitr")
+if(!require(ggplot2)) install.packages("ggplot2")
+if(!require(reshape2)) install.packages("reshape2")
+
+# Creating reproducible example
+set.seed(123)
+source("reproduce_2.R")
+
+````
+
+*All functions are stored inside the reproduce_2.R, to avoid long display of codes. Below are the values that will be used throughout the testing *
+```{r setup_values}
+number_iterations <- 10
+number_mutations <- 200
+ndrivers <- 20
+```
+
+We will first create a test set with `QuantumCat` with 6 clones, 200 variants, diploid, with an average depth of 100X, two samples with respective purity 70% and 60%. We make sure these variants correspond to stingent filters (i.e. depth $> 50$X).
+
+````{r create_data}
+toy.data<-QuantumCat_stringent(number_of_clones = 6,number_of_mutations = number_mutations,
+                     ploidy = "AB",depth = 100,
+                     contamination = c(0.3,0.4),min_depth = 50)
+
+````
+
+We check that all these variants are within the stringent filters (i.e depth $\geq 50$ X), and display the first six rows of the first sample:
+
+````{r check_input}
+sum(toy.data[[1]]$Depth<50 | toy.data[[2]]$Depth<50)
+kable(toy.data[[1]][1:6,])
+````
+
+
+Then we create as many mutations that are in permissive filters (i.e. 30 to 50X variants):
+
+````{r check_input}
+permissive<-QuantumCat_permissive(fromQuantumCat = toy.data ,number_of_mutations = number_mutations,
+                               ploidy = "AB",depth = 100,
+                               contamination = c(0.3,0.4),max_depth = 50, min_depth = 30)
+kable(permissive[[1]][1:6,])
+
+````
