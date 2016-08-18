@@ -29,6 +29,7 @@ if(!require(reshape2)) install.packages("reshape2")
 
 # Creating reproducible example
 set.seed(123)
+source("C:/Genome analysis/R_package/QuantumClone_final/QC_Github/QuantumClone/reproducible_testing/Rscript/reproduce_2.R")
 source("reproduce_2.R")
 
 ````
@@ -36,7 +37,7 @@ source("reproduce_2.R")
 *All functions are stored inside the reproduce_2.R, to avoid long display of codes. Below are the values that will be used throughout the testing *
 ```{r setup_values}
 number_iterations <- 10
-number_mutations <- 200
+number_mutations <- 40
 ndrivers <- 20
 ```
 
@@ -51,18 +52,53 @@ toy.data<-QuantumCat_stringent(number_of_clones = 6,number_of_mutations = number
 
 We check that all these variants are within the stringent filters (i.e depth $\geq 50$ X), and display the first six rows of the first sample:
 
-````{r check_input}
+````{r check_input_s}
 sum(toy.data[[1]]$Depth<50 | toy.data[[2]]$Depth<50)
 kable(toy.data[[1]][1:6,])
 ````
 
 
-Then we create as many mutations that are in permissive filters (i.e. 30 to 50X variants):
+Then we create as many mutations that are in permissive filters. For that we take 50 mutations with 30 to 50 depth, 100 that have a depth $\geq 30$ in triploid (AAB) loci and 50 that have a depth $\geq 30$ in a tetraploid (AABB) locus.
 
-````{r check_input}
+````{r check_input_p}
 permissive<-QuantumCat_permissive(fromQuantumCat = toy.data ,number_of_mutations = number_mutations,
                                ploidy = "AB",depth = 100,
                                contamination = c(0.3,0.4),max_depth = 50, min_depth = 30)
 kable(permissive[[1]][1:6,])
 
 ````
+
+We are now going to select `r ndrivers` drivers, with probability $3/4$ of being in the permissive filters.
+
+````{r select_drivers}
+drivers_id<-sample(1:(2*number_mutations),size = ndrivers,prob = rep(c(1/{4*number_mutations},
+                                                                       3/{4*number_mutations}),
+                                                                     each = number_mutations)
+                   )
+drivers_id<-drivers_id[order(drivers_id)]
+drivers_id
+````
+
+We now want to cluster mutations using only the filtered mutations (Paper pipeline), the filtered and drivers (extended), or all mutations alltogether (All), and compare the clustering quality of these different methods.
+
+```{r cluster}
+
+pap<-paper_pipeline(filtered = toy.data,
+                    permissive = permissive,
+                    drivers_id = drivers_id)
+
+ext<-extended(filtered = toy.data,
+              permissive = permissive,
+              drivers_id = drivers_id)
+
+all<-All(filtered = toy.data,
+         permissive = permissive,
+         drivers_id = drivers_idS
+)
+````
+
+We are now going to compare the quality of clustering using the Normalized Mutual Information, the number of clusters found (the truth being 6), the maximal and average error in the distance of a driver to its real position. 
+
+```{r compare_qual}
+
+```

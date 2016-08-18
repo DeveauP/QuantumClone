@@ -455,7 +455,7 @@ parallelEM<-function(Schrod,nclust,epsilon,contamination,
 #' @param EM_out Output from EM.algo or FullEM
 #' @keywords EM Hard clustering
 hard.clustering<-function(EM_out){
-  EM_out$clust<-apply(X = EM_out$fik,MARGIN = 1,FUN = function(z) {
+  clust<-apply(X = EM_out$fik,MARGIN = 1,FUN = function(z) {
     if(sum(z==max(z))>1){ ### Look for the multiple clones, and attribute with probability proportional to the weight
       if(max(z)>0){
         pos<-which(z==max(z))
@@ -471,7 +471,7 @@ hard.clustering<-function(EM_out){
       return(which.max(z))
     }
   })
-  return(EM_out$clust)
+  return(clust)
 }
 
 #' Bayesian Information Criterion

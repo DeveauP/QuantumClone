@@ -628,7 +628,7 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
                                  epsilon=5*(10**(-3)),ncores = 2,output_directory=NULL,
                                  model.selection = "BIC",optim = "default", keep.all.models = FALSE){
   preclustering_success<-F
-
+  
   if(preclustering){
     for(i in 1:length(Cell)){
       if(i==1){
@@ -823,32 +823,49 @@ Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination
   if(is.null(SNV_list[[1]]$NC)){ ### The output has not been through clustering
     Schrod<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided = TRUE,
                                               contamination = contamination)
-    # result<-Schrod[[1]]
-    # if(length(Schrod)>1){
-    #   for(i in 2:length(Schrod)){
-    #     result<-cbind(result,Schrod[[i]]$Cell,Schrod[[i]][,c('Cellularity','Genotype',"Alt","Depth","NC")])
-    #   }
-    # }
-    #result<-cbind(result,proba = eval.fik(Schrod = Schrod,centers = clone_prevalence,alpha= rep(1,times=nrow(Schrod[[1]])),
+ 
     result<- eval.fik(Schrod = Schrod,centers = clone_prevalence,alpha= rep(1,times=nrow(Schrod[[1]])),
-                                         weights= clone_weights,keep.all.poss = TRUE,
-                                          adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination))
+                      weights= clone_weights,keep.all.poss = TRUE,
+                      adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination))
+    filtered<-filter_on_fik(Schrod = Schrod,fik = result)
+    filtered_prob<-Probability.to.belong.to.clone(SNV_list = filtered,
+                                                  clone_prevalence,
+                                                  contamination,
+                                                  clone_weights)$filtered_prob
+
   }
-  else{
-    # result<-SNV_list[[1]]
-    # if(length(SNV_list)>1){
-    #   for(i in 2:length(SNV_list)){
-    #     result<-cbind(result,SNV_list[[i]]$Cell,SNV_list[[i]][,c('Cellularity','Genotype',"Alt","Depth","NC")])
-    #   }
-    # }
-    # if(is.null(SNV_list[[1]]$alpha)){
-    #   for(a in 1:length(SNV_list)){
-    #     SNV_list[[a]]<-rep(1,times=length(SNV_list[[a]]$NC))
-    #   }
-    # }
+  else{### The output has  been through clustering
+    Schrod<-SNV_list
     adj.fact<-Compute.adj.fact(SNV_list,contamination)
-    result<-eval.fik(Schrod = Schrod,centers = clone_prevalence,weights =clone_weights,
+    result<-eval.fik(Schrod = SNV_list,centers = clone_prevalence,weights =clone_weights,
+                     alpha = rep(1,times=nrow(SNV_list[[1]])),
                      keep.all.poss = TRUE,adj.factor = adj.fact)
+    filtered_prob<-result
+    filtered <-SNV_list
   }
-  return(data.frame(result,Start = Schrod[[1]]$Start))
+  
+  
+  clustering<-apply(X = result,MARGIN = 1,FUN = function(z) {
+    if(sum(z==max(z))>1){ ### Look for the multiple clones, and attribute with probability proportional to the weight
+      if(max(z)>0){
+        pos<-which(z==max(z))
+        prob<-clone_weights[pos]/(sum(clone_weights[pos]))
+        #sample(x = pos, size = 1, prob = prob))
+        return(pos[which.max(prob)])
+      }
+      else{ ### all possibilities have 0 probability, so choose one randomly
+        return(sample(1:length(z),size = z))
+      }
+    }
+    else{ # only one clone has maximal probability
+      return(which.max(z))
+    }
+  })
+  
+  return(list(unfiltered_prob = result,
+              unfiltered_data = Schrod,
+              filtered_prob =filtered_prob,
+              filtered_data = filtered,
+              cluster = clustering)
+  )
 }
