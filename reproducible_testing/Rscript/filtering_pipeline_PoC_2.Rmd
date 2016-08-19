@@ -93,9 +93,9 @@ ext<-extended(filtered = toy.data,
 
 all<-All(filtered = toy.data,
          permissive = permissive,
-         drivers_id = drivers_idS
+         drivers_id = drivers_id
 )
-````
+```
 
 We are now going to compare the quality of clustering using the Normalized Mutual Information, the number of clusters found (the truth being 6), the maximal and average error in the distance of a driver to its real position. 
 

@@ -812,19 +812,21 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
 #' @keywords Clonal inference phylogeny
 #' @export
 #' @examples
+#' set.seed(123)
 #' SNVs<-QuantumCat(number_of_clones = 2,number_of_mutations = 50,number_of_samples = 1)
 #' Probability.to.belong.to.clone(SNV_list=SNVs,
 #' clone_prevalence=list(c(0.5,1),c(0.5,1)),contamination=c(0,0))
 
 Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination,clone_weights=NULL){
   if(is.null(clone_weights)){
-    clone_weights<-rep(1/length(SNV_list),times = length(SNV_list))
+    clone_weights<-rep(1/(length(clone_prevalence[[1]])),times = length(clone_prevalence[[1]]))
   }
   if(is.null(SNV_list[[1]]$NC)){ ### The output has not been through clustering
     Schrod<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided = TRUE,
                                               contamination = contamination)
- 
-    result<- eval.fik(Schrod = Schrod,centers = clone_prevalence,alpha= rep(1,times=nrow(Schrod[[1]])),
+
+    alpha<-list_prod(Schrod,col = "alpha")
+    result<- eval.fik(Schrod = Schrod,centers = clone_prevalence,alpha= alpha,
                       weights= clone_weights,keep.all.poss = TRUE,
                       adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination))
     filtered<-filter_on_fik(Schrod = Schrod,fik = result)

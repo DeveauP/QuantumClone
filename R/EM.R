@@ -49,8 +49,7 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=F,alpha,adj.factor){
       #al[[i]][pro>1 | pro<0,k]<-0
     }
   }
-  f<-fik.from.al(al,Schrod[[1]]$id,keep.all.poss,alpha)
-  return(f)
+  return(fik.from.al(al,Schrod[[1]]$id,keep.all.poss,alpha))
 }
 
 #'List product

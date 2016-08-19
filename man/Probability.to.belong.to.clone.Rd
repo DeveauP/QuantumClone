@@ -22,6 +22,7 @@ and if the output from FREEC for the samples are not associated, the genotype "G
 Returns dataframe with all informations about mutation (Number of copies, Cellularity, etc.) and probability to belong to a clone
 }
 \examples{
+set.seed(123)
 SNVs<-QuantumCat(number_of_clones = 2,number_of_mutations = 50,number_of_samples = 1)
 Probability.to.belong.to.clone(SNV_list=SNVs,
 clone_prevalence=list(c(0.5,1),c(0.5,1)),contamination=c(0,0))
