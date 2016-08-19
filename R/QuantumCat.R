@@ -412,7 +412,14 @@ statistics_on_Multitest<-function(number_of_tests_per_condition=100,range_clones
 #' Compute_NMI(QC_output)
 Compute_NMI<-function(QC_out){
   # Probabilities
-  cluster<-QC_out$cluster
+  cluster<-as.numeric(as.character(QC_out$cluster))
+  if(length(unique(cluster))!=max(cluster)){### If a cluster is unused
+    spare<-cluster
+    for(i in 2:max(cluster)){ # take k for each unused value (smaller than i) of a cluster
+      spare[spare==i]<-i-sum(!(1:i %in% cluster[cluster<=i]))
+    }
+    cluster<-spare
+  }
   P_cluster<-table(cluster)/length(cluster)
   P_clone<-table(QC_out$filtered.data[[1]]$Chr)/length(QC_out$filtered.data[[1]]$Chr)
   
@@ -424,8 +431,8 @@ Compute_NMI<-function(QC_out){
                by = list(x= cluster,
                          y=QC_out$filtered.data[[1]]$Chr ),
                sum)
+
   L<-log(A[,3]/(length(cluster)*P_cluster[A[,1]]*P_clone[A[,2]]))
-  
   NMI<-2*sum(A[,3]/length(cluster)*L)/(H_clone+H_cluster)
   return(NMI)
 }

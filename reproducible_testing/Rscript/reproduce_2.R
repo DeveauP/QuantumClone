@@ -119,9 +119,9 @@ paper_pipeline<- function(filtered,
   }
   
   clustering$driver_info<-Probability.to.belong.to.clone(SNV_list = drivers_l,
-                                                          clone_prevalence = clustering$EM.output$centers,
-                                                          contamination = contamination,
-                                                          clone_weights= clustering$EM.output$weights)
+                                                         clone_prevalence = clustering$EM.output$centers,
+                                                         contamination = contamination,
+                                                         clone_weights= clustering$EM.output$weights)
   ### Hard clustering
   return(clustering)
   
@@ -137,7 +137,7 @@ extended<- function(filtered,
   for(i in 1:length(permissive)){
     input[[i]]<-rbind(filtered[[i]],
                       permissive[[i]][drivers_id[drivers_id>max(filtered[[1]]$Start)]-max(filtered[[1]]$Start),])
-
+    
   }
   clustering<-One_step_clustering(SNV_list = input,
                                   contamination = contamination,
@@ -145,7 +145,7 @@ extended<- function(filtered,
                                   maxit = 2,ncores = 4,
                                   save_plot = FALSE
   )
-
+  
   clustering$driver_clust<-clustering$cluster[clustering$filtered.data[[1]]$Start %in% drivers_id]
   return(clustering)
 }
@@ -169,4 +169,152 @@ All<-function(filtered,
   
   clustering$driver_clust<-clustering$cluster[clustering$filtered.data[[1]]$Start %in% drivers_id]
   return(clustering)
+}
+
+### Now we are going to compare quality of clustering: NMI, maximal distance to closest clone, number of clusters,
+### average error and maximal error for drivers
+
+compare_qual<-function(paper,
+                       extended,
+                       all,
+                       drivers_id){
+  
+  # NMI
+  NMI<-c(Compute_NMI(paper),
+         Compute_NMI(extended),
+         Compute_NMI(all)
+  )
+  
+  cellularities<-lapply(X = paper$filtered.data,FUN = function(df){
+    sapply(unique(df$Chr),FUN = function(ch){
+      df$Cellularit[df$Chr==ch][1]
+    }
+    ) 
+  }
+  )
+  #maximal distance to closest clone
+  Max.Distance.to.clone<-c(
+    MaxDistance(cellularit = cellularities, cluster_cells = paper$EM.output$centers),
+    MaxDistance(cellularit = cellularities, cluster_cells = extended$EM.output$centers),
+    MaxDistance(cellularit = cellularities, cluster_cells = all$EM.output$centers)
+  )
+  #number clusters
+  
+  nclusters<-c(length(paper$EM.output$centers[[1]]),
+               length(extended$EM.output$centers[[1]]),
+               length(all$EM.output$centers[[1]])
+  )
+  # average and max error for drivers
+  pap.err<-sqrt({
+    cellularities[[1]][paper$driver_info$filtered_data[[1]]$Chr]/100-
+      paper$EM.output$centers[[1]][paper$driver_info$cluster]}**2+
+      {
+        cellularities[[2]][paper$driver_info$filtered_data[[2]]$Chr]/100-
+          paper$EM.output$centers[[2]][paper$driver_info$cluster]}**2
+  )
+
+  ext.test<-cnum(extended$filtered.data[[1]]$Start) %in% cnum(drivers_id)
+  ext.Chr<-extended$filtered.data[[1]]$Chr[ext.test]
+  ext.clust<-extended$cluster[ext.test]
+  
+
+  ext.err<-sqrt({cellularities[[1]][ext.Chr]/100-
+      extended$EM.output$centers[[1]][ext.clust]}**2+
+      {cellularities[[2]][ext.Chr]/100-
+          extended$EM.output$centers[[2]][ext.clust]}**2
+  )
+  
+
+  all.test<-cnum(all$filtered.data[[1]]$Start) %in% cnum(drivers_id)
+  all.Chr<-all$filtered.data[[1]]$Chr[all.test]
+  all.clust<-all$cluster[all.test]
+  
+  
+  all.err<-sqrt({cellularities[[1]][all.Chr]/100-
+      all$EM.output$centers[[1]][all.clust]}**2+
+      {cellularities[[2]][all.Chr]/100-
+          all$EM.output$centers[[2]][all.clust]}**2
+  )
+  
+  max.driv.error<-c(max(pap.err),
+                    max(ext.err),
+                    max(all.err))
+  
+  mean.driv.error<-c(mean(pap.err),
+                     mean(ext.err),
+                     mean(all.err))
+  
+  result<-data.frame(Pipeline = c("paper","extended","all"),
+                     NMI = NMI,
+                     Max.Distance.to.clone = Max.Distance.to.clone,
+                     nclusters = nclusters,
+                     max.driv.error=max.driv.error,
+                     mean.driv.error = mean.driv.error
+  )
+  return(result)
+}
+
+
+# Convert function
+cnum<-function(x) as.numeric(as.character(x))
+# MaxDistance
+MaxDistance<-function(cellularit, cluster_cells){
+  nclones<-length(cellularit[[1]])
+  nclus<-length(cluster_cells[[1]])
+  xclon<-cellularit[[1]]/100
+  yclon<-cellularit[[2]]/100
+  result<-matrix(nrow = nclus,ncol = nclones)
+  
+  for(i in 1:nclus){
+    result[i,]<-sqrt((cnum(cluster_cells[[1]][i])-xclon)**2+
+                       (cnum(cluster_cells[[2]][i])-yclon)**2
+    )
+  }
+  minClustClon<-apply(X = result,MARGIN = 1,min) ### Find the clone that is closest to cluster
+  return(max(minClustClon))
+  
+}
+
+reproduce<-function(iterations,number_mutations,ndrivers){
+  set.seed(234)
+  
+  for(iter in 1:iterations){
+    toy.data<-QuantumCat_stringent(number_of_clones = 6,number_of_mutations = number_mutations,
+                                   ploidy = "AB",depth = 100,
+                                   contamination = c(0.3,0.4),min_depth = 50)
+    permissive<-QuantumCat_permissive(fromQuantumCat = toy.data ,number_of_mutations = number_mutations,
+                                      ploidy = "AB",depth = 100,
+                                      contamination = c(0.3,0.4),max_depth = 50, min_depth = 30)
+    drivers_id<-sample(1:(2*number_mutations),size = ndrivers,prob = rep(c(1/{4*number_mutations},
+                                                                           3/{4*number_mutations}),
+                                                                         each = number_mutations)
+    )
+    drivers_id<-drivers_id[order(drivers_id)]
+    
+    pap<-paper_pipeline(filtered = toy.data,
+                        permissive = permissive,
+                        drivers_id = drivers_id)
+    
+    ext<-extended(filtered = toy.data,
+                  permissive = permissive,
+                  drivers_id = drivers_id)
+    
+    all<-All(filtered = toy.data,
+             permissive = permissive,
+             drivers_id = drivers_id)
+    
+    Quality<-compare_qual(paper = pap,
+                          extended = ext,
+                          all = all,
+                          drivers_id = drivers_id)
+    
+    if(iter == 1){
+      result<-Quality
+    }
+    else{
+      result<-rbind(result,Quality)
+    }
+  }
+  
+  return(result)
 }

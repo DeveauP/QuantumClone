@@ -28,20 +28,20 @@ if(!require(ggplot2)) install.packages("ggplot2")
 if(!require(reshape2)) install.packages("reshape2")
 
 # Creating reproducible example
-set.seed(123)
-source("C:/Genome analysis/R_package/QuantumClone_final/QC_Github/QuantumClone/reproducible_testing/Rscript/reproduce_2.R")
 source("reproduce_2.R")
+
+set.seed(123)
 
 ````
 
 *All functions are stored inside the reproduce_2.R, to avoid long display of codes. Below are the values that will be used throughout the testing *
 ```{r setup_values}
 number_iterations <- 10
-number_mutations <- 40
+number_mutations <- 200
 ndrivers <- 20
 ```
 
-We will first create a test set with `QuantumCat` with 6 clones, 200 variants, diploid, with an average depth of 100X, two samples with respective purity 70% and 60%. We make sure these variants correspond to stingent filters (i.e. depth $> 50$X).
+We will first create a test set with `QuantumCat` with 6 clones, `r number_mutations` variants, diploid, with an average depth of 100X, two samples with respective purity 70% and 60%. We make sure these variants correspond to stringent filters (i.e. depth $> 50$X).
 
 ````{r create_data}
 toy.data<-QuantumCat_stringent(number_of_clones = 6,number_of_mutations = number_mutations,
@@ -58,7 +58,7 @@ kable(toy.data[[1]][1:6,])
 ````
 
 
-Then we create as many mutations that are in permissive filters. For that we take 50 mutations with 30 to 50 depth, 100 that have a depth $\geq 30$ in triploid (AAB) loci and 50 that have a depth $\geq 30$ in a tetraploid (AABB) locus.
+Then we create `r number_mutations` mutations that are in permissive filters. For that we take `r round(number_mutations/4)` mutations with 30 to 50 depth, `r round(number_mutations/2)` that have a depth $\geq 30$ in triploid (AAB) loci and `r round(number_mutations/4)` that have a depth $\geq 30$ in a tetraploid (AABB) locus.
 
 ````{r check_input_p}
 permissive<-QuantumCat_permissive(fromQuantumCat = toy.data ,number_of_mutations = number_mutations,
@@ -81,7 +81,7 @@ drivers_id
 
 We now want to cluster mutations using only the filtered mutations (Paper pipeline), the filtered and drivers (extended), or all mutations alltogether (All), and compare the clustering quality of these different methods.
 
-```{r cluster}
+```{r cluster,message = FALSE}
 
 pap<-paper_pipeline(filtered = toy.data,
                     permissive = permissive,
@@ -100,5 +100,35 @@ all<-All(filtered = toy.data,
 We are now going to compare the quality of clustering using the Normalized Mutual Information, the number of clusters found (the truth being 6), the maximal and average error in the distance of a driver to its real position. 
 
 ```{r compare_qual}
+Quality<-compare_qual(paper = pap,
+                      extended = ext,
+                      all = all,
+                      drivers_id = drivers_id)
+
+kable(Quality)
+```
+
+We are now going to reproduce this test `r number_iterations-1` times.
+
+```{r iterate,message = FALSE}
+
+Quality<-rbind(Quality,
+               reproduce(number_iterations-1,
+                         number_mutations,
+                         ndrivers)
+               )
+
+kable(Quality)
+
+``` 
+
+We can plot these results:
+
+```{r plot,echo = FALSE}
+Melt<-melt(cbind(Quality),id = "Pipeline")
+Melt$value<-as.numeric(as.character(Melt$value))
+
+ggplot(Melt,aes_string(x= "Pipeline",y = "value",facet = "variable"))+geom_boxplot()+facet_wrap( ~ variable,nrow = floor(sqrt(length(unique(Melt$variable))))+1,scales = "free_y")+theme_bw()+theme(axis.text.x = element_text(angle = 90))
+
 
 ```

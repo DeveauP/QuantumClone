@@ -847,7 +847,7 @@ Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination
   }
   
   
-  clustering<-apply(X = result,MARGIN = 1,FUN = function(z) {
+  clustering<-apply(X = filtered_prob,MARGIN = 1,FUN = function(z) {
     if(sum(z==max(z))>1){ ### Look for the multiple clones, and attribute with probability proportional to the weight
       if(max(z)>0){
         pos<-which(z==max(z))
