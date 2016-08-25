@@ -11,24 +11,29 @@ vignette: >
   %\VignetteEngine{rmarkdown::render}
   %\VignetteEncoding{UTF-8}
 ---
-Release of 19/08/2016
+Release of 19/08/2016:
+
   - Corrected NMI computation if a number of cluster is missing (for example cluster values can be 1:3, 5:7, cluster value 6 would be considered missing)
   - Changed the proof of concept pipeline to be easier to read and edit
-  - Changes in Probability.to.belong.to.clone: now returns filtered and unfiltered probabilities (clustering is on filtered probabilities)
+  - Changes in `Probability.to.belong.to.clone`: now returns filtered and unfiltered probabilities (clustering is on filtered probabilities)
 
-Release of 16/08/2016
+Release of 16/08/2016:
+
   - Corrected hard clustering parameters
-  - Corrected probability.to.belong.to.clone
+  - Corrected `Probability.to.belong.to.clone`
   - Gain from parallelization script
 
-Release of 12/08/2016
+Release of 12/08/2016:
+
   - Computed PoC for clustering quality
   - Changes in `eval.fik` for an expected 5-10% gain in computational speed.
 
-Release of 9/08/2016
+Release of 9/08/2016:
+
   - Removed 3D plots to prepare CRAN release
 
 Release of 8/08/2016:
+
   - Removed rgl dependency (3D plots), causing QuantumClone to be unavailable on Ubuntu
   - Updated pipeline tests
   - Computational time test compiled

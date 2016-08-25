@@ -6,7 +6,7 @@
 \usage{
 QuantumClone(SNV_list, FREEC_list = NULL, contamination, nclone_range = 2:5,
   clone_priors = NULL, prior_weight = NULL, simulated = FALSE,
-  save_plot = TRUE, epsilon = 5 * (10^(-3)), maxit = 8,
+  save_plot = TRUE, epsilon = 5 * (10^(-3)), maxit = 2,
   preclustering = TRUE, timepoints = NULL, ncores = 1,
   output_directory = NULL, model.selection = "BIC", optim = "default",
   keep.all.models = FALSE, force.single.copy = FALSE)
