@@ -2,13 +2,10 @@
 title: "Release"
 author: "Paul Deveau"
 date: "`r Sys.Date()`"
-output: 
-  html_document: 
-    highlight: tango
-    theme: cosmo
+output: html_vignette 
 vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{Release}
-  %\VignetteEngine{rmarkdown::render}
   %\VignetteEncoding{UTF-8}
 ---
 Release of 19/08/2016:

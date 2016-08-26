@@ -4,8 +4,8 @@ author: "Paul Deveau"
 date: "`r Sys.Date()`"
 output: 
 html_document:
-highlight: tango
-theme: cosmo
+  highlight: tango
+  theme: cosmo
 self_contained: no
 fig_width: 7
 fig_height: 7

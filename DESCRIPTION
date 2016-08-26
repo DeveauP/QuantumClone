@@ -2,9 +2,7 @@ Package: QuantumClone
 Title: Clustering Mutations using High Throughput Sequencing (HTS) Data
 Version: 0.16.8.19
 Authors@R: person("Paul", "Deveau", role = c("aut", "cre"),
-		     email = "paul.deveau at curie.fr")
-Author: Paul Deveau [aut, cre]
-Maintainer: Paul Deveau <paul.deveau@curie.fr>
+		     email = "paul.deveau@curie.fr")
 Description: Using HTS data, clusters mutations in order to recreate putative
     clones from the data provided. It requires genotype at the location of the
     variant as well as the depth of coverage and number of reads supporting the
@@ -27,8 +25,8 @@ Imports:
     gridExtra,
     ggplot2
 Suggests:
-    rmarkdown
+    knitr,rmarkdown
 License: GPL-2
 LazyData: true
-VignetteBuilder: rmarkdown
+VignetteBuilder: knitr
 RoxygenNote: 5.0.1

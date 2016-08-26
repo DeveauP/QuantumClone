@@ -2,14 +2,10 @@
 title: "Use case"
 author: "Paul Deveau"
 date: "`r Sys.Date()`"
-output: 
-  rmarkdown::html_vignette:
-      self_contained: no
-      fig_width: 7
-      fig_height: 7
+output:  rmarkdown::html_vignette
 vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{Use case}
-  %\VignetteEngine{rmarkdown::render}
   %\VignetteEncoding{UTF-8}
 ---
 
