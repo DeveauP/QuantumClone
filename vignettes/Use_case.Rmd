@@ -8,12 +8,13 @@ vignette: >
   %\VignetteIndexEntry{Use case}
   %\VignetteEncoding{UTF-8}
 ---
-
+```{r, include = FALSE}
+library(QuantumClone)
+knitr::opts_chunk$set(fig.dpi = 96)
+```
 # QuantumClone and QuantumCat
 
-R package available on [CRAN](https://cran.r-project.org/package=QuantumClone)
-
-or on [github](https://github.com/DeveauP/QuantumClone)
+R package available on [CRAN](https://cran.r-project.org/package=QuantumClone) or on [github](https://github.com/DeveauP/QuantumClone)
 
 Maintainer: Paul Deveau (paul.deveau at curie.fr)
 

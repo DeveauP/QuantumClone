@@ -3,5 +3,5 @@
 ^\.travis.yml
 ^\Images
 GUI_windows.R
-reproducible_testing/
+^\reproducible_testing
 Readme.md

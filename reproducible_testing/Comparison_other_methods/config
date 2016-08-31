@@ -1,17 +1,17 @@
 ###Config file
 
 # Software paths
-R=/path/to/bin/R
-python=/path/to/bin/python 
+R=/bioinfo/local/build/R/R-3.2.3/bin/R #or /path/to/R/bin/R
+#python=/path/to/bin/python
+#pythonpath=$PYTHONPATH # to change pythonpath if necessary
 
 ## Package path
-pyclone=/path/to/pyClone # this is the pyClone file
-pyclone_config=${PWD}/config_pyClone.txt #path to the master config file
+pyclone=PyClone # command to start PyClone (here only PyClone as installed with conda)
+pyclone_config=${input}/config_pyclone_light.txt #path to the master config file
 
 ## Directories
-input=/path/to/reproducible_testing/Comparison_other_methods/
 output=$PWD
 
-## Plot output of comparisons ? (plots for sample will not be output)
+## Plot output?
 plot=TRUE #TRUE or FALSE
 
