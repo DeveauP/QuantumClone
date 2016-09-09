@@ -140,19 +140,28 @@ QuantumCat<-function(number_of_clones,number_of_mutations,ploidy=2,depth=100,num
 
 #' Data generation
 #'
+#' Decayed tree generation
+#' Known issues: can generate data with cellularity < 0
+#' Replaced by phylo_tree_generation
 #' WARNING: Tree_generation recreates a tree from data while phylo_tree_generation randomly creates a phylogeny
 #' @param number_of_clones The wanted number of observable clones (meaning bearing at least 1 mutation)
 #' @param number_of_samples The number of samples on which the data should be simulated
 #' @keywords Data creation phylogeny
-phylo_tree_generation<-function(number_of_clones,number_of_samples){
-  Localization<-as.character('Ancestral')
+#' @seealso phylo_tree_generation
+phylo_tree_generation_previous<-function(number_of_clones,number_of_samples){
+  if(number_of_clones<2){
+    warning("Cannot create a phylogenetic tree with less than 2 clones")
+    return(NA)
+  }
+  
+  Localization<-'Ancestral'
   Proportion<-list()
   for(i in 1:number_of_samples){
     Proportion[[i]]<-100
   }
   j<-1
   mutated<-1
-  has_progeny<-as.numeric(0)
+  has_progeny<-0
   while(sum(mutated)<number_of_clones){
     j=j+1
     if(length(which(has_progeny==0))==1){
@@ -279,47 +288,9 @@ Multitest<-function(number_of_tests,number_of_samples=2,ploidy=2,Sample_name='Mu
       colnames(statistics)<-colnames(statistics)<-c("number_of_clones",'clones_observed','NMI')
     }
     else{
-      #       for(j in 1:number_of_clones){
-      #         #percentage_misclustered<-percentage_misclustered+sum(cluster!=corresponding_cluster)
-      #         cluster<-t$pamobject$clustering[t$filtered.data[[1]]$Chr]==j]
-      #         corresponding_cluster<-as.numeric(names(table(cluster))[which.max(table(cluster))])
-      #         if(length(corresponding_cluster)==0){
-      #           warning(paste("One unobserved clone:",cluster))
-      #         }
-      #         else{
-      #           if(j==1){
-      #             distance<-sqrt(sum((t$pamobject$medoids[corresponding_cluster,]-Cell[j,])**2))
-      #           }
-      #           else{
-      #             distance<-c(sqrt(sum((t$pamobject$medoids[corresponding_cluster,]-Cell[j,])**2)))
-      #           }
-      #         }
-      #       }
-      #percentage_misclustered<-percentage_misclustered/length(t$pamobject$clustering)*100
-      #average_distance<-mean(distance)
+    
       statistics<-rbind(statistics,c(number_of_clones,max(t$cluster),NMI))
     }
-    #     if(plot_results){
-    #       if(number_of_samples>1){
-    #         for(p in 1:dim(U)[1]){
-    #           q<-ggplot2::qplot(x=c(t$pamobject$medoids[,U[p,1]],Cell[,U[p,1]]),y=c(t$pamobject$medoids[,U[p,2]],Cell[,U[p,2]]),
-    #                             xlab=paste('Cellularity of centers, sample',U[p,1]),
-    #                             ylab=paste('Cellularity of centers, sample',U[p,2]),asp=1,main='Comparison of centers',
-    #                             colour=factor(c(rep(1,times=dim(t$pamobject$medoids)[1]),rep(2,times=dim(Cell)[1]))),
-    #                             shape=factor(c(rep(1,times=dim(t$pamobject$medoids)[1]),rep(2,times=dim(Cell)[1]))))+scale_shape_discrete(name="Centers",breaks=c(1,2),labels=c("Estimated","Real"))+scale_colour_discrete(name="Centers",breaks=c(1,2),labels=c("Estimated","Real"))+coord_cartesian(xlim=c(0,1),ylim=c(0,1))
-    #           ggplot2::ggsave(plot = q, filename = paste(Sample_name,i,'/', 'Comparison_simulation', U[p,1],'_',U[p,2], '.png',sep=''),width = 6.04,height = 6.04)
-    #         }
-    #       }
-    #       else{
-    #         q<-ggplot2::qplot(x=c(t$pamobject$medoids[,1],unique(Cell[,1])/100),y=0.5,
-    #                           xlab=paste('Cellularity of centers'),
-    #                           ylab='',asp=1,main='Comparison of centers',
-    #                           colour=factor(c(rep(1,times=dim(t$pamobject$medoids)[1]),rep(2,times=dim(unique(Cell))[1]))),
-    #                           shape=factor(c(rep(1,times=dim(t$pamobject$medoids)[1]),rep(2,times=dim(unique(Cell))[1]))))+scale_shape_discrete(name="Centers",breaks=c(1,2),labels=c("Estimated","Real"))+scale_colour_discrete(name="Centers",breaks=c(1,2),labels=c("Estimated","Real"))+coord_cartesian(xlim=c(0,1),ylim=c(0,1))
-    #         ggplot2::ggsave(plot = q, filename = paste(Sample_name,i,'/', 'Comparison_simulation', '.png',sep=''),width = 6.04,height = 6.04)
-    #         
-    #       }
-    
   }
   return(statistics)
 }
