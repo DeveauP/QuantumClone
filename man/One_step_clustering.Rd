@@ -6,7 +6,7 @@
 \usage{
 One_step_clustering(SNV_list, FREEC_list = NULL, contamination,
   nclone_range = 2:5, clone_priors = NULL, prior_weight = NULL,
-  maxit = 2, preclustering = TRUE, simulated = FALSE, epsilon = 0.01,
+  maxit = 2, preclustering = "FLASH", simulated = FALSE, epsilon = 0.01,
   save_plot = TRUE, ncores = 1, restrict.to.AB = FALSE,
   output_directory = NULL, model.selection = 6, optim = "default",
   keep.all.models = FALSE, force.single.copy = FALSE)
@@ -73,10 +73,10 @@ cat("Cluster data: will try to cluster between 3 and 4 clones, with 1 maximum se
 print("The genotype is provided in the list frame, and
           there is no associated data from FREEC to get genotype from.")
 print("The computation will run on a single CPU.")
-Clustering_output<-QuantumClone(SNV_list = Mutations,
+Clustering_output<-One_step_clustering(SNV_list = Mutations,
 FREEC_list = NULL,contamination = c(0,0),nclone_range = 3:4,
 clone_priors = NULL,prior_weight = NULL ,
-maxit = 1,preclustering = TRUE, simulated = TRUE,
+maxit = 1,preclustering = "FLASH", simulated = TRUE,
 save_plot = TRUE,ncores=1,output_directory="Example")
 print("The data can be accessed by Clustering_output$filtered_data")
 print("All plots are now saved in the working directory")

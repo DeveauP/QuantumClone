@@ -596,8 +596,8 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
   else{
     for(i in 1:length(nclone_range)){
       if(FLASH){
-        priors<-Create_prior_cutTree(tree,Schrod,i)
-        list_out_EM[[i]]<-parallelEM(Schrod = Schrod,nclust = i,epsilon = epsilon,
+        priors<-Create_prior_cutTree(tree,Schrod,nclone_range[i])
+        list_out_EM[[i]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],epsilon = epsilon,
                                      contamination = contamination,prior_center = priors$centers,
                                      prior_weight = priors$weights,maxit = 1 , ncores = 1,
                                      optim = optim,keep.all.models = keep.all.models)

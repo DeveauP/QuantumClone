@@ -6,7 +6,7 @@
 \usage{
 QuantumClone(SNV_list, FREEC_list = NULL, contamination, nclone_range = 2:5,
   clone_priors = NULL, prior_weight = NULL, simulated = FALSE,
-  save_plot = TRUE, epsilon = 0.01, maxit = 2, preclustering = TRUE,
+  save_plot = TRUE, epsilon = 0.01, maxit = 2, preclustering = "FLASH",
   timepoints = NULL, ncores = 1, output_directory = NULL,
   model.selection = "BIC", optim = "default", keep.all.models = FALSE,
   force.single.copy = FALSE)
@@ -56,30 +56,6 @@ uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it wil
 \description{
 Sequentially calls a function to test all accessible cellularities for all mutations in the samples,then cluster them, and finally draws
 phylogenetic trees based on the uncovered cellularities
-}
-\examples{
-
-Mutations<-QuantumClone::Input_Example
- for(i in 1:2){
- Mutations[[i]]<-cbind(rep(paste("Example_",i,sep=""),times=10),Mutations[[i]])
- colnames(Mutations[[i]])[1]<-"Sample"
-}
-print("The data should look like this:")
-print(head(Mutations[[1]]))
-
-cat("Cluster data: will try to cluster between 3 and 4 clones, with 1 maximum search each time,
-      and will use priors from preclustering (e.g. k-medoids on A and AB sites)")
-print("The genotype is provided in the list frame, and
-          there is no associated data from FREEC to get genotype from.")
-print("The computation will run on a single CPU.")
-Clustering_output<-QuantumClone(SNV_list = Mutations,
-FREEC_list = NULL,contamination = c(0,0),nclone_range = 3:4,
-clone_priors = NULL,prior_weight = NULL ,
-maxit = 1,preclustering = TRUE, simulated = TRUE,
-save_plot = TRUE,ncores=1,output_directory="Example")
-print("The data can be accessed by Clustering_output$filtered_data")
-print("All plots are now saved in the working directory")
-
 }
 \keyword{Cancer}
 \keyword{Clonal}

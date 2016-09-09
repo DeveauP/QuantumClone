@@ -33,7 +33,6 @@
 #' @importFrom utils tail write.table
 #' @export
 #' @examples
-#'
 #' Mutations<-QuantumClone::Input_Example
 #'  for(i in 1:2){
 #'  Mutations[[i]]<-cbind(rep(paste("Example_",i,sep=""),times=10),Mutations[[i]])
@@ -43,7 +42,7 @@
 #' print(head(Mutations[[1]]))
 #'
 #' cat("Cluster data: will try to cluster between 3 and 4 clones, with 1 maximum search each time,
-#'       and will use priors from preclustering.
+#'       and will use priors from preclustering.")
 #' print("The genotype is provided in the list frame, and
 #'           there is no associated data from FREEC to get genotype from.")
 #' print("The computation will run on a single CPU.")
@@ -141,7 +140,7 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
 #'
 One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                               contamination,nclone_range=2:5,
-                              clone_priors=NULL,prior_weight=NULL,maxit=2,preclustering=TRUE,
+                              clone_priors=NULL,prior_weight=NULL,maxit=1,preclustering="FLASH",
                               simulated = FALSE, epsilon = 0.01,
                               save_plot = TRUE,ncores=1,
                               restrict.to.AB = FALSE,output_directory=NULL,
