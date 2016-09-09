@@ -560,10 +560,10 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
                         nclone_range=2:5, epsilon=5*(10**(-3)),ncores = 2,
                         model.selection = "BIC",optim = "default",keep.all.models = FALSE,
                         FLASH = FALSE){
-  
   list_out_EM<-list()
   if(FLASH){
     tree<-Cellular_preclustering(Schrod)$tree
+    maxit<-1
   }
   if(ncores >1){
     cl <- parallel::makeCluster( ncores )
