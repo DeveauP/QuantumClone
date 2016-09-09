@@ -117,6 +117,7 @@ zscore<-function(Depth,Alt){
 #' @param chr the ground truth for clusters
 #' @return numeric value of NMI (between 0 and 1)
 #' @examples
+#' set.seed(123)
 #' #1: Cluster data
 #' FQC<-FlashQC(QuantumClone::Input_Example,conta = c(0,0),Nclus = 2:10)
 #' 
@@ -171,9 +172,33 @@ MajorityVote<-function(index){
 #' @param conta vector with contamination fraction in each sample
 #' @param Nclus vector with the number of clusters to test (alternatively only min and max values)
 #' @examples
+#' set.seed(123)
 #' #1: Cluster data
-#' FQC<-FlashQC(QuantumClone::Input_Example,conta = c(0,0),Nclus = 2:10)
+#' In<-QuantumClone::Input_Example
+#' FQC<-FlashQC(In,conta = c(0,0),Nclus = 2:10)
 #' 
+#' #2: Get order variants by clones:
+#' ord<-order(In[[1]]$Chr)
+#' #3: Visualize clustering:
+#' image(
+#'  1:nrow(In[[1]]),
+#'  1:nrow(In[[1]]),
+#'  FQC$similarity[ord,ord], 
+#'  xlab="", ylab="")
+#' #4: add limit of real clusters:
+#' abline(h = cumsum(table(In[[1]]$Chr[ord]))+1)
+#' abline(v = cumsum(table(In[[1]]$Chr[ord]))+1)
+#' 
+#' #5: alternatively add clusters found:
+#' ord<-order(FQC$clusters)
+#' image(
+#'  1:nrow(In[[1]]),
+#'  1:nrow(In[[1]]),
+#'  FQC$similarity[ord,ord], 
+#'  xlab="", ylab="")
+#' abline(h = cumsum(table(FQC$clusters[ord]))+1)
+#' abline(v = cumsum(table(FQC$clusters[ord]))+1)
+#'  
 #' @export
 #' @importFrom NbClust NbClust
 #' @seealso QuantumClone

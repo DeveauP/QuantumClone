@@ -8,6 +8,15 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEncoding{UTF-8}
 ---
+<h3<Release of 9/9/2016 </h3>
+<h4>MAY BE UNSTABLE</h4>
+<ul>
+<li> Added FlashQC : using hierarchical clustering and distance on the p-value of 2 variants being from the same distribution; </li>
+<li> Updated parallel: initialization and number of clusters are run in parallel, not independently; </li>
+<li> For rearranged genomes, after the first clustering, a second one is done after removing unlikely states; </li>
+<li> Preclustering can now be done with FlashQC </li>
+</ul>
+
 <h3>Release of 31/08/2016</h3>
 <ul>
 <li>Rewrote this vignette in html </li>

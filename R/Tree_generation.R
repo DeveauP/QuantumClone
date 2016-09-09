@@ -41,7 +41,7 @@ phylo_tree_generation<-function(number_of_clones,number_of_samples){
   can_split<-c(FALSE,
                check_split(Proportions[2,]),
                check_split(Proportions[3,]))
-  if(number_of_samples>1){
+  if(number_of_samples>1){ ### Issue with coercion to numeric vector.
     probs<-apply(Proportions[can_split,],MARGIN = 1, FUN = sum )
   }
   else{

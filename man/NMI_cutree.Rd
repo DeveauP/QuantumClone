@@ -18,6 +18,7 @@ numeric value of NMI (between 0 and 1)
 Computes the NMI based on the clustering
 }
 \examples{
+set.seed(123)
 #1: Cluster data
 FQC<-FlashQC(QuantumClone::Input_Example,conta = c(0,0),Nclus = 2:10)
 
