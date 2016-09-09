@@ -5,9 +5,9 @@
 \title{Expectation Maximization}
 \usage{
 EM_clustering(Schrod, contamination, prior_weight = NULL,
-  clone_priors = NULL, maxit = 8, nclone_range = 2:5, epsilon = 5 *
+  clone_priors = NULL, maxit = 1, nclone_range = 2:5, epsilon = 5 *
   (10^(-3)), ncores = 2, model.selection = "BIC", optim = "default",
-  keep.all.models = FALSE)
+  keep.all.models = FALSE, FLASH = FALSE)
 }
 \arguments{
 \item{Schrod}{List of dataframes, output of the Schrodinger function or the EM algorithm}
@@ -32,6 +32,8 @@ uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it wil
 \item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx")}
 
 \item{keep.all.models}{Should the function output the best model (default; FALSE), or all models tested (if set to true)}
+
+\item{FLASH}{should it use FLASH algorithm to create priors}
 }
 \description{
 Maximization of the likelihood given a mixture of binomial distributions

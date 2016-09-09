@@ -6,10 +6,10 @@
 \usage{
 QuantumClone(SNV_list, FREEC_list = NULL, contamination, nclone_range = 2:5,
   clone_priors = NULL, prior_weight = NULL, simulated = FALSE,
-  save_plot = TRUE, epsilon = 5 * (10^(-3)), maxit = 2,
-  preclustering = TRUE, timepoints = NULL, ncores = 1,
-  output_directory = NULL, model.selection = "BIC", optim = "default",
-  keep.all.models = FALSE, force.single.copy = FALSE)
+  save_plot = TRUE, epsilon = 0.01, maxit = 2, preclustering = TRUE,
+  timepoints = NULL, ncores = 1, output_directory = NULL,
+  model.selection = "BIC", optim = "default", keep.all.models = FALSE,
+  force.single.copy = FALSE)
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
@@ -34,7 +34,8 @@ and if the output from FREEC for the samples are not associated, the genotype "G
 
 \item{maxit}{Number of initial conditions to be tested for the EM algorithm}
 
-\item{preclustering}{Boolean: should a kmeans be performed on A and AB sites to determine priors}
+\item{preclustering}{The type of preclustering used for priors: "Flash","kmedoid" or NULL. NULL will generate
+centers using uniform distribution. WARNING: overrides priors given}
 
 \item{timepoints}{a numeric vector indicating if the samples are from different timepoints or tumors (e.g. one tumor and metastates) If NULL,
 all samples are considered from the same tumor.}

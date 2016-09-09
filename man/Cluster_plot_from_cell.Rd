@@ -29,7 +29,8 @@ Cluster_plot_from_cell(Cell, Sample_names, simulated, save_plot = TRUE,
 
 \item{maxit}{Maximal number of independant initial condition tests to be tried}
 
-\item{preclustering}{Boolean: should a kmeans be performed on A and AB sites to determine priors}
+\item{preclustering}{The type of preclustering used for priors: "Flash","kmedoid" or NULL. NULL will generate
+centers using uniform distribution.}
 
 \item{epsilon}{Stop value: maximal admitted value of the difference in cluster position and weights between two optimization steps.}
 

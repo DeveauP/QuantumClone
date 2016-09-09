@@ -42,7 +42,7 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=F,alpha,adj.factor){
     for(k in 1:length(weights)){ ## k is a clone
       idx<-idx+1
       pro<-centers[idx]*adj
-      test<-pro <1 & pro >0
+      test<-pro <=1 & pro >=0
       #pro_0<-pro
       #pro_0[pro>1 | pro<0]<-0
       al[[i]][test,k]<-dbinom(x =Alt[test] ,size = Depth[test],prob = pro[test])
@@ -550,39 +550,66 @@ BIC_criterion<-function(EM_out_list,model.selection){
 #' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights between two optimization steps.
 #' @param ncores Number of CPUs to be used
 #' @param clone_priors If known a list of priors (cell prevalence) to be used in the clustering
+#' @param FLASH should it use FLASH algorithm to create priors
 #' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx")
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
 #'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
 #' @keywords EM clustering number
-EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NULL, maxit=8,
+EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NULL, maxit=1,
                         nclone_range=2:5, epsilon=5*(10**(-3)),ncores = 2,
-                        model.selection = "BIC",optim = "default",keep.all.models = FALSE){
+                        model.selection = "BIC",optim = "default",keep.all.models = FALSE,
+                        FLASH = FALSE){
   
   list_out_EM<-list()
-  if(length(nclone_range)>maxit && ncores >1){
+  if(FLASH){
+    tree<-Cellular_preclustering(Schrod)$tree
+  }
+  if(ncores >1){
     cl <- parallel::makeCluster( ncores )
     doParallel::registerDoParallel(cl)
     
-    list_out_EM<-foreach::foreach(i=nclone_range,.export = c("parallelEM","FullEM","EM.algo","create_priors",
-                                                             "add.to.list","e.step","m.step","list_prod",
-                                                             "Compute.adj.fact","eval.fik","eval.fik.m",
-                                                             "fik.from.al","filter_on_fik")) %dopar% {
-                                                               parallelEM(Schrod = Schrod,nclust = i,epsilon = epsilon,
-                                                                          contamination = contamination,prior_center = clone_priors,
-                                                                          prior_weight = prior_weight,maxit = maxit , ncores = 1,
-                                                                          optim = optim,keep.all.models = keep.all.models)
-                                                             }
+    list_out_EM<-foreach::foreach(i=rep(nclone_range,each = maxit),
+                                  .export = c("parallelEM","FullEM","EM.algo","create_priors",
+                                              "add.to.list","e.step","m.step","list_prod",
+                                              "Compute.adj.fact","eval.fik","eval.fik.m",
+                                              "fik.from.al","filter_on_fik","Create_prior_cutTree")) %dopar% {
+                                                if(FLASH){
+                                                  priors<-Create_prior_cutTree(tree,Schrod,i)
+                                                  return(parallelEM(Schrod = Schrod,nclust = i,epsilon = epsilon,
+                                                                    contamination = contamination,prior_center = priors$centers,
+                                                                    prior_weight = priors$weights,maxit = 1 , ncores = 1,
+                                                                    optim = optim,keep.all.models = keep.all.models)
+                                                  )
+                                                }
+                                                else{
+                                                  return(parallelEM(Schrod = Schrod,nclust = i,epsilon = epsilon,
+                                                                    contamination = contamination,prior_center = clone_priors,
+                                                                    prior_weight = prior_weight,maxit = 1 , ncores = 1,
+                                                                    optim = optim,keep.all.models = keep.all.models)
+                                                  )
+                                                }
+                                              }
     doParallel::stopImplicitCluster()
     parallel::stopCluster(cl)
   }
   else{
     for(i in 1:length(nclone_range)){
-      list_out_EM[[i]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],epsilon = epsilon,
-                                   contamination = contamination,prior_center = clone_priors,
-                                   prior_weight = prior_weight,maxit = maxit , ncores = ncores,
-                                   optim = optim,
-                                   keep.all.models = keep.all.models)
+      if(FLASH){
+        priors<-Create_prior_cutTree(tree,Schrod,i)
+        list_out_EM[[i]]<-parallelEM(Schrod = Schrod,nclust = i,epsilon = epsilon,
+                                     contamination = contamination,prior_center = priors$centers,
+                                     prior_weight = priors$weights,maxit = 1 , ncores = 1,
+                                     optim = optim,keep.all.models = keep.all.models)
+        
+      }
+      else{
+        list_out_EM[[i]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],epsilon = epsilon,
+                                     contamination = contamination,prior_center = clone_priors,
+                                     prior_weight = prior_weight,maxit = maxit , ncores = 1,
+                                     optim = optim,
+                                     keep.all.models = keep.all.models)
+      }
     }
   }
   if(!keep.all.models){
