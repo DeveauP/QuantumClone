@@ -237,9 +237,7 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
   }
   
   #### New version
-  print(length(unique(Cell[[1]]$id)))
-  print(length(Cell[[1]]$id))
-  
+
   if(length(unique(Cell[[1]]$id))==length(Cell[[1]]$id)){ # All mutations had a single possible state
     message("Post-processing output")
     if(keep.all.models){

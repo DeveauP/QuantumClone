@@ -31,7 +31,7 @@ Cellular_preclustering<-function(Schrod_cells){
   result<-list(similarityMatrix = DistMat,
                distance = dissimMatrix,
                tree = tree
-               )
+  )
   result 
 }
 
@@ -64,10 +64,10 @@ Create_prior_cutTree<-function(tree,Schrod_cells,NClus){
   for(i in 1:length(Schrod_cells)){
     
     centers[[i]]<-2 * unlist(sapply(as.numeric(names(weights)),
-                         function(cl){
-                           sum(Schrod_cells[[i]]$Norm_Alt[clustering==cl])/sum(Schrod_cells[[i]]$Depth[clustering==cl])
-                         }
-                         )
+                                    function(cl){
+                                      sum(Schrod_cells[[i]]$Norm_Alt[clustering==cl])/sum(Schrod_cells[[i]]$Depth[clustering==cl])
+                                    }
+    )
     )
     centers[[i]][centers[[i]]>1]<-1
   }
@@ -87,11 +87,10 @@ ProbDistMatrix<-function(Schrod_cells){
     ### z-score should be >0
     result<-result+zscore(Depth = Schrod_cells[[l]]$Depth,
                           Alt = Schrod_cells[[l]]$Norm_Alt
-                          )
+    )
   }
-
   2*pnorm(-result**(1/2))
-   
+  
 }
 
 #'  Z-score
@@ -112,6 +111,7 @@ zscore<-function(Depth,Alt){
     result[,i]<-((p1-p2)**2)/(p*(1-p)*(1/Depth[i]+1/Depth))
     result[w0,i]<-0
     result[w1,i]<-+Inf
+    result[is.na(result[,i]),i]<-+Inf
   }
   result
 }
@@ -247,7 +247,7 @@ FlashQC<-function(Cells,conta,Nclus){
   priors<-Create_prior_cutTree(tree = tree,
                                Schrod_cells = Schrod_cells,
                                NClus = majority
-                              )
+  )
   result<-list(similarity = DistMat,
                distance = dissimMatrix,
                tree = tree,
@@ -256,7 +256,7 @@ FlashQC<-function(Cells,conta,Nclus){
                majority = majority,
                weights = priors$weights,
                centers = priors$centers
-               )
+  )
   result 
   
 }
