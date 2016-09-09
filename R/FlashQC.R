@@ -25,6 +25,7 @@ Cellular_preclustering<-function(Schrod_cells){
   
   DistMat<-ProbDistMatrix(Schrod_cells)
   dissimMatrix<-as.dist(1-DistMat)
+  #print(sum(is.na(DistMat)))
   tree<-hclust(d = dissimMatrix,method = "ward.D2")
   #cut_tree<-cutree(tree = tree,k = majority)
   result<-list(similarityMatrix = DistMat,
@@ -83,10 +84,14 @@ Create_prior_cutTree<-function(tree,Schrod_cells,NClus){
 ProbDistMatrix<-function(Schrod_cells){
   result<-matrix(0,nrow = nrow(Schrod_cells[[1]]),ncol = nrow(Schrod_cells[[1]]))
   for(l in 1:length(Schrod_cells)){
-    result<-result+zscore(Schrod_cells[[l]]$Depth,Schrod_cells[[l]]$Norm_Alt)
+    ### z-score should be >0
+    result<-result+zscore(Depth = Schrod_cells[[l]]$Depth,
+                          Alt = Schrod_cells[[l]]$Norm_Alt
+                          )
   }
+
   2*pnorm(-result**(1/2))
-  
+   
 }
 
 #'  Z-score
@@ -100,11 +105,13 @@ zscore<-function(Depth,Alt){
   result<-matrix(ncol = n,nrow = n)
   for(i in 1:n){
     p<-(Alt+Alt[i])/(Depth + Depth[i])
-    w<-which(p==0)
+    w0<-which(p==0)
+    w1<-which(p>1)
     p1<-Alt[i]/Depth[i]
     p2<-Alt/Depth
     result[,i]<-((p1-p2)**2)/(p*(1-p)*(1/Depth[i]+1/Depth))
-    result[w,i]<-0
+    result[w0,i]<-0
+    result[w1,i]<-+Inf
   }
   result
 }
