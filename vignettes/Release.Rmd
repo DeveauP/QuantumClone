@@ -8,7 +8,7 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEncoding{UTF-8}
 ---
-<h3<Release of X/9/2016 </h3>
+<h3<Release of 12/9/2016 </h3>
 <ul>
 <li>Changes in weight computation: normalization by sum of weights; </li>
 <li>Added <a href=https://www.jstatsoft.org/article/view/v040i06>DEoptim </a> solver for EM;</li>
