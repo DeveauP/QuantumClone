@@ -20,7 +20,7 @@ FullEM(Schrod, nclust, prior_center, prior_weight = NULL, contamination,
 
 \item{epsilon}{Stopping condition for the algorithm: what is the minimal tolerated difference of position or weighted between two steps}
 
-\item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx")}
+\item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")}
 }
 \description{
 Optimization of clone positions and proportion of mutations in each clone followed 

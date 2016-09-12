@@ -50,7 +50,7 @@ In numeric, the function
 uses a variant of the BIC by multiplication of the k*ln(n) factor. 
 If >1, it will select models with lower complexity.}
 
-\item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx")}
+\item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")}
 
 \item{keep.all.models}{Should the function output the best model (default; FALSE), or all models tested (if set to true)}
 

@@ -9,7 +9,6 @@ Description: Using HTS data, clusters mutations in order to recreate putative
     mutation. Additional information may be provided, such as the contamination
     in the tumor sample. This package also provides a function QuantumCat() which
     simulates data obtained from tumor sequencing.
-	THIS VERSION IS IN BETA. See released version for stable release.
 URL:
     https://github.com/DeveauP/QuantumClone
 BugReports:
@@ -25,7 +24,8 @@ Imports:
     parallel,
     gridExtra,
     ggplot2,
-	NbClust
+	NbClust,
+	DEoptim
 Suggests:
     knitr,rmarkdown
 License: GPL-2

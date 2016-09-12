@@ -129,7 +129,7 @@ zscore<-function(Depth,Alt){
 #' FQC<-FlashQC(QuantumClone::Input_Example,conta = c(0,0),Nclus = 2:10)
 #' 
 #' #2: Compute NMI
-#' NMI_cutree(FQC$clusters,chr = QuantumClone::Input_Example[[1]]$Chr)
+#' NMI_cutree(FQC$cluster,chr = QuantumClone::Input_Example[[1]]$Chr)
 #' @export
 NMI_cutree<-function(cut_tree,chr){
   # Probabilities
@@ -155,6 +155,7 @@ NMI_cutree<-function(cut_tree,chr){
 }
 #' Majority vote
 #' 
+#' Extract majority vote from multiple indices
 #' @param index vector with number of clusters selected by indices
 #' @return Numeric value of the number of clusters to chose
 MajorityVote<-function(index){
@@ -178,6 +179,8 @@ MajorityVote<-function(index){
 #' @param Cells Input for QuantumClone with genotype required
 #' @param conta vector with contamination fraction in each sample
 #' @param Nclus vector with the number of clusters to test (alternatively only min and max values)
+#' @param model.selection One of "tree", "AIC", "BIC" or numeric. "tree" will use "ccc","ch" and "gap" methods from NbClust 
+#' to determine the number of clusters. "BIC","AIC" or numeric values will use methods from QuantumClone.
 #' @examples
 #' set.seed(123)
 #' #1: Cluster data
@@ -197,22 +200,39 @@ MajorityVote<-function(index){
 #' abline(v = cumsum(table(In[[1]]$Chr[ord]))+1)
 #' 
 #' #5: alternatively add clusters found:
-#' ord<-order(FQC$clusters)
+#' ord<-order(FQC$cluster)
 #' image(
 #'  1:nrow(In[[1]]),
 #'  1:nrow(In[[1]]),
 #'  FQC$similarity[ord,ord], 
 #'  xlab="", ylab="")
-#' abline(h = cumsum(table(FQC$clusters[ord]))+1)
-#' abline(v = cumsum(table(FQC$clusters[ord]))+1)
+#' abline(h = cumsum(table(FQC$cluster[ord]))+1)
+#' abline(v = cumsum(table(FQC$cluster[ord]))+1)
 #'  
 #' @export
 #' @importFrom NbClust NbClust
 #' @seealso QuantumClone
-FlashQC<-function(Cells,conta,Nclus){
+FlashQC<-function(Cells,conta,Nclus,model.selection = "tree"){
+  if(is.data.frame(Cells)){
+    Cells<-list(Cells)
+  }
+  else if(!is.list(Cells)){
+    warning("Incorrect input: Cells... exiting")
+    return(NA)
+  }
+  
+  message("Processing input data...")
   Schrod_cells<-Patient_schrodinger_cellularities(SNV_list = Cells,
                                                   contamination = conta,
                                                   Genotype_provided = TRUE)
+  
+  if(nrow(Schrod_cells[[1]])==nrow(Cells[[1]])){
+    recluster<-FALSE
+  }
+  else{
+    recluster<-TRUE
+  }
+  
   for(i in 1:length(Schrod_cells)){
     
     Schrod_cells[[i]]$Norm_Alt<-round(
@@ -220,43 +240,188 @@ FlashQC<-function(Cells,conta,Nclus){
     )
   }
   
-  
+  message("Clustering...")
   DistMat<-ProbDistMatrix(Schrod_cells)
   dissimMatrix<-as.dist(1-DistMat)
   tree<-hclust(d = dissimMatrix,method = "ward.D2")
-  Cells<-matrix(data = 0,ncol = length(Schrod_cells),nrow = nrow(Schrod_cells[[1]]))
-  for(i in 1:length(Schrod_cells)){
-    Cells[,i]<-Schrod_cells[[i]]$Alt/Schrod_cells[[i]]$Depth*Schrod_cells[[i]]$NCh/(Schrod_cells[[i]]$NC * 1-conta[i])
-    
-  }
-  index<- c("ch","ccc","gap")
-  method<-"ward.D2"
-  selected<-unlist(sapply(X =index,function(name){
-    NbClust(data = Cells,diss = dissimMatrix, distance =  NULL,
-            method = method,index = name,
-            min.nc = min(Nclus),
-            max.nc = max(Nclus)
-    )$Best.nc["Number_clusters"]
-  })
-  )
-  tree<-hclust(d = dissimMatrix,method = method)
   
-  majority<-MajorityVote(selected)
+  ##################################
+  ### Find correct number of clusters
+  ##################################
+  majority<-FLASH_main(Schrod_cells = Schrod_cells,
+                       model.selection = model.selection,
+                       conta = conta,Nclus = Nclus,tree = tree,
+                       dissimMatrix = dissimMatrix)
+  
   cut_tree<-cutree(tree = tree,k = majority)
-  
   priors<-Create_prior_cutTree(tree = tree,
                                Schrod_cells = Schrod_cells,
                                NClus = majority
   )
-  result<-list(similarity = DistMat,
-               distance = dissimMatrix,
-               tree = tree,
-               clusters = cut_tree,
-               cluster_nb = selected,
-               majority = majority,
-               weights = priors$weights,
-               centers = priors$centers
-  )
-  result 
+  if(recluster){
+    message("Keeping most likely positions and reclustering...")
+    alpha<-list_prod(L = Schrod_cells, col = "alpha")
+    adj.factor<-Compute.adj.fact(Schrod_cells,conta)
+    fik<-eval.fik(Schrod = Schrod_cells,
+                  centers = priors$centers,
+                  weights = priors$weights,
+                  alpha = alpha,
+                  adj.factor = adj.factor,
+                  keep.all.poss = TRUE)
+
+    filtered.data<-filter_on_fik(Schrod_cells,fik = fik)
+    
+    DistMat<-ProbDistMatrix(filtered.data)
   
+    dissimMatrix<-as.dist(1-DistMat)
+    tree<-hclust(d = dissimMatrix,method = "ward.D2")
+    majority<-FLASH_main(Schrod_cells = filtered.data,
+                         model.selection = model.selection,
+                         conta = conta,Nclus = Nclus,tree = tree,
+                         dissimMatrix = dissimMatrix)
+    
+    cut_tree<-cutree(tree = tree,k = majority)
+    priors<-Create_prior_cutTree(tree = tree,
+                                 Schrod_cells = filtered.data,
+                                 NClus = majority
+    )
+    result<-list(similarity = DistMat,
+                 distance = dissimMatrix,
+                 tree = tree,
+                 cluster = cut_tree,
+                 majority = majority,
+                 weights = priors$weights,
+                 centers = priors$centers,
+                 filtered.data = filtered.data
+    )
+  }
+  else{
+    result<-list(similarity = DistMat,
+                 distance = dissimMatrix,
+                 tree = tree,
+                 cluster = cut_tree,
+                 majority = majority,
+                 weights = priors$weights,
+                 centers = priors$centers,
+                 filtered.data = Schrod_cells
+    )
+  }
+  
+  
+
+  result 
+}
+
+#' Compute value of objective function
+#' 
+#' Compute the value of clustering based on same principles as QuantumClone EM
+#' @param tree Tree from hierarchical clustering
+#' @param nclus Number of clusters used for cutting (numeric of length 1)
+#' @param Schrod Output from Schrodinger cellularities
+#' @param conta Numeric value of contamination fraction in each sample
+Compute_objective<-function(tree,nclus,Schrod,conta){
+  priors<-Create_prior_cutTree(tree = tree,Schrod_cells = Schrod,NClus = nclus)
+  alpha<-list_prod(L = Schrod, col = "alpha")
+  
+  adj.factor<-Compute.adj.fact(Schrod,conta)
+  fik<-eval.fik(Schrod = Schrod,
+           centers = priors$centers,
+           weights = priors$weights,
+           alpha = alpha,
+           adj.factor = adj.factor,
+           keep.all.poss = TRUE)
+  
+  -sum(fik *log(fik ))
+}
+
+#' Compute criterion FLASH
+#' 
+#' Computes BIC from a list of outputs of EM algorithm, then returns the position with minimal BIC
+#' @param Obj Numeric vector with objective function values
+#' @param Mut_num Number of mutations to cluster
+#' @param k the number of clusters (in the same order as Obj)
+#' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
+#' @keywords EM clustering number
+BIC_criterion_FLASH<-function(Obj,Mut_num,k ,model.selection){
+  ### Criterion should be minimized
+  # Here we assimilate EM.output$val to -ln(L) where L is the likelihood of the model
+  # BIC is written -2*ln(L)+k*ln(k)
+  # Generalized BIC is written -2*ln(L)+q * k*ln(k)
+  # AIC is written 2*k - 2*ln(L)
+  
+  if(is.numeric(model.selection)){
+    ### Modified BIC to relax or add constraints on model selection
+    # if q > 1 adding explicative variables should explain observed values better => control overfitting
+    # if q = 1 BIC
+    # if q < 1 adding explicative variables is less costly
+    
+    
+    Bic<-numeric()
+    
+    #k<-length(EM_out_list[[i]]$EM.output$centers[[1]])
+    Bic<-2*Obj+model.selection * k *log(Mut_num)
+    #W<-which.min(Bic)
+    #L<-0
+    return(Bic)
+  }
+  else if(model.selection == "BIC"){
+    Bic<-2*Obj + k *log(Mut_num)
+    
+    return(Bic)
+  }
+  else if(model.selection == "AIC"){
+    Aic<-2*Obj+2*k
+    
+    return(Aic)
+  }
+}
+
+#' Flash core
+#' 
+#' Returns number of clusters based on model selection
+#' @param Schrod_cells Output from Schrodinger cellularities
+#' @param conta vector with contamination fraction in each sample
+#' @param Nclus vector with the number of clusters to test (alternatively only min and max values)
+#' @param model.selection One of "tree", "AIC", "BIC" or numeric. "tree" will use "ccc","ch" and "gap" methods from NbClust 
+#' to determine the number of clusters. "BIC","AIC" or numeric values will use methods from QuantumClone.
+#' @param tree Hierarchical tree from hclust
+#' @param dissimMatrix Dissimilarity matrix, required if model selection is "tree"
+FLASH_main<-function(Schrod_cells,model.selection,conta,Nclus,tree = NULL,dissimMatrix=NULL){
+  if(grepl(x = "tree",pattern =  model.selection)){
+    ### Using NbClust
+    Cells<-matrix(data = 0,ncol = length(Schrod_cells),nrow = nrow(Schrod_cells[[1]]))
+    for(i in 1:length(Schrod_cells)){
+      Cells[,i]<-Schrod_cells[[i]]$Alt/Schrod_cells[[i]]$Depth*Schrod_cells[[i]]$NCh/(Schrod_cells[[i]]$NC * 1-conta[i])
+      
+    }
+    index<- c("ch","ccc","gap")
+    method<-"ward.D2"
+    selected<-unlist(sapply(X =index,function(name){
+      NbClust(data = Cells,diss = dissimMatrix, distance =  NULL,
+              method = method,index = name,
+              min.nc = min(Nclus),
+              max.nc = max(Nclus)
+      )$Best.nc["Number_clusters"]
+    })
+    )
+    majority<-MajorityVote(selected)
+  }else{
+    ### Compute objective for each cluster value
+    obj<-sapply(Nclus,function(nclus){
+      Compute_objective(tree = tree,
+                        nclus = nclus,
+                        Schrod = Schrod_cells,
+                        conta = conta)
+    }
+    )
+    ### Adapt to BIC selection
+    Crit<-BIC_criterion_FLASH(Obj = obj,Mut_num = nrow(Schrod_cells[[1]]),
+                              k = Nclus,
+                              model.selection = model.selection
+    )
+    majority<-Nclus[which.min(Crit)]
+  }
+  #tree<-hclust(d = dissimMatrix,method = method)
+  
+  majority
 }

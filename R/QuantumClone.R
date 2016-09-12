@@ -20,13 +20,13 @@
 #' @param ncores Number of cores to be used during EM algorithm
 #' @param output_directory Path to output directory
 #' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights between two optimization steps.
-#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx")
+#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
 #'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
 #' @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
 #' @keywords Clonal inference Cancer phylogeny
-#' @import optimx compiler
+#' @import optimx compiler DEoptim
 #' @importFrom grDevices colorRampPalette
 #' @importFrom graphics par plot segments text
 #' @importFrom stats aggregate dbinom frequency na.omit optim rbinom rnbinom rpois runif sd
@@ -106,7 +106,7 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
 #' @param nclone_range A number or range of clusters that should be used for clustering
 #' @param restrict.to.AB Boolean: Should the analysis keep only sites located in A and AB sites in all samples?
 #' @param output_directory Directory in which to save results
-#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx")
+#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. 
 #' In numeric, the function
@@ -634,7 +634,7 @@ strcount <- function(x, pattern='', split=''){
 #' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights between two optimization steps.
 #' @param ncores Number of CPUs to be used
 #' @param output_directory Directory in which to save results
-#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx")
+#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
 #'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.

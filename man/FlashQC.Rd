@@ -4,7 +4,7 @@
 \alias{FlashQC}
 \title{Flash QuantumClone}
 \usage{
-FlashQC(Cells, conta, Nclus)
+FlashQC(Cells, conta, Nclus, model.selection = "tree")
 }
 \arguments{
 \item{Cells}{Input for QuantumClone with genotype required}
@@ -12,6 +12,9 @@ FlashQC(Cells, conta, Nclus)
 \item{conta}{vector with contamination fraction in each sample}
 
 \item{Nclus}{vector with the number of clusters to test (alternatively only min and max values)}
+
+\item{model.selection}{One of "tree", "AIC", "BIC" or numeric. "tree" will use "ccc","ch" and "gap" methods from NbClust 
+to determine the number of clusters. "BIC","AIC" or numeric values will use methods from QuantumClone.}
 }
 \description{
 Fast method to find clones without filtering for multiple states
@@ -35,14 +38,14 @@ abline(h = cumsum(table(In[[1]]$Chr[ord]))+1)
 abline(v = cumsum(table(In[[1]]$Chr[ord]))+1)
 
 #5: alternatively add clusters found:
-ord<-order(FQC$clusters)
+ord<-order(FQC$cluster)
 image(
  1:nrow(In[[1]]),
  1:nrow(In[[1]]),
  FQC$similarity[ord,ord], 
  xlab="", ylab="")
-abline(h = cumsum(table(FQC$clusters[ord]))+1)
-abline(v = cumsum(table(FQC$clusters[ord]))+1)
+abline(h = cumsum(table(FQC$cluster[ord]))+1)
+abline(v = cumsum(table(FQC$cluster[ord]))+1)
  
 }
 \seealso{

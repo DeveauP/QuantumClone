@@ -22,7 +22,7 @@ m.step(fik, Schrod, previous.weights, previous.centers, contamination, alpha,
 
 \item{adj.factor}{Factor to compute the probability: makes transition between the cellularity of the clone and the frequency observed}
 
-\item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx")}
+\item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")}
 }
 \description{
 Optimization of clone positions and proportion of mutations in each clone, based on the previously calculated expectation

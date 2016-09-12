@@ -25,7 +25,7 @@ parallelEM(Schrod, nclust, epsilon, contamination, prior_center = NULL,
 
 \item{ncores}{Number of CPUs to be used}
 
-\item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx")}
+\item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")}
 
 \item{keep.all.models}{Should the function output the best model (default; FALSE), or all models tested (if set to true)}
 }

@@ -227,8 +227,7 @@ phylo_tree_generation_previous<-function(number_of_clones,number_of_samples){
 #' }
 Multitest<-function(number_of_tests,number_of_samples=2,ploidy=2,Sample_name='Multitest',depth=100,number_of_mutations=150,
                     number_of_clones=NULL,plot_results=T,save_Cell=F,preclustering = T ,
-                    contamination = NULL,nclone_range = 2:5 ,maxit = 1, epsilon = 5*(10**(-3)), ncores = 1){
-  set.seed(1)
+                    contamination = NULL,nclone_range = 2:5 ,maxit = 4, epsilon =0.01, ncores = 1){
   if(is.null(contamination)){
     contamination<-rep(0,times=number_of_samples)
   }

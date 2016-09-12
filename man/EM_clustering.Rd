@@ -5,8 +5,8 @@
 \title{Expectation Maximization}
 \usage{
 EM_clustering(Schrod, contamination, prior_weight = NULL,
-  clone_priors = NULL, maxit = 1, nclone_range = 2:5, epsilon = 5 *
-  (10^(-3)), ncores = 2, model.selection = "BIC", optim = "default",
+  clone_priors = NULL, maxit = 1, nclone_range = 2:5, epsilon = 0.01,
+  ncores = 2, model.selection = "BIC", optim = "default",
   keep.all.models = FALSE, FLASH = FALSE)
 }
 \arguments{
@@ -29,7 +29,7 @@ EM_clustering(Schrod, contamination, prior_weight = NULL,
 \item{model.selection}{The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
 uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.}
 
-\item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx")}
+\item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")}
 
 \item{keep.all.models}{Should the function output the best model (default; FALSE), or all models tested (if set to true)}
 

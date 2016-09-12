@@ -13,6 +13,6 @@ MajorityVote(index)
 Numeric value of the number of clusters to chose
 }
 \description{
-Majority vote
+Extract majority vote from multiple indices
 }
 

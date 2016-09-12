@@ -16,7 +16,7 @@ Creates a phylogenetic tree on simple assumptions:
 1. There is a common ancestor to all clones
 2. Each clone creates a partition of the space. One node will carry mutations, the other will not. 
 A node that is not mutated can be partitioned.
-3. Nodes that have less than 2% difference to another existing clone will be discarded or
+3. Nodes that have less than 2% difference in all samples to another existing clone will be discarded or
 less than 1% cellularity in all samples.
 4. Nodes that have less than 10% cellularity in ALL samples cannot be split further.
 WARNING: Tree_generation recreates a tree from data while phylo_tree_generation randomly creates a phylogeny
