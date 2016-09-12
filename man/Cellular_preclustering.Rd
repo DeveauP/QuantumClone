@@ -16,8 +16,6 @@ returns a list with:
  \item{distance}{The dissimilarity matrix}
  \item{tree}{The tree obtained by hierachical clustering of the dissimilarity matrix using "ward.D2" method}
  }
- 
- @importFrom stats hclust as.dist cutree hclust
 }
 \description{
 This method clusters mutations based on the probability that they are from the same 

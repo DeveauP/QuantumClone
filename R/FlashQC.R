@@ -14,7 +14,7 @@
 #'  \item{tree}{The tree obtained by hierachical clustering of the dissimilarity matrix using "ward.D2" method}
 #'  }
 #'  
-#'  @importFrom stats hclust as.dist cutree hclust
+#'@importFrom stats hclust as.dist cutree hclust
 Cellular_preclustering<-function(Schrod_cells){
   for(i in 1:length(Schrod_cells)){
     Schrod_cells[[i]]$Norm_Alt<-round(
