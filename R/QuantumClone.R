@@ -197,6 +197,15 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
     }
   }
   
+  ### check optim:
+  #optims_accepted<-c("default","optimx","DEoptim","RcppDE")
+  optims_accepted<-c("default","optimx","DEoptim")
+  if(length(optim)!=1){
+    stop("optim argument can only be of length 1")
+  }
+  else if(!(optim %in% optims_accepted)){
+    stop(paste("optim can only be one of:",optims_accepted))
+  }
   
   ### Pre-processing data
   message(paste("Checking all possibilities for",Sample_name))

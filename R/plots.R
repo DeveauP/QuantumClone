@@ -5,7 +5,6 @@
 #' @param Sample_names Name of the samples.
 #' @param output_dir Directory in which to save plots
 #' @keywords Clonal inference plot
-#'
 plot_cell_from_Return_out<-function(lis,Sample_names,output_dir=NULL){
   if(length(lis)>1){
     U<-expand.grid(1:length(lis),1:length(lis))

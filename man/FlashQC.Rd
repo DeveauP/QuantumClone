@@ -46,7 +46,8 @@ image(
  xlab="", ylab="")
 abline(h = cumsum(table(FQC$cluster[ord]))+1)
 abline(v = cumsum(table(FQC$cluster[ord]))+1)
- 
+# Show clustering quality:
+NMI_cutree( FQC$cluster,chr = In[[1]]$Chr)
 }
 \seealso{
 QuantumClone

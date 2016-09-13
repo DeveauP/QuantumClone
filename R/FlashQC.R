@@ -218,8 +218,7 @@ FlashQC<-function(Cells,conta,Nclus,model.selection = "tree"){
     Cells<-list(Cells)
   }
   else if(!is.list(Cells)){
-    warning("Incorrect input: Cells... exiting")
-    return(NA)
+    stop("Incorrect input: Cells... exiting")
   }
   
   message("Processing input data...")
@@ -269,7 +268,6 @@ FlashQC<-function(Cells,conta,Nclus,model.selection = "tree"){
                   alpha = alpha,
                   adj.factor = adj.factor,
                   keep.all.poss = TRUE)
-
     filtered.data<-filter_on_fik(Schrod_cells,fik = fik)
     
     DistMat<-ProbDistMatrix(filtered.data)
@@ -331,8 +329,16 @@ Compute_objective<-function(tree,nclus,Schrod,conta){
            alpha = alpha,
            adj.factor = adj.factor,
            keep.all.poss = TRUE)
+  w<-which(fik == 0)
+  if(length(w)){
+    fik<--fik *log(fik )
+    fik[w]<-0
+    return(sum(fik))
+  }
+  else{
+    return(-sum(fik *log(fik )))
+  }
   
-  -sum(fik *log(fik ))
 }
 
 #' Compute criterion FLASH
@@ -360,12 +366,14 @@ BIC_criterion_FLASH<-function(Obj,Mut_num,k ,model.selection){
     Bic<-numeric()
     
     #k<-length(EM_out_list[[i]]$EM.output$centers[[1]])
+
     Bic<-2*Obj+model.selection * k *log(Mut_num)
     #W<-which.min(Bic)
     #L<-0
     return(Bic)
   }
   else if(model.selection == "BIC"){
+    #print(Obj)
     Bic<-2*Obj + k *log(Mut_num)
     
     return(Bic)
@@ -415,6 +423,7 @@ FLASH_main<-function(Schrod_cells,model.selection,conta,Nclus,tree = NULL,dissim
                         conta = conta)
     }
     )
+    print(obj)
     ### Adapt to BIC selection
     Crit<-BIC_criterion_FLASH(Obj = obj,Mut_num = nrow(Schrod_cells[[1]]),
                               k = Nclus,

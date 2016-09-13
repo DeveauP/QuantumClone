@@ -171,13 +171,27 @@ m.step<-function(fik,Schrod,previous.weights,
                   upper=rep(1,length(unlist(previous.centers)))) 
     return(list(weights=weights,centers=spare[1:length(unlist(previous.centers))],val=spare$value))
   }
-  else{
-    spare<-DEoptim(fn = fnx,
-                  lower = rep(0,times = length(unlist(previous.centers))),
-                  upper=rep(1,length(unlist(previous.centers)))) 
-    return(list(weights=weights,centers=spare[1:length(unlist(previous.centers))],val=spare$value))
+  else if(optim =="DEoptim"){
+    spare<-DEoptim::DEoptim(fn = fnx,
+                            lower = rep(0,times = length(unlist(previous.centers))),
+                            upper=rep(1,length(unlist(previous.centers))),
+                            control = DEoptim.control(
+                              strategy = min(2* length(length(unlist(previous.centers))),40),
+                              itermax = 50
+                            )
+    )
   }
-  
+  # else if(optim =="RcppDE"){
+  #   spare<-RcppDE::DEoptim(fn = fnx,
+  #                          lower = rep(0,times = length(unlist(previous.centers))),
+  #                          upper=rep(1,length(unlist(previous.centers))),
+  #                          control = RcppDE::DEoptim.control(
+  #                            strategy = min(2* length(length(unlist(previous.centers))),40),
+  #                            itermax = 50
+  #                          )
+  #   )
+  # }
+  return(list(weights=weights,centers=spare[1:length(unlist(previous.centers))],val=spare$value))
 }
 
 Compute.adj.fact<-function(Schrod,contamination){ ##Factor used to compute the probability of the binomial distribution
@@ -315,7 +329,7 @@ FullEM<-function(Schrod, nclust, prior_center, prior_weight=NULL,
                  contamination = contamination, epsilon = epsilon,
                  optim = optim)
   if(is.list(E_out)){
-      F_out<-filter_on_fik(Schrod = Schrod,fik = E_out$fik)
+    F_out<-filter_on_fik(Schrod = Schrod,fik = E_out$fik)
     ### Reclustering has been moved afterwards, to reduce number of clusters if necessary
     # E_out<-EM.algo(Schrod = F_out,nclust = nclust,
     #                prior_center = E_out$centers,prior_weight = E_out$weights,
