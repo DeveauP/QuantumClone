@@ -135,11 +135,13 @@ eval.fik.m<-function(Schrod,centers,weights,alpha,adj.factor){
 #' @param adj.factor Factor to compute the probability: makes transition between the cellularity of the clone and the frequency observed
 #' @param contamination Numeric vector with the fraction of normal cells contaminating the sample
 #' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")
+#' @param initialpop Previous population to reuse for genetic algorithm
 #' @keywords EM Maximization
 
 m.step<-function(fik,Schrod,previous.weights,
                  previous.centers,contamination,alpha,adj.factor,
-                 optim ="default"){
+                 optim ="default",
+                 initialpop = NULL){
   weights<-apply(X = fik,MARGIN = 2,FUN = mean)
   weights<-weights/sum(weights)
   cur.cent<-list()
@@ -172,14 +174,33 @@ m.step<-function(fik,Schrod,previous.weights,
     return(list(weights=weights,centers=spare[1:length(unlist(previous.centers))],val=spare$value))
   }
   else if(optim =="DEoptim"){
-    spare<-DEoptim::DEoptim(fn = fnx,
-                            lower = rep(0,times = length(unlist(previous.centers))),
-                            upper=rep(1,length(unlist(previous.centers))),
-                            control = DEoptim.control(
-                              strategy = min(2* length(length(unlist(previous.centers))),40),
-                              itermax = 50
-                            )
-    )
+    if(!is.null(initialpop)){
+      spare<-DEoptim::DEoptim(fn = fnx,
+                              lower = rep(0,times = length(unlist(previous.centers))),
+                              upper=rep(1,length(unlist(previous.centers))),
+                              control = DEoptim::DEoptim.control(
+                                strategy =1,
+                                itermax = 30,
+                                reltol = 0.01,
+                                initialpop = initialpop
+                              )
+      )
+    }
+    else{
+      spare<-DEoptim::DEoptim(fn = fnx,
+                              lower = rep(0,times = length(unlist(previous.centers))),
+                              upper=rep(1,length(unlist(previous.centers))),
+                              control = DEoptim::DEoptim.control(
+                                NP = min(40,10*length(unlist(previous.centers))),
+                                strategy =1,
+                                itermax = 30,
+                                reltol = 0.01,
+                                initialpop = initialpop
+                              )
+      )    
+      }
+    
+      return(list(weights = weights, centers = spare$optim$bestmem,val = spare$optim$bestval, initialpop = spare$member$pop))
   }
   # else if(optim =="RcppDE"){
   #   spare<-RcppDE::DEoptim(fn = fnx,
@@ -236,12 +257,13 @@ EM.algo<-function(Schrod, nclust=NULL,
   
   adj.factor<-Compute.adj.fact(Schrod = Schrod,contamination = contamination)
   alpha<-list_prod(L = Schrod,col = "alpha")
-  
+  initialpop<-NULL
   while(eval>epsilon){
     tik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,alpha,adj.factor)
     m<-m.step(fik = tik,Schrod = Schrod,previous.weights = cur.weight,
               previous.centers =cur.center, alpha =alpha, 
-              adj.factor=adj.factor,optim = optim )
+              adj.factor=adj.factor,optim = optim , initialpop = initialpop)
+    initialpop<-m$initialpop
     if(!is.list(m)){
       test<-create_priors(nclust = 2,nsample = 2)
       eval_1<-max(abs(prior_center-unlist(test)))
@@ -265,7 +287,13 @@ EM.algo<-function(Schrod, nclust=NULL,
   }
   fik<-eval.fik(Schrod = Schrod,centers = cur.center,weights = cur.weight,
                 keep.all.poss = TRUE,alpha = alpha,adj.factor = adj.factor)
-  return(list(fik=fik,weights=cur.weight,centers=cur.center,val=cur.val))
+  if(optim!="DEoptim"){
+    return(list(fik=fik,weights=cur.weight,centers=cur.center,val=cur.val))
+  }
+  else{
+    return(list(fik=fik,weights=cur.weight,centers=cur.center,val=cur.val,initialpop = m$itialpop))
+    
+  }
 }
 
 #'Data filter

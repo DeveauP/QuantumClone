@@ -423,7 +423,7 @@ FLASH_main<-function(Schrod_cells,model.selection,conta,Nclus,tree = NULL,dissim
                         conta = conta)
     }
     )
-    print(obj)
+    #print(obj)
     ### Adapt to BIC selection
     Crit<-BIC_criterion_FLASH(Obj = obj,Mut_num = nrow(Schrod_cells[[1]]),
                               k = Nclus,

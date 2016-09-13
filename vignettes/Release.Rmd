@@ -10,6 +10,13 @@ vignette: >
 ---
 <h3<Release of 12/9/2016 </h3>
 <ul>
+<li> Solved fik*log(fik) when fik = 0 issue in FlashQC </li>
+<li> Added controls to DEoptim </li>
+<li> Prepared for integration of RcppDE </li>
+</ul>
+
+<h3<Release of 12/9/2016 </h3>
+<ul>
 <li>Changes in weight computation: normalization by sum of weights; </li>
 <li>Added <a href=https://www.jstatsoft.org/article/view/v040i06>DEoptim </a> solver for EM;</li>
 <li>Flash QuantumClone handles polyploid regions;</li>
