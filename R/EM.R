@@ -136,12 +136,14 @@ eval.fik.m<-function(Schrod,centers,weights,alpha,adj.factor){
 #' @param contamination Numeric vector with the fraction of normal cells contaminating the sample
 #' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")
 #' @param initialpop Previous population to reuse for genetic algorithm
+#' @param itermax itermax parameter for DEoptim
 #' @keywords EM Maximization
 
 m.step<-function(fik,Schrod,previous.weights,
                  previous.centers,contamination,alpha,adj.factor,
                  optim ="default",
-                 initialpop = NULL){
+                 initialpop = NULL,
+                 itermax = NULL){
   weights<-apply(X = fik,MARGIN = 2,FUN = mean)
   weights<-weights/sum(weights)
   cur.cent<-list()
@@ -175,32 +177,40 @@ m.step<-function(fik,Schrod,previous.weights,
   }
   else if(optim =="DEoptim"){
     if(!is.null(initialpop)){
+      
       spare<-DEoptim::DEoptim(fn = fnx,
                               lower = rep(0,times = length(unlist(previous.centers))),
                               upper=rep(1,length(unlist(previous.centers))),
                               control = DEoptim::DEoptim.control(
                                 strategy =1,
-                                itermax = 30,
+                                itermax = itermax,
                                 reltol = 0.01,
                                 initialpop = initialpop
                               )
       )
+      #control that sufficient iterations were run for convergence:
+
     }
     else{
       spare<-DEoptim::DEoptim(fn = fnx,
                               lower = rep(0,times = length(unlist(previous.centers))),
                               upper=rep(1,length(unlist(previous.centers))),
                               control = DEoptim::DEoptim.control(
-                                NP = min(40,10*length(unlist(previous.centers))),
+                                NP = min(10*length(unlist(previous.centers))),
                                 strategy =1,
-                                itermax = 30,
-                                reltol = 0.01,
-                                initialpop = initialpop
-                              )
-      )    
+                                itermax = itermax,
+                                reltol = 0.01
+                                )
+      )
+      if(max(abs(spare$member$bestmemit[itermax,]-spare$member$bestmemit[itermax-1,]))){
+        ### Convergence if the last two iterations have centers with less than 1% change
+        itermax<-itermax +10
       }
-    
-      return(list(weights = weights, centers = spare$optim$bestmem,val = spare$optim$bestval, initialpop = spare$member$pop))
+      }
+      
+      return(list(weights = weights, centers = spare$optim$bestmem,val = spare$optim$bestval, 
+                  initialpop = spare$member$pop,itermax = itermax)
+             )
   }
   # else if(optim =="RcppDE"){
   #   spare<-RcppDE::DEoptim(fn = fnx,
@@ -258,12 +268,20 @@ EM.algo<-function(Schrod, nclust=NULL,
   adj.factor<-Compute.adj.fact(Schrod = Schrod,contamination = contamination)
   alpha<-list_prod(L = Schrod,col = "alpha")
   initialpop<-NULL
+  itermax<-50
   while(eval>epsilon){
+    
     tik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,alpha,adj.factor)
     m<-m.step(fik = tik,Schrod = Schrod,previous.weights = cur.weight,
               previous.centers =cur.center, alpha =alpha, 
-              adj.factor=adj.factor,optim = optim , initialpop = initialpop)
-    initialpop<-m$initialpop
+              adj.factor=adj.factor,optim = optim , initialpop = initialpop,
+              itermax = itermax)
+    if(optim == "DEoptim"){
+      initialpop<-m$initialpop
+      itermax<-m$itermax
+    
+    }
+    
     if(!is.list(m)){
       test<-create_priors(nclust = 2,nsample = 2)
       eval_1<-max(abs(prior_center-unlist(test)))
@@ -291,7 +309,8 @@ EM.algo<-function(Schrod, nclust=NULL,
     return(list(fik=fik,weights=cur.weight,centers=cur.center,val=cur.val))
   }
   else{
-    return(list(fik=fik,weights=cur.weight,centers=cur.center,val=cur.val,initialpop = m$itialpop))
+    return(list(fik=fik,weights=cur.weight,centers=cur.center,
+                val=cur.val,initialpop = m$itialpop))
     
   }
 }
@@ -435,7 +454,7 @@ add.to.list<-function(...){
 #' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @import foreach
-#' @importFrom doParallel registerDoParallel stopImplicitCluster
+#' @importFrom doParallel registerDoParallel
 #' @importFrom parallel makeCluster stopCluster
 #' @keywords EM
 
@@ -644,7 +663,7 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
                                                   )
                                                 }
                                               }
-    doParallel::stopImplicitCluster()
+    #doParallel::stopImplicitCluster()
     parallel::stopCluster(cl)
   }
   else{
