@@ -164,12 +164,6 @@ m.step<-function(fik,Schrod,previous.weights,
   else if(optim =="optimx"){
     spare<-optimx(par = unlist(previous.centers),
                   fn = fnx,
-                  # fn = function(x) {
-                  #   -sum(fik*log(eval.fik.m(Schrod = Schrod,
-                  #                           centers = x,alpha = alpha,
-                  #                           adj.factor = adj.factor,
-                  #                           weights = previous.weights)))
-                  # },
                   method = "L-BFGS-B",
                   lower = rep(0,times = length(unlist(previous.centers))),
                   upper=rep(1,length(unlist(previous.centers)))) 
@@ -178,39 +172,42 @@ m.step<-function(fik,Schrod,previous.weights,
   else if(optim =="DEoptim"){
     if(!is.null(initialpop)){
       
-      spare<-DEoptim::DEoptim(fn = fnx,
-                              lower = rep(0,times = length(unlist(previous.centers))),
-                              upper=rep(1,length(unlist(previous.centers))),
-                              control = DEoptim::DEoptim.control(
-                                strategy =1,
-                                itermax = itermax,
-                                reltol = 0.01,
-                                initialpop = initialpop
-                              )
+      spare<-suppressWarnings(DEoptim::DEoptim(fn = fnx,
+                                               lower = rep(0,times = length(unlist(previous.centers))),
+                                               upper=rep(1,length(unlist(previous.centers))),
+                                               control = DEoptim::DEoptim.control(
+                                                 NP = min(10*length(unlist(previous.centers)),40),
+                                                 strategy =1,
+                                                 itermax = itermax,
+                                                 initialpop = initialpop,
+                                                 CR = 0.9
+                                               )
+      )
       )
       #control that sufficient iterations were run for convergence:
-
+      
     }
     else{
-      spare<-DEoptim::DEoptim(fn = fnx,
-                              lower = rep(0,times = length(unlist(previous.centers))),
-                              upper=rep(1,length(unlist(previous.centers))),
-                              control = DEoptim::DEoptim.control(
-                                NP = min(10*length(unlist(previous.centers))),
-                                strategy =1,
-                                itermax = itermax,
-                                reltol = 0.01
-                                )
+      spare<-suppressWarnings(DEoptim::DEoptim(fn = fnx,
+                                               lower = rep(0,times = length(unlist(previous.centers))),
+                                               upper=rep(1,length(unlist(previous.centers))),
+                                               control = DEoptim::DEoptim.control(
+                                                 NP = min(10*length(unlist(previous.centers)),40),
+                                                 CR = 0.9,
+                                                 strategy =1,
+                                                 itermax = itermax
+                                               )
+      )
       )
       if(max(abs(spare$member$bestmemit[itermax,]-spare$member$bestmemit[itermax-1,]))){
         ### Convergence if the last two iterations have centers with less than 1% change
         itermax<-itermax +10
       }
-      }
-      
-      return(list(weights = weights, centers = spare$optim$bestmem,val = spare$optim$bestval, 
-                  initialpop = spare$member$pop,itermax = itermax)
-             )
+    }
+    
+    return(list(weights = weights, centers = spare$optim$bestmem,val = spare$optim$bestval, 
+                initialpop = spare$member$pop,itermax = itermax)
+    )
   }
   # else if(optim =="RcppDE"){
   #   spare<-RcppDE::DEoptim(fn = fnx,
@@ -279,7 +276,7 @@ EM.algo<-function(Schrod, nclust=NULL,
     if(optim == "DEoptim"){
       initialpop<-m$initialpop
       itermax<-m$itermax
-    
+      
     }
     
     if(!is.list(m)){

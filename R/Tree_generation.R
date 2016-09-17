@@ -41,19 +41,20 @@ phylo_tree_generation<-function(number_of_clones,number_of_samples){
   can_split<-c(FALSE,
                check_split(Proportions[2,]),
                check_split(Proportions[3,]))
-  if(number_of_samples>1){ ### Issue with coercion to numeric vector.
-    probs<-apply(Proportions[can_split,],MARGIN = 1, FUN = sum )
-  }
-  else{
-    probs<-Proportions[can_split,]
-  }
-  probs<-probs/sum(probs)
   
+  
+  probs<-update_probs(Proportions,can_split)
   j<-2
   mutated<-c(TRUE, TRUE,FALSE)
   
   while(j < number_of_clones){
-    to_split<-sample(which(can_split),size = 1,prob = probs)
+    if(length(probs)==1){
+      to_split<-which(can_split)
+    }
+    else{
+      to_split<-sample(which(can_split),size = 1,prob = probs)
+    }
+
     new_leaf<-sapply(X = Proportions[to_split,],FUN = function(p){
       sample(0:p,size = 1)
     }
@@ -68,8 +69,7 @@ phylo_tree_generation<-function(number_of_clones,number_of_samples){
       )
       can_split[to_split]<-FALSE
       can_split<-c(can_split,check_split(Proportions),check_split(opposite))
-      probs<-apply(Proportions[can_split,],MARGIN = 1, FUN = sum )
-      probs<-probs/sum(probs)
+      probs<-update_probs(Proportions,can_split)
       Localization<-c(Localization,paste0(Localization[to_split],c("L","R")))
       mutated<-c(mutated,TRUE,FALSE)
     }
@@ -116,4 +116,23 @@ check_split<-function(leaf){
     return(FALSE)
   }
   return(TRUE)
+}
+
+#' Update proportions
+#' 
+#' Creates vector with probability to be sampled
+#' @param Proportions numeric matrix
+#' @param can_split logical vector
+update_probs<-function(Proportions,can_split){
+  w<-which(can_split)
+  probs<-numeric(length(w))
+  for(i in 1:length(w)){
+    if(is.matrix(Proportions)){
+      probs[i]<-sum(Proportions[w[i],])
+    }
+    else{
+      probs[i]<-Proportions[w[i]]
+    }
+  }
+  probs/sum(probs)
 }

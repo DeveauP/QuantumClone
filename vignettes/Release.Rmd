@@ -10,9 +10,16 @@ vignette: >
 ---
 <h3<Release of 12/9/2016 </h3>
 <ul>
-<li> Solved fik*log(fik) when fik = 0 issue in FlashQC </li>
-<li> Added controls to DEoptim </li>
-<li> Prepared for integration of RcppDE </li>
+<li> Changed parameters for DEoptim controls; </li>
+<li> Solved tree generation issue if the progeny can only come from one node. </li>
+
+</ul>
+
+<h3<Release of 12/9/2016 </h3>
+<ul>
+<li> Solved fik*log(fik) when fik = 0 issue in FlashQC; </li>
+<li> Added controls to DEoptim; </li>
+<li> Prepared for integration of RcppDE. </li>
 </ul>
 
 <h3<Release of 12/9/2016 </h3>
