@@ -5,10 +5,10 @@
 \title{Cellularity clustering}
 \usage{
 Cluster_plot_from_cell(Cell, Sample_names, simulated, save_plot = TRUE,
-  contamination, clone_priors, prior_weight, nclone_range, maxit,
+  contamination, clone_priors, prior_weight, nclone_range, Initializations,
   preclustering = TRUE, epsilon = 5 * (10^(-3)), ncores = 2,
   output_directory = NULL, model.selection = "BIC", optim = "default",
-  keep.all.models = FALSE)
+  keep.all.models = FALSE, integrate = TRUE)
 }
 \arguments{
 \item{Cell}{Output from Return_one_cell_by_mut, list of cellularities (one list-element per sample)}
@@ -27,7 +27,7 @@ Cluster_plot_from_cell(Cell, Sample_names, simulated, save_plot = TRUE,
 
 \item{nclone_range}{Number of clusters to look for}
 
-\item{maxit}{Maximal number of independant initial condition tests to be tried}
+\item{Initializations}{Maximal number of independant initial condition tests to be tried}
 
 \item{preclustering}{The type of preclustering used for priors: "Flash","kmedoid" or NULL. NULL will generate
 centers using uniform distribution.}
@@ -44,6 +44,8 @@ uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it wil
 \item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")}
 
 \item{keep.all.models}{Should the function output the best model (default; FALSE), or all models tested (if set to true)}
+
+\item{integrate}{Should QuantumClone integrate probabilities over epsilon interval?}
 }
 \description{
 Clustering cellularities based on  the most likely presence of a clone, using the pamk algorithm (fpc package). Clustering can be guided by toggling manual_clustering on and/or giving a range of number of clusters.

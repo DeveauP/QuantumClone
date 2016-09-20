@@ -8,6 +8,14 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEncoding{UTF-8}
 ---
+<h3<Release of 20/9/2016 </h3>
+<ul>
+<li> Added integration of binomial density over 2xEpsilon interval; </li>
+<li> Added computation of Precision, Recall, F1, Rand Index in `Precision_Recall`; </li>
+<li> Changed `maxit` to `Initializations`.</li>
+
+</ul>
+
 <h3<Release of 12/9/2016 </h3>
 <ul>
 <li> Changed parameters for DEoptim controls; </li>

@@ -117,42 +117,6 @@ zscore<-function(Depth,Alt){
 }
 
 
-#' NMI
-#' 
-#' Computes the NMI based on the clustering
-#' @param cut_tree a numeric vector of cluster selection
-#' @param chr the ground truth for clusters
-#' @return numeric value of NMI (between 0 and 1)
-#' @examples
-#' set.seed(123)
-#' #1: Cluster data
-#' FQC<-FlashQC(QuantumClone::Input_Example,conta = c(0,0),Nclus = 2:10)
-#' 
-#' #2: Compute NMI
-#' NMI_cutree(FQC$cluster,chr = QuantumClone::Input_Example[[1]]$Chr)
-#' @export
-NMI_cutree<-function(cut_tree,chr){
-  # Probabilities
-  cluster<-as.numeric(as.character(cut_tree))
-  clones<-chr
-  
-  P_cluster<-table(cluster)/length(cluster)
-  P_clone<-table(clones)/length(clones)
-  
-  # Information entropy
-  H_clone<--sum(P_clone*log(P_clone))
-  H_cluster<--sum(P_cluster*log(P_cluster))
-  
-  A<-aggregate(rep(1, length(cluster)), 
-               by = list(x= cluster,
-                         y=clones ),
-               sum)
-  
-  L<-log(A[,3]/(length(cluster)*P_cluster[A[,1]]*P_clone[A[,2]]))
-  NMI<-2*sum(A[,3]/length(cluster)*L)/(H_clone+H_cluster)
-  return(NMI)
-  
-}
 #' Majority vote
 #' 
 #' Extract majority vote from multiple indices

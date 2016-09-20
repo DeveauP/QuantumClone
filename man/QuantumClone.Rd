@@ -6,10 +6,10 @@
 \usage{
 QuantumClone(SNV_list, FREEC_list = NULL, contamination, nclone_range = 2:5,
   clone_priors = NULL, prior_weight = NULL, simulated = FALSE,
-  save_plot = TRUE, epsilon = 0.01, maxit = 2, preclustering = "FLASH",
-  timepoints = NULL, ncores = 1, output_directory = NULL,
-  model.selection = "BIC", optim = "default", keep.all.models = FALSE,
-  force.single.copy = FALSE)
+  save_plot = TRUE, epsilon = NULL, Initializations = 2,
+  preclustering = "FLASH", timepoints = NULL, ncores = 1,
+  output_directory = NULL, model.selection = "BIC", optim = "default",
+  keep.all.models = FALSE, force.single.copy = FALSE, integrate = TRUE)
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
@@ -30,9 +30,10 @@ and if the output from FREEC for the samples are not associated, the genotype "G
 
 \item{save_plot}{Should the plots be saved? Default is TRUE}
 
-\item{epsilon}{Stop value: maximal admitted value of the difference in cluster position and weights between two optimization steps.}
+\item{epsilon}{Stop value: maximal admitted value of the difference in cluster position and weights 
+between two optimization steps. If NULL, will take 1/(median depth). Also used for integration size.}
 
-\item{maxit}{Number of initial conditions to be tested for the EM algorithm}
+\item{Initializations}{Number of initial conditions to be tested for the EM algorithm}
 
 \item{preclustering}{The type of preclustering used for priors: "Flash","kmedoid" or NULL. NULL will generate
 centers using uniform distribution. WARNING: overrides priors given}
@@ -52,6 +53,8 @@ uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it wil
 \item{keep.all.models}{Should the function output the best model (default; FALSE), or all models tested (if set to true)}
 
 \item{force.single.copy}{Should all mutations in overdiploid regions set to single copy? Default is FALSE}
+
+\item{integrate}{Should QuantumClone integrate probabilities over epsilon interval?}
 }
 \description{
 Sequentially calls a function to test all accessible cellularities for all mutations in the samples,then cluster them, and finally draws
@@ -74,7 +77,7 @@ print("The computation will run on a single CPU.")
 Clustering_output<-QuantumClone(SNV_list = Mutations,
 FREEC_list = NULL,contamination = c(0,0),nclone_range = 3:4,
 clone_priors = NULL,prior_weight = NULL ,
-maxit = 1,preclustering = "FLASH", simulated = TRUE,
+Initializations = 1,preclustering = "FLASH", simulated = TRUE,
 save_plot = TRUE,ncores=1,output_directory="Example")
 print("The data can be accessed by Clustering_output$filtered_data")
 print("All plots are now saved in the working directory")

@@ -7,8 +7,8 @@
 Multitest(number_of_tests, number_of_samples = 2, ploidy = 2,
   Sample_name = "Multitest", depth = 100, number_of_mutations = 150,
   number_of_clones = NULL, plot_results = T, save_Cell = F,
-  preclustering = T, contamination = NULL, nclone_range = 2:5,
-  maxit = 4, epsilon = 0.01, ncores = 1)
+  preclustering = "FLASH", contamination = NULL, nclone_range = 2:5,
+  Initializations = 4, epsilon = 0.01, ncores = 1)
 }
 \arguments{
 \item{number_of_tests}{The number of times the QuantumCat function should be called}
@@ -35,7 +35,7 @@ Multitest(number_of_tests, number_of_samples = 2, ploidy = 2,
 
 \item{nclone_range}{Range of values tested for the maximum likelihood}
 
-\item{maxit}{Number of trials different initial conditions to be used to evaluate the mximum likelihood}
+\item{Initializations}{Number of trials different initial conditions to be used to evaluate the mximum likelihood}
 
 \item{epsilon}{The stop value of the EM algorithm}
 

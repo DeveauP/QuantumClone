@@ -5,9 +5,9 @@
 \title{Expectation Maximization}
 \usage{
 EM_clustering(Schrod, contamination, prior_weight = NULL,
-  clone_priors = NULL, maxit = 1, nclone_range = 2:5, epsilon = 0.01,
-  ncores = 2, model.selection = "BIC", optim = "default",
-  keep.all.models = FALSE, FLASH = FALSE)
+  clone_priors = NULL, Initializations = 1, nclone_range = 2:5,
+  epsilon = 0.01, ncores = 2, model.selection = "BIC",
+  optim = "default", keep.all.models = FALSE, FLASH = FALSE, integrate)
 }
 \arguments{
 \item{Schrod}{List of dataframes, output of the Schrodinger function or the EM algorithm}
@@ -18,7 +18,7 @@ EM_clustering(Schrod, contamination, prior_weight = NULL,
 
 \item{clone_priors}{If known a list of priors (cell prevalence) to be used in the clustering}
 
-\item{maxit}{Maximal number of independant initial condition tests to be tried}
+\item{Initializations}{Maximal number of independant initial condition tests to be tried}
 
 \item{nclone_range}{Number of clusters to look for}
 

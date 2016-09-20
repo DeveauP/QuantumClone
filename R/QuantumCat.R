@@ -213,7 +213,7 @@ phylo_tree_generation_previous<-function(number_of_clones,number_of_samples){
 #' @param preclustering Should the data be pre-clustered by k-means?
 #' @param contamination A numeric vector indicating the fraction of normal cells in each sample.
 #' @param nclone_range Range of values tested for the maximum likelihood
-#' @param maxit Number of trials different initial conditions to be used to evaluate the mximum likelihood
+#' @param Initializations Number of trials different initial conditions to be used to evaluate the mximum likelihood
 #' @param epsilon The stop value of the EM algorithm
 #' @param ncores Number of cores to be used for the optimization research
 #' @keywords Data generation phylogeny
@@ -226,8 +226,8 @@ phylo_tree_generation_previous<-function(number_of_clones,number_of_samples){
 #' number_of_clones=2,plot_results=FALSE,depth=500,number_of_mutations=10)
 #' }
 Multitest<-function(number_of_tests,number_of_samples=2,ploidy=2,Sample_name='Multitest',depth=100,number_of_mutations=150,
-                    number_of_clones=NULL,plot_results=T,save_Cell=F,preclustering = T ,
-                    contamination = NULL,nclone_range = 2:5 ,maxit = 4, epsilon =0.01, ncores = 1){
+                    number_of_clones=NULL,plot_results=T,save_Cell=F,preclustering = "FLASH" ,
+                    contamination = NULL,nclone_range = 2:5 ,Initializations = 4, epsilon =0.01, ncores = 1){
   if(is.null(contamination)){
     contamination<-rep(0,times=number_of_samples)
   }
@@ -265,7 +265,7 @@ Multitest<-function(number_of_tests,number_of_samples=2,ploidy=2,Sample_name='Mu
       }
     }
     t<-One_step_clustering(SNV_list = data_generated,simulated = T,save_plot = plot_results,epsilon = epsilon,ncores = ncores,
-                           preclustering = ,contamination = contamination,nclone_range = nclone_range,maxit = maxit)
+                           preclustering = ,contamination = contamination,nclone_range = nclone_range,Initializations = Initializations)
     percentage_misclustered<-0
     if(number_of_samples>1){
       #combining results
@@ -337,7 +337,7 @@ statistics_on_Multitest<-function(number_of_tests_per_condition=100,range_clones
               for(eps in epsilon){
                 contamination<-rep(x = cont,times=l)
                 statistics<-Multitest(number_of_tests = number_of_tests_per_condition,preclustering = preclustering,epsilon = eps,
-                                      contamination = contamination,nclone_range = nclone_range,maxit = maxit,
+                                      contamination = contamination,nclone_range = nclone_range,Initializations = maxit,
                                       number_of_samples = l,ploidy = k,Sample_name = "Test",number_of_mutations = j,
                                       number_of_clones = i,plot_results = plot_results,save_Cell = F,depth = m, ncores = ncores )
                 write.table(x = statistics,file = paste(folder,'/C',i,'M',j,'P',k,'S',l,'D',m,"eps",eps,'.txt',sep=''))
@@ -371,38 +371,4 @@ statistics_on_Multitest<-function(number_of_tests_per_condition=100,range_clones
   result<-data.frame(Test_code,mean_clone_found,sd_clone_found,mean_percentage_misclustered,sd_percentage_misclustered,obs)
   colnames(result)<-c("Test_code",'mean_clone_found','sd_clone_found','mean_NMI','sd_NMI',"number_of_obs")
   return(result)
-}
-
-#' Normalized Mutual Information
-#' 
-#' Compute the normalized mutual information to assess clustering quality
-#' @param  QC_out output from QuantumClone clustering 
-#' @export
-#' @examples 
-#' Compute_NMI(QC_output)
-Compute_NMI<-function(QC_out){
-  # Probabilities
-  cluster<-as.numeric(as.character(QC_out$cluster))
-  if(length(unique(cluster))!=max(cluster)){### If a cluster is unused
-    spare<-cluster
-    for(i in 2:max(cluster)){ # take k for each unused value (smaller than i) of a cluster
-      spare[spare==i]<-i-sum(!(1:i %in% cluster[cluster<=i]))
-    }
-    cluster<-spare
-  }
-  P_cluster<-table(cluster)/length(cluster)
-  P_clone<-table(QC_out$filtered.data[[1]]$Chr)/length(QC_out$filtered.data[[1]]$Chr)
-  
-  # Information entropy
-  H_clone<--sum(P_clone*log(P_clone))
-  H_cluster<--sum(P_cluster*log(P_cluster))
-  
-  A<-aggregate(rep(1, length(cluster)), 
-               by = list(x= cluster,
-                         y=QC_out$filtered.data[[1]]$Chr ),
-               sum)
-
-  L<-log(A[,3]/(length(cluster)*P_cluster[A[,1]]*P_clone[A[,2]]))
-  NMI<-2*sum(A[,3]/length(cluster)*L)/(H_clone+H_cluster)
-  return(NMI)
 }
