@@ -281,7 +281,6 @@ Compute.adj.fact<-function(Schrod,contamination){ ##Factor used to compute the p
 #' @param prior_center Clone coordinates (from another analysis) to be used 
 #' @param prior_weight Prior on the fraction of mutation in each clone
 #' @param contamination Numeric vector with the fraction of normal cells contaminating the sample
-#' @param epsilon Stopping condition for the algorithm: what is the minimal tolerated difference of position or weighted between two steps
 #' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx")
 #' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights 
 #' between two optimization steps. If NULL, will take 1/(median depth). Also used for integration size.
@@ -690,6 +689,7 @@ BIC_criterion<-function(EM_out_list,model.selection){
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
 #'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
+#' @param should we integrate over 2epsilon interval
 #' @keywords EM clustering number
 EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NULL, Initializations=1,
                         nclone_range=2:5, epsilon=0.01,ncores = 2,
