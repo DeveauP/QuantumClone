@@ -9,9 +9,14 @@
 #' @param weights Proportion of mutation in a clone
 #' @param alpha Weight of each possibility / normalization so that the sum of all possibilities weighs equal to 1 mutation
 #' @param adj.factor Factor to compute the probability: makes transition between the cellularity of the clone and the frequency observed
+#' @param integrate Should the signal be integrated over 2 epsilon interval
+#' @param epsilon Stop condition and size of integration
 #' @keywords E-Step
-e.step<-function(Schrod,centers,weights,alpha,adj.factor){ 
-  f<-eval.fik(Schrod = Schrod,centers = centers,weights = weights,alpha = alpha,adj.factor = adj.factor)
+e.step<-function(Schrod,centers,weights,alpha,adj.factor,integrate,epsilon){ 
+  f<-eval.fik(Schrod = Schrod,centers = centers,weights = weights,
+              alpha = alpha,adj.factor = adj.factor,
+              integrate = integrate,
+              epsilon = epsilon)
   for(k in 1:length(weights)){ ##k corresponds to a clone
     f[,k]<-f[,k]*weights[k]
   }
@@ -44,7 +49,10 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,alpha,adj.factor,in
         idx<-idx+1
         pro<-centers[idx]*adj
         test<-pro <=1 & pro >=0
-        al[[i]][test,k]<-peak(x =Alt[test] ,y = Depth[test],prob = pro[test],epsilon = epsilon)
+        al[[i]][test,k]<-peak(x =Alt[test],
+                              y = Depth[test],
+                              prob = pro[test],
+                              epsilon = epsilon)
       }
     }
   }
@@ -308,7 +316,11 @@ EM.algo<-function(Schrod, nclust=NULL,
   itermax<-50
   while(eval>epsilon){
     
-    tik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,alpha,adj.factor)
+    tik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,
+                alpha = alpha,
+                adj.factor = adj.factor,
+                integrate = integrate,
+                epsilon = epsilon)
     m<-m.step(fik = tik,Schrod = Schrod,previous.weights = cur.weight,
               previous.centers =cur.center, alpha =alpha, 
               adj.factor=adj.factor,optim = optim , initialpop = initialpop,
@@ -343,7 +355,9 @@ EM.algo<-function(Schrod, nclust=NULL,
     }
   }
   fik<-eval.fik(Schrod = Schrod,centers = cur.center,weights = cur.weight,
-                keep.all.poss = TRUE,alpha = alpha,adj.factor = adj.factor)
+                keep.all.poss = TRUE,alpha = alpha,adj.factor = adj.factor,
+                integrate = integrate,
+                epsilon = epsilon)
   if(optim!="DEoptim"){
     return(list(fik=fik,weights=cur.weight,centers=cur.center,val=cur.val))
   }
@@ -498,7 +512,7 @@ add.to.list<-function(...){
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param integrate Should we perform integration of signal over ~epsilon sized interval
 #' @import foreach
-#' @importFrom doParallel registerDoParallel
+#' @importFrom doParallel registerDoParallel %dopar%
 #' @importFrom parallel makeCluster stopCluster
 #' @keywords EM
 parallelEM<-function(Schrod,nclust,epsilon,contamination,
@@ -514,7 +528,7 @@ parallelEM<-function(Schrod,nclust,epsilon,contamination,
     result<-foreach::foreach(i=1:(Initializations),.export = c("FullEM","EM.algo","create_priors",
                                                      "add.to.list","e.step","m.step","list_prod",
                                                      "Compute.adj.fact","eval.fik","eval.fik.m",
-                                                     "fik.from.al","filter_on_fik")) %dopar% {
+                                                     "fik.from.al","filter_on_fik","peak")) %dopar% {
                                                        FullEM(Schrod = Schrod,nclust = nclust,prior_weight = prior_weight,
                                                               contamination = contamination,epsilon = epsilon,
                                                               prior_center = create_priors(nclust = nclust,
@@ -693,7 +707,7 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
                                   .export = c("parallelEM","FullEM","EM.algo","create_priors",
                                               "add.to.list","e.step","m.step","list_prod",
                                               "Compute.adj.fact","eval.fik","eval.fik.m",
-                                              "fik.from.al","filter_on_fik","Create_prior_cutTree")) %dopar% {
+                                              "fik.from.al","filter_on_fik","Create_prior_cutTree","peak")) %dopar% {
                                                 if(FLASH){
                                                   priors<-Create_prior_cutTree(tree,Schrod,i)
                                                   return(parallelEM(Schrod = Schrod,nclust = i,epsilon = epsilon,
