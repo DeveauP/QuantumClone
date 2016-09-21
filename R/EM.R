@@ -511,7 +511,7 @@ add.to.list<-function(...){
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param integrate Should we perform integration of signal over ~epsilon sized interval
 #' @import foreach
-#' @importFrom doParallel registerDoParallel %dopar%
+#' @importFrom doParallel registerDoParallel
 #' @importFrom parallel makeCluster stopCluster
 #' @keywords EM
 parallelEM<-function(Schrod,nclust,epsilon,contamination,
@@ -689,7 +689,7 @@ BIC_criterion<-function(EM_out_list,model.selection){
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
 #'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
-#' @param should we integrate over 2epsilon interval
+#' @param integrate should we integrate over 2epsilon interval
 #' @keywords EM clustering number
 EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NULL, Initializations=1,
                         nclone_range=2:5, epsilon=0.01,ncores = 2,

@@ -780,6 +780,7 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
 #' @param clone_prevalence List of numeric vectors giving the cellular prevalence of each clone in each sample
 #' @param contamination Numeric vector giving the contamination by normal cells
 #' @param clone_weights Numeric vector giving the proportion of mutations in each clone
+#' @param integrate Should QuantumClone integrate probabilities over epsilon interval?
 #' @keywords Clonal inference phylogeny
 #' @export
 #' @examples
@@ -788,7 +789,18 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
 #' Probability.to.belong.to.clone(SNV_list=SNVs,
 #' clone_prevalence=list(c(0.5,1),c(0.5,1)),contamination=c(0,0))
 
-Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination,clone_weights=NULL){
+Probability.to.belong.to.clone<-function(SNV_list,
+                                         clone_prevalence,
+                                         contamination,
+                                         clone_weights=NULL,
+                                         integrate = TRUE){
+  if(integrate){
+    epsilon<-1/median(unlist(lapply(SNV_list,function(df){df$Depth})))
+    message(paste("epsilon value:",epsilon))
+  }
+  else{
+    epsilon<-NULL
+  }
   if(is.null(clone_weights)){
     clone_weights<-rep(1/(length(clone_prevalence[[1]])),times = length(clone_prevalence[[1]]))
   }
@@ -797,9 +809,13 @@ Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination
                                               contamination = contamination)
     
     alpha<-list_prod(Schrod,col = "alpha")
-    result<- eval.fik(Schrod = Schrod,centers = clone_prevalence,alpha= alpha,
+    result<- eval.fik(Schrod = Schrod,
+                      centers = clone_prevalence,
+                      alpha= alpha,
                       weights= clone_weights,keep.all.poss = TRUE,
-                      adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination))
+                      adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination),
+                      integrate = integrate,
+                      epsilon = epsilon)
     filtered<-filter_on_fik(Schrod = Schrod,fik = result)
     filtered_prob<-Probability.to.belong.to.clone(SNV_list = filtered,
                                                   clone_prevalence,
@@ -810,9 +826,13 @@ Probability.to.belong.to.clone<-function(SNV_list,clone_prevalence,contamination
   else{### The output has  been through clustering
     Schrod<-SNV_list
     adj.fact<-Compute.adj.fact(SNV_list,contamination)
-    result<-eval.fik(Schrod = SNV_list,centers = clone_prevalence,weights =clone_weights,
+    result<-eval.fik(Schrod = SNV_list,centers = clone_prevalence,
+                     weights =clone_weights,
                      alpha = rep(1,times=nrow(SNV_list[[1]])),
-                     keep.all.poss = TRUE,adj.factor = adj.fact)
+                     keep.all.poss = TRUE,
+                     adj.factor = adj.fact,
+                     integrate = integrate,
+                     epsilon = epsilon)
     filtered_prob<-result
     filtered <-SNV_list
   }

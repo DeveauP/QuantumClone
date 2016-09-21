@@ -34,6 +34,8 @@ uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it wil
 \item{keep.all.models}{Should the function output the best model (default; FALSE), or all models tested (if set to true)}
 
 \item{FLASH}{should it use FLASH algorithm to create priors}
+
+\item{integrate}{should we integrate over 2epsilon interval}
 }
 \description{
 Maximization of the likelihood given a mixture of binomial distributions

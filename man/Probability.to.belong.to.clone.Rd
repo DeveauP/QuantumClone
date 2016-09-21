@@ -5,7 +5,7 @@
 \title{Probability}
 \usage{
 Probability.to.belong.to.clone(SNV_list, clone_prevalence, contamination,
-  clone_weights = NULL)
+  clone_weights = NULL, integrate = TRUE)
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
@@ -17,6 +17,8 @@ and if the output from FREEC for the samples are not associated, the genotype "G
 \item{contamination}{Numeric vector giving the contamination by normal cells}
 
 \item{clone_weights}{Numeric vector giving the proportion of mutations in each clone}
+
+\item{integrate}{Should QuantumClone integrate probabilities over epsilon interval?}
 }
 \description{
 Returns dataframe with all informations about mutation (Number of copies, Cellularity, etc.) and probability to belong to a clone

@@ -18,14 +18,12 @@ EM.algo(Schrod, nclust = NULL, prior_center = NULL, prior_weight = NULL,
 
 \item{contamination}{Numeric vector with the fraction of normal cells contaminating the sample}
 
-\item{epsilon}{Stopping condition for the algorithm: what is the minimal tolerated difference of position or weighted between two steps}
+\item{epsilon}{Stop value: maximal admitted value of the difference in cluster position and weights 
+between two optimization steps. If NULL, will take 1/(median depth). Also used for integration size.}
 
 \item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx")}
 
 \item{integrate}{Should we perform integration of density over ~epsilon sized interval}
-
-\item{epsilon}{Stop value: maximal admitted value of the difference in cluster position and weights 
-between two optimization steps. If NULL, will take 1/(median depth). Also used for integration size.}
 }
 \description{
 Optimization of clone positions and proportion of mutations in each clone.
