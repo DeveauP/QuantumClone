@@ -292,7 +292,8 @@ Compute_objective<-function(tree,nclus,Schrod,conta){
            weights = priors$weights,
            alpha = alpha,
            adj.factor = adj.factor,
-           keep.all.poss = TRUE)
+           keep.all.poss = TRUE,
+           integrate = FALSE)
   w<-which(fik == 0)
   if(length(w)){
     fik<--fik *log(fik )
