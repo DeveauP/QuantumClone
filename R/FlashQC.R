@@ -371,6 +371,9 @@ FLASH_main<-function(Schrod_cells,model.selection,conta,Nclus,tree = NULL,dissim
     }
     index<- c("ch","ccc","gap")
     method<-"ward.D2"
+    if(ncol(Cells)==1){
+      Cells<-cbind(Cells,1-Cells)
+    }
     selected<-unlist(sapply(X =index,function(name){
       NbClust::NbClust(data = Cells,diss = dissimMatrix, distance =  NULL,
               method = method,index = name,
