@@ -1,3 +1,26 @@
+#' Peak
+#' 
+#' 
+#' Integrate binomial density over 2epsilon*depth interval
+#' @param x Number of alternative reads
+#' @param y Number of draws
+#' @param prob probability to draw
+#' @param epsilon coefficient to normalize interval size
+peak<-function(x,y,prob,epsilon){ # x € [0;1]
+  xmin<-round(x-epsilon*y )
+  xmax<-round(x+epsilon*y)
+  xmin[xmin<0]<-0
+  xmax[xmax>y]<-y[xmax>y]
+  
+  ifelse(test = xmin==xmax,
+         yes =  dbinom(x = x,size = y,prob),
+         no = ifelse(xmax>=y,
+                     yes = abs(pbinom(xmax, y, prob)-pbinom(xmin,y,prob,lower.tail = TRUE)),
+                     no = abs(pbinom(xmax, y, prob)-pbinom(xmin,y,prob,lower.tail = TRUE))
+         )
+  )
+}
+
 ##We assume that a list of data-frame is provided with columns Chr; Start; N; Alt; Depth; 
 ##Weight;Genotype;Number of chromosomes; Number of copies; id;
 ##And that the number of clusters is known; contamination is also known.
@@ -57,21 +80,21 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,alpha,adj.factor,in
     }
   }
   else{
-  for(i in 1:length(Schrod)){ ## i is a sample
-    al[[i]]<-matrix(data = 0,nrow=nrow(Schrod[[1]]),ncol=length(weights))
-    Alt<-Schrod[[i]]$Alt
-    Depth<-Schrod[[i]]$Depth
-    adj<-adj.factor[,i]
-    for(k in 1:length(weights)){ ## k is a clone
-      idx<-idx+1
-      pro<-centers[idx]*adj
-      test<-pro <=1 & pro >=0
-      #pro_0<-pro
-      #pro_0[pro>1 | pro<0]<-0
-      al[[i]][test,k]<-dbinom(x =Alt[test] ,size = Depth[test],prob = pro[test])
-      #al[[i]][pro>1 | pro<0,k]<-0
+    for(i in 1:length(Schrod)){ ## i is a sample
+      al[[i]]<-matrix(data = 0,nrow=nrow(Schrod[[1]]),ncol=length(weights))
+      Alt<-Schrod[[i]]$Alt
+      Depth<-Schrod[[i]]$Depth
+      adj<-adj.factor[,i]
+      for(k in 1:length(weights)){ ## k is a clone
+        idx<-idx+1
+        pro<-centers[idx]*adj
+        test<-pro <=1 & pro >=0
+        #pro_0<-pro
+        #pro_0[pro>1 | pro<0]<-0
+        al[[i]][test,k]<-dbinom(x =Alt[test] ,size = Depth[test],prob = pro[test])
+        #al[[i]][pro>1 | pro<0,k]<-0
+      }
     }
-  }
   }
   return(fik.from.al(al,Schrod[[1]]$id,keep.all.poss,alpha))
 }
@@ -291,7 +314,7 @@ EM.algo<-function(Schrod, nclust=NULL,
                   contamination, epsilon=10**(-2),
                   optim = "default",
                   integrate
-                  ){
+){
   if(is.null(prior_weight)){
     prior_weight<-rep(1/nclust,times = nclust)
     cur.weight<-rep(1/nclust,times = nclust)
@@ -505,7 +528,6 @@ add.to.list<-function(...){
 #' @param prior_weight Prior on the fraction of mutation in each clone
 #' @param contamination Numeric vector with the fraction of normal cells contaminating the sample
 #' @param epsilon Stopping condition for the algorithm: what is the minimal tolerated difference of position or weighted between two steps
-#' @param ncores Number of CPUs to be used
 #' @param Initializations Maximal number of independant initial condition tests to be tried
 #' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
@@ -516,49 +538,22 @@ add.to.list<-function(...){
 #' @keywords EM
 parallelEM<-function(Schrod,nclust,epsilon,contamination,
                      prior_center=NULL,prior_weight=NULL,
-                     Initializations=1, ncores = 2,
+                     Initializations=1,
                      optim = "default",
                      keep.all.models = FALSE,
                      integrate){
-  if(ncores>1){
-    cl <- parallel::makeCluster( ncores )
-    doParallel::registerDoParallel(cl)
-    
-    result<-foreach::foreach(i=1:(Initializations),.export = c("FullEM","EM.algo","create_priors",
-                                                     "add.to.list","e.step","m.step","list_prod",
-                                                     "Compute.adj.fact","eval.fik","eval.fik.m",
-                                                     "fik.from.al","filter_on_fik","peak")) %dopar% {
-                                                       FullEM(Schrod = Schrod,nclust = nclust,prior_weight = prior_weight,
-                                                              contamination = contamination,epsilon = epsilon,
-                                                              prior_center = create_priors(nclust = nclust,
-                                                                                           nsample = length(Schrod),
-                                                                                           prior = prior_center),
-                                                              optim = optim,
-                                                              integrate = integrate
-                                                       )
-                                                     }
-    doParallel::stopImplicitCluster()
-    parallel::stopCluster(cl)
-  }
-  else{
-    result<-list()
-    for(i in 1:Initializations){
-      result[[i]]<-FullEM(Schrod = Schrod,nclust = nclust,
-                          prior_weight = prior_weight,
-                          contamination = contamination,epsilon = epsilon,
-                          prior_center = create_priors(nclust = nclust,
-                                                       nsample = length(Schrod),
-                                                       prior = prior_center),
-                          optim = optim,
-                          integrate = integrate
-      )
-    } 
-  }
-  #   result<-list()
-  #   for(i in 1:Initializations){
-  #     result[[i]]<-FullEM(Schrod = Schrod,nclust = nclust,prior_weight = prior_weight,contamination = contamination,epsilon = epsilon,
-  #                                      prior_center = create_priors(nclust = nclust,nsample = length(Schrod),prior = prior_center))
-  #   }
+  result<-list()
+  for(i in 1:Initializations){
+    result[[i]]<-FullEM(Schrod = Schrod,nclust = nclust,
+                        prior_weight = prior_weight,
+                        contamination = contamination,epsilon = epsilon,
+                        prior_center = create_priors(nclust = nclust,
+                                                     nsample = length(Schrod),
+                                                     prior = prior_center),
+                        optim = optim,
+                        integrate = integrate
+    )
+  } 
   if(keep.all.models){
     if(Initializations>1){
       return(result)
@@ -712,7 +707,7 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
                                                   priors<-Create_prior_cutTree(tree,Schrod,i)
                                                   return(parallelEM(Schrod = Schrod,nclust = i,epsilon = epsilon,
                                                                     contamination = contamination,prior_center = priors$centers,
-                                                                    prior_weight = priors$weights,Initializations = 1 , ncores = 1,
+                                                                    prior_weight = priors$weights,Initializations = 1,
                                                                     optim = optim,keep.all.models = keep.all.models,
                                                                     integrate = integrate
                                                   )
@@ -721,7 +716,7 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
                                                 else{
                                                   return(parallelEM(Schrod = Schrod,nclust = i,epsilon = epsilon,
                                                                     contamination = contamination,prior_center = clone_priors,
-                                                                    prior_weight = prior_weight,Initializations = 1 , ncores = 1,
+                                                                    prior_weight = prior_weight,Initializations = 1,
                                                                     optim = optim,keep.all.models = keep.all.models,
                                                                     integrate = integrate
                                                   )
@@ -740,7 +735,7 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
                                      contamination = contamination,
                                      prior_center = priors$centers,
                                      prior_weight = priors$weights,
-                                     Initializations = 1 , ncores = 1,
+                                     Initializations = Initializations,
                                      optim = optim,
                                      keep.all.models = keep.all.models,
                                      integrate = integrate
@@ -750,7 +745,7 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
       else{
         list_out_EM[[i]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],epsilon = epsilon,
                                      contamination = contamination,prior_center = clone_priors,
-                                     prior_weight = prior_weight,Initializations = Initializations , ncores = 1,
+                                     prior_weight = prior_weight,Initializations = Initializations,
                                      optim = optim,
                                      keep.all.models = keep.all.models,
                                      integrate = integrate
@@ -759,8 +754,30 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
     }
   }
   if(!keep.all.models){
+    # ####
+    # ## Dropping clusters that are closer than epsilon in all samples
+    # ####
+    # To_drop<-which(unlist(lapply(list_out_EM,function(out_EM){
+    #   Cluster_drop(centers = out_EM$EM.output$centers, epsilon = epsilon)
+    # }))>0)
+    # 
+    # if(length(To_drop) && length(To_drop) < length(list_out_EM)){
+    #   for(w in To_drop){
+    #     list_out_EM[[w]]$EM.output$val <- NA
+    #   }
+    # }
+    ###  Can be uncommented for use, not recommended (tested on Imput_Example)
+        
+    ### 
+    # Criterion
+    #
+    
     result<-list_out_EM[[which.min(BIC_criterion(EM_out_list = list_out_EM, model.selection = model.selection))]]
+    
+
     result$cluster<-hard.clustering(EM_out = result$EM.output)
+    
+    
     return(result)
   }
   else{
@@ -775,36 +792,57 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
           list_out_EM[[index]]<-spare[[i]][[k]]
         }
       }
-      rm(spare)
     }
     Crit<-BIC_criterion(EM_out_list = list_out_EM, model.selection = model.selection)
+    
     for(i in 1:length(list_out_EM)){
       list_out_EM[[i]]$cluster<-hard.clustering(EM_out = list_out_EM[[i]]$EM.output)
       list_out_EM[[i]]$Crit<-Crit[i]
     }
+    
     return(list_out_EM)
   }
 }
 
-#' Peak
+#' Find clusters to fuse
 #' 
-#' 
-#' Integrate binomial density over 2epsilon*depth interval
-#' @param x Number of alternative reads
-#' @param y Number of draws
-#' @param prob probability to draw
-#' @param epsilon coefficient to normalize interval size
-peak<-function(x,y,prob,epsilon){ # x € [0;1]
-  xmin<-round(x-epsilon*y )
-  xmax<-round(x+epsilon*y)
-  xmin[xmin<0]<-0
-  xmax[xmax>y]<-y[xmax>y]
-  
-  ifelse(test = xmin==xmax,
-         yes =  dbinom(x = x,size = y,prob),
-         no = ifelse(xmax>=y,
-                     yes = abs(pbinom(xmax, y, prob)-pbinom(xmin,y,prob,lower.tail = TRUE)),
-                     no = abs(pbinom(xmax, y, prob)-pbinom(xmin,y,prob,lower.tail = TRUE))
-         )
-  )
+#' @param centers list or vector with centers of clusters
+#' @param epsilon maximal distance in each sample between two cluster centers to fuse
+#' @return Returns numbers of clusters to drop
+#' @examples
+#' centers <- list(c(1,0.95,0.98,9,0.95),c(1,0.95,0.98,9,0))
+#' epsilon = 0.05
+#' cld<-Cluster_dropt(centers,epsilon)
+Cluster_drop<-function(centers,epsilon){
+  fuse<-NULL
+  #fuse_with<-NULL
+  if(is.list(centers)){
+    grid.test<-expand.grid(1:length(centers[[1]]),1:length(centers[[1]]))
+    grid.test<-grid.test[grid.test[,1]<grid.test[,2],]
+    for(i in 1:nrow(grid.test)){
+      row<-as.numeric(grid.test[i,])
+      test<-logical(length = length(centers))
+      
+      for(j in 1:length(centers)){
+        test[j]<-abs(centers[[j]][row[1]]-centers[[j]][row[2]])<epsilon
+      }
+      if(sum(test)==length(test)){
+        fuse<-c(fuse,row[1])
+        #fuse_with<-c(fuse_with,row[2])
+      }
+    }
+  }
+  else{
+    grid.test<-expand.grid(1:length(centers[[1]]),1:length(centers[[1]]))
+    grid.test<-grid.test[grid.test[,1]<grid.test[,2],]
+    for(i in 1:nrow(grid.test)){
+      row<-grid.test[i,]
+      test<-abs(centers[row[1]]-centers[row[2]])<epsilon
+      if(test){
+        fuse<-c(fuse,row[1])
+        #fuse_with<-c(fuse_with,row[2])
+      }
+    }
+  }
+  length(fuse)
 }

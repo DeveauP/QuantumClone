@@ -134,6 +134,8 @@ Precision_Recall<-function(hx,Truth){
   RI<-(TP+TN)/tot
   
   return(list(TP = TP, TN = TN,FP = FP, FN = FN, 
-         Pr = Pr, R = R, F1 = F1, RI =RI,validat = validat)
+         Pr = Pr, R = R, F1 = F1, RI =RI,
+         validat = validat,
+         nclus = length(unique(hx)))
   )
 }

@@ -1,6 +1,6 @@
 Package: QuantumClone
 Title: Clustering Mutations using High Throughput Sequencing (HTS) Data
-Version: 0.16.9.12
+Version: 0.16.9.21
 Authors@R: person("Paul", "Deveau", role = c("aut", "cre"),
 		     email = "paul.deveau@curie.fr")
 Description: Using HTS data, clusters mutations in order to recreate putative
@@ -15,7 +15,8 @@ BugReports:
     https://github.com/DeveauP/QuantumClone/issues
 Depends:
     R (>= 3.1.0),
-    compiler
+    compiler,
+    foreach
 Imports:
     doParallel,
     parallel,
@@ -24,8 +25,7 @@ Imports:
 	NbClust,
 	DEoptim,
     optimx,
-    fpc,
-    foreach
+    fpc
 Suggests:
     knitr,rmarkdown
 License: GPL-2

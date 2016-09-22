@@ -364,13 +364,14 @@ FLASH_main<-function(Schrod_cells,model.selection,conta,Nclus,tree = NULL,dissim
     ### Using NbClust
     Cells<-matrix(data = 0,ncol = length(Schrod_cells),nrow = nrow(Schrod_cells[[1]]))
     for(i in 1:length(Schrod_cells)){
-      Cells[,i]<-Schrod_cells[[i]]$Alt/Schrod_cells[[i]]$Depth*Schrod_cells[[i]]$NCh/(Schrod_cells[[i]]$NC * 1-conta[i])
+      Cells[,i]<-Schrod_cells[[i]]$Alt/Schrod_cells[[i]]$Depth*
+        Schrod_cells[[i]]$NCh/(Schrod_cells[[i]]$NC * 1-conta[i])
       
     }
     index<- c("ch","ccc","gap")
     method<-"ward.D2"
     selected<-unlist(sapply(X =index,function(name){
-      NbClust(data = Cells,diss = dissimMatrix, distance =  NULL,
+      NbClust::NbClust(data = Cells,diss = dissimMatrix, distance =  NULL,
               method = method,index = name,
               min.nc = min(Nclus),
               max.nc = max(Nclus)

@@ -20,7 +20,7 @@
 #' @param ncores Number of cores to be used during EM algorithm
 #' @param output_directory Path to output directory
 #' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights 
-#' between two optimization steps. If NULL, will take 1/(median depth). Also used for integration size.
+#' between two optimization steps. If NULL, will take 1/(average depth). Also used for integration size.
 #' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
@@ -103,7 +103,7 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
 #' @param preclustering The type of preclustering used for priors: "Flash","kmedoid" or NULL. NULL will generate
 #'  centers using uniform distribution. WARNING: overrides priors given
 #' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights 
-#' between two optimization steps. If NULL, will take 1/(median depth)
+#' between two optimization steps. If NULL, will take 1/(average depth)
 #' @param ncores Number of cores to be used during EM algorithm
 #' @param clone_priors List of vectors with the putated position of clones
 #' @param prior_weight Numeric with the proportion mutations in each clone
@@ -202,7 +202,7 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
     }
   }
   if(is.null(epsilon)){
-    epsilon<-1/median(unlist(lapply(SNV_list,function(df) df$Depth)))
+    epsilon<-1/mean(unlist(lapply(SNV_list,function(df) df$Depth)))
     message(paste("epsilon set to:",epsilon))
   }
   ### check optim:
