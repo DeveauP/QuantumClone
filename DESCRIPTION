@@ -27,7 +27,7 @@ Imports:
     optimx,
     fpc
 Suggests:
-    knitr,rmarkdown,testhat
+    knitr,rmarkdown,testthat
 License: GPL-2
 LazyData: true
 VignetteBuilder: knitr
