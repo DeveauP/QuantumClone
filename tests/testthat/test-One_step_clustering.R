@@ -13,3 +13,8 @@ test_that("Check optimx",{
   
 })
 
+# test_that("Check DEoptim",{
+#   expect_identical(Compute_NMI(
+#     One_step_clustering(Input_Example,contamination = c(0,0),nclone_range = 4,optim = "DEoptim",save_plot = FALSE)
+#   ), 1)
+# })
