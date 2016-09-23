@@ -1,5 +1,7 @@
 ####Github Status : 
 [![Build Status](https://travis-ci.org/DeveauP/QuantumClone.svg)](https://travis-ci.org/DeveauP/QuantumClone)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/DeveauP/QuantumClone?branch=master&svg=true)](https://ci.appveyor.com/project/DeveauP/QuantumClone)
+[![Coverage Status](https://img.shields.io/codecov/c/github/DeveauP/QuantumClone/master.svg)](https://codecov.io/github/DeveauP/QuantumClone?branch=master)
 ####CRAN Status and statistics : 
 [![CRAN version](http://www.r-pkg.org/badges/version/QuantumClone)](http://www.r-pkg.org/badges/version/QuantumClone)
 [![CRAN downloads weekly](http://cranlogs.r-pkg.org/badges/QuantumClone)](http://cran.rstudio.com/web/packages/QuantumClone/index.html)
