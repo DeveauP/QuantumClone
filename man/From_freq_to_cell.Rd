@@ -22,7 +22,8 @@ and if the output from FREEC for the samples are not associated, the genotype "G
 
 \item{save_plot}{Should the plots be saved? Default is TRUE}
 
-\item{contamination}{Numeric vector giving the contamination by normal cells}
+\item{contamination}{Numeric vector describind the contamination in all samples (ranging from 0 to 1). Default is 0. 
+No longer used for clustering.}
 
 \item{ncores}{Number of cores to be used during EM algorithm}
 

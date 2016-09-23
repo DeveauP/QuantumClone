@@ -1,26 +1,3 @@
-#' Peak
-#' 
-#' 
-#' Integrate binomial density over 2epsilon*depth interval
-#' @param x Number of alternative reads
-#' @param y Number of draws
-#' @param prob probability to draw
-#' @param epsilon coefficient to normalize interval size
-peak<-function(x,y,prob,epsilon){ # x € [0;1]
-  xmin<-round(x-epsilon*y )
-  xmax<-round(x+epsilon*y)
-  xmin[xmin<0]<-0
-  xmax[xmax>y]<-y[xmax>y]
-  
-  ifelse(test = xmin==xmax,
-         yes =  dbinom(x = x,size = y,prob),
-         no = ifelse(xmax>=y,
-                     yes = abs(pbinom(xmax, y, prob)-pbinom(xmin,y,prob,lower.tail = TRUE)),
-                     no = abs(pbinom(xmax, y, prob)-pbinom(xmin,y,prob,lower.tail = TRUE))
-         )
-  )
-}
-
 ##We assume that a list of data-frame is provided with columns Chr; Start; N; Alt; Depth; 
 ##Weight;Genotype;Number of chromosomes; Number of copies; id;
 ##And that the number of clusters is known; contamination is also known.
@@ -43,6 +20,7 @@ e.step<-function(Schrod,centers,weights,alpha,adj.factor,integrate,epsilon){
   for(k in 1:length(weights)){ ##k corresponds to a clone
     f[,k]<-f[,k]*weights[k]
   }
+  ### Normalize fik
   f_0<-f
   f_0<-t(apply(X = f,MARGIN = 1,FUN = function(z) {
     if(sum(z)>0){
@@ -54,134 +32,6 @@ e.step<-function(Schrod,centers,weights,alpha,adj.factor,integrate,epsilon){
   }
   ))
   return(f_0)
-}
-
-eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,alpha,adj.factor,integrate,epsilon){
-  al<-list()
-  if(is.list(centers)){
-    centers<-unlist(centers)
-  }
-  idx<-0
-  if(integrate){
-    for(i in 1:length(Schrod)){ ## i is a sample
-      al[[i]]<-matrix(data = 0,nrow=nrow(Schrod[[1]]),ncol=length(weights))
-      Alt<-Schrod[[i]]$Alt
-      Depth<-Schrod[[i]]$Depth
-      adj<-adj.factor[,i]
-      for(k in 1:length(weights)){ ## k is a clone
-        idx<-idx+1
-        pro<-centers[idx]*adj
-        test<-pro <=1 & pro >=0
-        al[[i]][test,k]<-peak(x =Alt[test],
-                              y = Depth[test],
-                              prob = pro[test],
-                              epsilon = epsilon)
-      }
-    }
-  }
-  else{
-    for(i in 1:length(Schrod)){ ## i is a sample
-      al[[i]]<-matrix(data = 0,nrow=nrow(Schrod[[1]]),ncol=length(weights))
-      Alt<-Schrod[[i]]$Alt
-      Depth<-Schrod[[i]]$Depth
-      adj<-adj.factor[,i]
-      for(k in 1:length(weights)){ ## k is a clone
-        idx<-idx+1
-        pro<-centers[idx]*adj
-        test<-pro <=1 & pro >=0
-        #pro_0<-pro
-        #pro_0[pro>1 | pro<0]<-0
-        al[[i]][test,k]<-dbinom(x =Alt[test] ,size = Depth[test],prob = pro[test])
-        #al[[i]][pro>1 | pro<0,k]<-0
-      }
-    }
-  }
-  return(fik.from.al(al,Schrod[[1]]$id,keep.all.poss,alpha))
-}
-
-#'List product
-#'
-#' Returns the product of all elements in a list, e.g. a vector if the elements of the list are vectors, etc.
-#' @param L list used
-#' @param col If it is a list of matrices, and only one column should be used, name of the column.
-#' @keywords List handling
-#' #Write example for list_prod
-list_prod<-function(L,col=NULL){
-  if(is.null(col)){
-    if(length(L)>1){
-      result<-L[[1]]
-      for(i in 2:length(L)){
-        result<-result*L[[i]]
-      }
-    }
-    else{
-      return(L[[1]])
-    }
-  }
-  else{
-    if(length(L)>1){
-      result<-L[[1]][,col]
-      for(i in 2:length(L)){
-        result<-result*L[[i]][,col]
-      }
-    }
-    else{
-      return(L[[1]][,col])
-    }
-  }
-  return(result)
-}
-
-fik.from.al<-function(al,id,keep.all.poss,alpha=NULL){
-  if(is.null(alpha)){
-    alpha<-rep(1,times=length(id))
-  }
-  fik<-matrix(nrow = length(unique(id)),ncol = ncol(al[[1]]))
-  spare<-alpha*list_prod(al)
-  u<-unique(id)
-  #tab<-table(u)
-  if(keep.all.poss){
-    return(spare*alpha)
-  }
-  else{
-    # fik<- as.data.frame(cbind(spare,id =id)) %>% group_by(id) %>% summarise_all(funs(sum)) # takes longer on matrices of 100 rows
-    for(i in 1:length(u)){
-      if(sum(id==u[i])>1){ ##more than one possibility for a mutation
-        fik[i,]<-apply(X = spare[id==u[i],],MARGIN = 2, sum) ##normalize by sum of possibilities...
-      }
-      else{ ## only one possibility for a mutation
-        fik[i,]<-spare[id==u[i],]
-      }
-    }
-    
-  }
-  fik[fik==0]<-.Machine$double.xmin ## replace by machine limit to avoid the log(0) issue
-  #print(cbind(fik2,fik))
-  #return(as.matrix(fik[,-1]))
-  return(as.matrix(fik))
-}
-
-#' Eval probability for M step
-#' Computes the log directly as log density is faster to compute
-#' 
-#' @param Schrod The shcrodinger list of matrices
-#' @param centers centers of the clusters
-#' @param weights weight of each cluster
-#' @param alpha weight of each status (number of copies for a mutation)
-#' @param adj.factor The adjusting factor, taking into account contamination, copy number, number of copies
-#' @param integrate Should QuantumClone integrate probabilities over epsilon interval?
-#' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights 
-#' between two optimization steps. If NULL, will take 1/(median depth). Also used for integration size.
-eval.fik.m<-function(Schrod,centers,weights,alpha,adj.factor,epsilon,integrate){
-  spare<-eval.fik(Schrod = Schrod,
-                  centers=centers,
-                  weights = weights,
-                  alpha = alpha, 
-                  adj.factor= adj.factor,
-                  epsilon= epsilon,
-                  integrate = integrate)
-  spare[spare==0]<-.Machine$double.xmin
-  return(spare)
 }
 
 #'Maximization step
@@ -210,17 +60,29 @@ m.step<-function(fik,Schrod,previous.weights,
                  integrate,
                  epsilon){
   weights<-apply(X = fik,MARGIN = 2,FUN = mean)
-  weights<-weights/sum(weights)
+  # weights<-weights/sum(weights) # Overkill
   cur.cent<-list()
+  
+  if(optim == "default" | optim == "optimx"){
+    Alt<-matrix(nrow = nrow(Schrod[[1]]),ncol = length(Schrod))
+    Depth<-matrix(nrow = nrow(Schrod[[1]]),ncol = length(Schrod))
+
+    for(i in 1:length(Schrod)){
+      Alt[,i]<-Schrod[[i]]$Alt
+      Depth[,i]<-Schrod[[i]]$Depth
+    }
+  }
   fnx<-compiler::cmpfun(function(x) -sum(fik*log(eval.fik.m(Schrod = Schrod,centers = x,alpha = alpha,adj.factor = adj.factor,
                                                             weights = previous.weights,epsilon = epsilon,
                                                             integrate = integrate))),
                         options = list(optimize = 3)
   )
   
+  
   if(optim == "default"){
     spare<-optim(par = unlist(previous.centers),
                  fn = fnx ,
+                 gr= function(x){grbase(fik,adj.factor,x,Alt,Depth)},
                  method = "L-BFGS-B",lower = rep(0,times = length(unlist(previous.centers))),upper=rep(1,length(unlist(previous.centers)))) 
     if(!is.list(spare)){
       return(NA)
@@ -228,8 +90,9 @@ m.step<-function(fik,Schrod,previous.weights,
     return(list(weights=weights,centers=spare$par,val=spare$val))
   }
   else if(optim =="optimx"){
-    spare<-optimx(par = unlist(previous.centers),
+    spare<-optimx::optimx(par = unlist(previous.centers),
                   fn = fnx,
+                  #gr = function(x){grbase(fik,adj.factor,x,Alt,Depth)},
                   method = "L-BFGS-B",
                   lower = rep(0,times = length(unlist(previous.centers))),
                   upper=rep(1,length(unlist(previous.centers)))) 
@@ -292,7 +155,7 @@ Compute.adj.fact<-function(Schrod,contamination){ ##Factor used to compute the p
   n<-length(Schrod)
   adj.factor<-matrix(ncol = n,nrow=nrow(Schrod[[1]]))
   for(i in 1:n){
-    adj.factor[,i]<-Schrod[[i]]$NC*(1-contamination[i])/Schrod[[i]]$NCh
+    adj.factor[,i]<-Schrod[[i]]$NC/Schrod[[i]]$NCh
   }
   return(adj.factor)
 }
@@ -495,7 +358,10 @@ create_priors<-function(nclust,nsample,prior=NULL){
       return(result)
     }
   }
-  else{ ## need to remove elements
+  else if(length(prior[[1]])==nclust){
+    return(prior)
+    }
+  else{## need to remove elements
     lp<-list_prod(prior)
     if(sum(lp>0.95**nsample)>0){ ## there is an ancestral clone in the priors given
       w<-which.max(lp>0.95**nsample)
@@ -592,7 +458,7 @@ hard.clustering<-function(EM_out){
         return(pos[which.max(prob)])
       }
       else{ ### all possibilities have 0 probability, so choose one randomly
-        return(sample(1:length(z),size = z))
+        return(sample(1:length(z),size = 1))
       }
     }
     else{ # only one clone has maximal probability
@@ -698,13 +564,24 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
     cl <- parallel::makeCluster( ncores )
     doParallel::registerDoParallel(cl)
     
-    list_out_EM<-foreach::foreach(i=rep(nclone_range,each = Initializations),
+    list_out_EM<-foreach::foreach(i=paste(rep(nclone_range,each = Initializations),c("",rep("_jit",times = Initializations-1))),
+                                  ### jitter around priors if more than 1
                                   .export = c("parallelEM","FullEM","EM.algo","create_priors",
                                               "add.to.list","e.step","m.step","list_prod",
                                               "Compute.adj.fact","eval.fik","eval.fik.m",
-                                              "fik.from.al","filter_on_fik","Create_prior_cutTree","peak")) %dopar% {
+                                              "fik.from.al","filter_on_fik","Create_prior_cutTree","peak","grbase")) %dopar% {
+
                                                 if(FLASH){
-                                                  priors<-Create_prior_cutTree(tree,Schrod,i)
+                                                  if(grepl(pattern= "_",x= i)){
+                                                    i<-as.numeric(unlist(strsplit(x = i,split = "_"))[1])
+                                                    jitter <- TRUE
+                                                  }
+                                                  else{
+                                                    i<-as.numeric(i)
+                                                    jitter <- FALSE
+                                                  }
+                                                  priors<-Create_prior_cutTree(tree,Schrod,i,jitter)
+                                                  
                                                   return(parallelEM(Schrod = Schrod,nclust = i,epsilon = epsilon,
                                                                     contamination = contamination,prior_center = priors$centers,
                                                                     prior_weight = priors$weights,Initializations = 1,
@@ -714,6 +591,7 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
                                                   )
                                                 }
                                                 else{
+                                                  i<-as.numeric(unlist(strsplit(x = i,split = "_"))[1])
                                                   return(parallelEM(Schrod = Schrod,nclust = i,epsilon = epsilon,
                                                                     contamination = contamination,prior_center = clone_priors,
                                                                     prior_weight = prior_weight,Initializations = 1,
@@ -729,18 +607,25 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
   else{
     for(i in 1:length(nclone_range)){
       if(FLASH){
-        priors<-Create_prior_cutTree(tree,Schrod,nclone_range[i])
-        list_out_EM[[i]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],
-                                     epsilon = epsilon,
-                                     contamination = contamination,
-                                     prior_center = priors$centers,
-                                     prior_weight = priors$weights,
-                                     Initializations = Initializations,
-                                     optim = optim,
-                                     keep.all.models = keep.all.models,
-                                     integrate = integrate
-        )
-        
+        for(init in 1:Initializations){
+          if(init == 1){
+            priors<-Create_prior_cutTree(tree,Schrod,nclone_range[i],jitter = FALSE)
+          }
+          else{
+            priors<-Create_prior_cutTree(tree,Schrod,nclone_range[i],jitter = TRUE)
+            
+          }
+          list_out_EM[[i]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],
+                                       epsilon = epsilon,
+                                       contamination = contamination,
+                                       prior_center = priors$centers,
+                                       prior_weight = priors$weights,
+                                       Initializations = Initializations,
+                                       optim = optim,
+                                       keep.all.models = keep.all.models,
+                                       integrate = integrate
+          )
+        }
       }
       else{
         list_out_EM[[i]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],epsilon = epsilon,
@@ -809,10 +694,9 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
 #' @param centers list or vector with centers of clusters
 #' @param epsilon maximal distance in each sample between two cluster centers to fuse
 #' @return Returns numbers of clusters to drop
-#' @examples
-#' centers <- list(c(1,0.95,0.98,9,0.95),c(1,0.95,0.98,9,0))
-#' epsilon = 0.05
-#' cld<-Cluster_dropt(centers,epsilon)
+# centers <- list(c(1,0.95,0.98,9,0.95),c(1,0.95,0.98,9,0))
+# epsilon = 0.05
+# cld<-Cluster_drop(centers,epsilon)
 Cluster_drop<-function(centers,epsilon){
   fuse<-NULL
   #fuse_with<-NULL

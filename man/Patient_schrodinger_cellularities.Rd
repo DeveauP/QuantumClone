@@ -17,7 +17,8 @@ and if the output from FREEC for the samples are not associated, the genotype "G
 
 \item{Genotype_provided}{If the FREEC_list is provided, then should be FALSE (default), otherwise TRUE}
 
-\item{contamination}{Numeric vector describind the contamination in all samples (ranging from 0 to 1). Default is 0.}
+\item{contamination}{Numeric vector describind the contamination in all samples (ranging from 0 to 1). Default is 0. 
+No longer used for clustering.}
 
 \item{restrict.to.AB}{Should the analysis keep only sites located in A and AB sites in all samples?}
 

@@ -8,6 +8,21 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEncoding{UTF-8}
 ---
+<h3<Release of 23/9/2016 </h3>
+<ul>
+<li> Added computation of gradient for "optim" and "optimx"; </li>
+<li> Corrected priors creation from FLASH for QuantumClone; </li>
+<li> Added jitter if number of initializations is >1 and preclustering with FLASH.</li>
+
+</ul>
+
+<h3<Release of 22/9/2016 </h3>
+<ul>
+<li> Fixed errors from FlashQC; </li>
+<li> Updated validation tools. </li>
+
+</ul>
+
 <h3<Release of 20/9/2016 </h3>
 <ul>
 <li> Added integration of binomial density over 2xEpsilon interval; </li>

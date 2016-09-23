@@ -18,7 +18,8 @@ and if the output from FREEC for the samples are not associated, the genotype "G
 
 \item{FREEC_list}{list of dataframes from FREEC for each samples (usually named Sample_ratio.txt), in the same order as SNV_list}
 
-\item{contamination}{Numeric vector describind the contamination in all samples (ranging from 0 to 1). Default is 0.}
+\item{contamination}{Numeric vector describind the contamination in all samples (ranging from 0 to 1). Default is 0. 
+No longer used for clustering.}
 
 \item{nclone_range}{A number or range of clusters that should be used for clustering}
 
@@ -31,7 +32,7 @@ and if the output from FREEC for the samples are not associated, the genotype "G
 \item{save_plot}{Should the plots be saved? Default is TRUE}
 
 \item{epsilon}{Stop value: maximal admitted value of the difference in cluster position and weights 
-between two optimization steps. If NULL, will take 1/(median depth). Also used for integration size.}
+between two optimization steps. If NULL, will take 1/(average depth). Also used for integration size.}
 
 \item{Initializations}{Number of initial conditions to be tested for the EM algorithm}
 
