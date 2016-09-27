@@ -7,7 +7,7 @@
 EM_clustering(Schrod, contamination, prior_weight = NULL,
   clone_priors = NULL, Initializations = 1, nclone_range = 2:5,
   epsilon = 0.01, ncores = 2, model.selection = "BIC",
-  optim = "default", keep.all.models = FALSE, FLASH = FALSE, integrate)
+  optim = "default", keep.all.models = FALSE, FLASH = FALSE)
 }
 \arguments{
 \item{Schrod}{List of dataframes, output of the Schrodinger function or the EM algorithm}
@@ -34,8 +34,6 @@ uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it wil
 \item{keep.all.models}{Should the function output the best model (default; FALSE), or all models tested (if set to true)}
 
 \item{FLASH}{should it use FLASH algorithm to create priors}
-
-\item{integrate}{should we integrate over 2epsilon interval}
 }
 \description{
 Maximization of the likelihood given a mixture of binomial distributions

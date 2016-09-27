@@ -33,18 +33,16 @@ list_prod<-function(L,col=NULL){
   return(result)
 }
 
-fik.from.al<-function(al,id,keep.all.poss,alpha=NULL){
-  if(is.null(alpha)){
-    alpha<-rep(1,times=length(id))
-  }
-  fik<-matrix(nrow = length(unique(id)),ncol = ncol(al[[1]]))
-  spare<-alpha*list_prod(al)
-  u<-unique(id)
+fik.from.al<-function(al,id=NULL,keep.all.poss = TRUE){
+  
+  spare<-list_prod(al)
   #tab<-table(u)
   if(keep.all.poss){
-    return(spare*alpha)
+    return(spare)
   }
   else{
+    fik<-matrix(nrow = length(unique(id)),ncol = ncol(al[[1]]))
+    u<-unique(id)
     # fik<- as.data.frame(cbind(spare,id =id)) %>% group_by(id) %>% summarise_all(funs(sum)) # takes longer on matrices of 100 rows
     for(i in 1:length(u)){
       if(sum(id==u[i])>1){ ##more than one possibility for a mutation
@@ -63,70 +61,41 @@ fik.from.al<-function(al,id,keep.all.poss,alpha=NULL){
 }
 
 
-#' Peak
-#' 
-#' 
-#' Integrate binomial density over 2epsilon*depth interval
-#' @param x Number of alternative reads
-#' @param y Number of draws
-#' @param prob probability to draw
-#' @param epsilon coefficient to normalize interval size
-peak<-function(x,y,prob,epsilon){ # x € [0;1]
-  xmin<-round(x-epsilon*y )
-  xmax<-round(x+epsilon*y)
-  xmin[xmin<0]<-0
-  xmax[xmax>y]<-y[xmax>y]
-  
-  ifelse(test = xmin==xmax,
-         yes =  dbinom(x = x,size = y,prob),
-         no = ifelse(xmax>=y,
-                     yes = abs(pbinom(xmax, y, prob)-pbinom(xmin,y,prob,lower.tail = TRUE)),
-                     no = abs(pbinom(xmax, y, prob)-pbinom(xmin,y,prob,lower.tail = TRUE))
-         )
-  )
-}
-
-eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,alpha,adj.factor,integrate,epsilon){
+eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,alpha,adj.factor,epsilon,log = FALSE){
   al<-list()
   if(is.list(centers)){
     centers<-unlist(centers)
   }
   idx<-0
-  if(integrate){
-    for(i in 1:length(Schrod)){ ## i is a sample
-      al[[i]]<-matrix(data = 0,nrow=nrow(Schrod[[1]]),ncol=length(weights))
-      Alt<-Schrod[[i]]$Alt
-      Depth<-Schrod[[i]]$Depth
-      adj<-adj.factor[,i]
-      for(k in 1:length(weights)){ ## k is a clone
-        idx<-idx+1
-        pro<-centers[idx]*adj
-        test<-pro <=1 & pro >=0
-        al[[i]][test,k]<-peak(x =Alt[test],
-                              y = Depth[test],
-                              prob = pro[test],
-                              epsilon = epsilon)
-      }
-    }
+  if(log){
+    al<-matrix(data = 0,nrow=nrow(Schrod[[1]]),ncol=length(weights))
   }
   else{
-    for(i in 1:length(Schrod)){ ## i is a sample
-      al[[i]]<-matrix(data = 0,nrow=nrow(Schrod[[1]]),ncol=length(weights))
-      Alt<-Schrod[[i]]$Alt
-      Depth<-Schrod[[i]]$Depth
-      adj<-adj.factor[,i]
-      for(k in 1:length(weights)){ ## k is a clone
-        idx<-idx+1
-        pro<-centers[idx]*adj
-        test<-pro <=1 & pro >=0
-        #pro_0<-pro
-        #pro_0[pro>1 | pro<0]<-0
-        al[[i]][test,k]<-dbinom(x =Alt[test] ,size = Depth[test],prob = pro[test])
-        #al[[i]][pro>1 | pro<0,k]<-0
+    al<-matrix(data = 1,nrow=nrow(Schrod[[1]]),ncol=length(weights))
+  }
+  for(i in 1:length(Schrod)){ ## i is a sample
+    Alt<-Schrod[[i]]$Alt
+    Depth<-Schrod[[i]]$Depth
+    adj<-adj.factor[,i]
+    for(k in 1:length(weights)){ ## k is a clone
+      idx<-idx+1
+      pro<-centers[idx]*adj
+      test<-pro <=1 & pro >=0
+      #pro_0<-pro
+      #pro_0[pro>1 | pro<0]<-0
+      if(log){
+        al[test,k]<-al[test,k]+dbinom(x =Alt[test] ,size = Depth[test],prob = pro[test],log = TRUE)
       }
+      else{
+        al[test,k]<-al[test,k]*dbinom(x =Alt[test] ,size = Depth[test],prob = pro[test],log = FALSE)
+        
+      }
+      al[!test,k]<-NA
+      
     }
   }
-  return(fik.from.al(al,Schrod[[1]]$id,keep.all.poss,alpha))
+  
+  al
 }
 
 #' Eval probability for M step
@@ -135,21 +104,20 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,alpha,adj.factor,in
 #' @param Schrod The shcrodinger list of matrices
 #' @param centers centers of the clusters
 #' @param weights weight of each cluster
-#' @param alpha weight of each status (number of copies for a mutation)
 #' @param adj.factor The adjusting factor, taking into account contamination, copy number, number of copies
-#' @param integrate Should QuantumClone integrate probabilities over epsilon interval?
-#' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights 
-#' between two optimization steps. If NULL, will take 1/(median depth). Also used for integration size.
-eval.fik.m<-function(Schrod,centers,weights,alpha,adj.factor,epsilon,integrate){
+#' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights
+#' @param log Should it compute the log distribution (TRUE) or probability (FALSE)
+#' @param alpha Corrective value (if some variants are more likely than others) 
+#' between two optimization steps. If NULL, will take 1/(median depth).
+eval.fik.m<-function(Schrod,centers,weights,alpha,adj.factor,epsilon,log = TRUE){
   spare<-eval.fik(Schrod = Schrod,
                   centers=centers,
                   weights = weights,
                   alpha = alpha, 
                   adj.factor= adj.factor,
                   epsilon= epsilon,
-                  integrate = integrate)
-  spare[spare==0]<-.Machine$double.xmin
-  return(spare)
+                  log = log)
+  spare
 }
 
 #' Computes gradient of function
@@ -164,18 +132,31 @@ grbase<-compiler::cmpfun(function(fik,adj.factor,centers,Alt,Depth){
   centers.per.sample<-length(centers)/ncol(adj.factor)
   ## fik has the Schrod possibilities in rows and clones in cols
   ## adj.factors has mutations in row and samples in cols
-
-
-  print(centers)
-  for(i in 1:centers.per.sample){
-    for(s in 1:ncol(adj.factor)){
-      index<-i+(centers.per.sample)*(s-1)
-      test_Alt<-which(Alt[,s]==0)
-      test_Depth<-which({Depth[,s]-Alt[,s]}==0)
-      spare<-
-        fik[,i]*
-          {Alt[,s] - adj.factor[,s]* Depth[,s]*centers[index]}/
-        {centers[index]*{1-adj.factor[,s]*centers[index]}}
+  index<-0
+  for(s in 1:ncol(adj.factor)){
+    for(i in 1:centers.per.sample){
+      index<-index+1
+      pro<-adj.factor[,s]*centers[index]
+      # test<-pro >= 0 & pro <= 1
+      # 
+      # spare<-sum(fik[test,i]*
+      #     {Alt[test,s]/centers[index]} - {adj.factor[test,s]*( Depth[test,s] - Alt[test,s])}/
+      #     {1-adj.factor[test,s]*centers[index]}
+      # )
+      
+      
+      spare<--sum(
+        fik[,i]*{
+          
+          {Alt[,s]/centers[index]} - {adj.factor[,s]*( Depth[,s] - Alt[,s])}/
+          {1-adj.factor[,s]*centers[index]}
+        })
+      if(is.infinite(spare)){
+        result[index]<-sign(spare)*.Machine$double.xmax
+      }
+      else{
+        result[index]<-spare
+      }
     }
   }
   result

@@ -8,6 +8,17 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEncoding{UTF-8}
 ---
+<h3<Release of 27/9/2016 </h3>
+<b> Massive update </b>
+<ul>
+<li> Fixed gradient computation; </li>
+<li> Removed alpha (to force possibility) </li>
+<li> Switched from computation of dbinom to log(dbinom) by default; </li>
+<li> Added testthat : plots, QuantumCat,Flash for BIC and overdiploid; </li>
+<li> Fixed QuantumCat with single sample </li>
+
+</ul>
+
 <h3<Release of 23/9/2016 </h3>
 <ul>
 <li> Added computation of gradient for "optim" and "optimx"; </li>

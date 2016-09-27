@@ -31,8 +31,8 @@ QuantumCat<-function(number_of_clones,number_of_mutations,ploidy=2,depth=100,num
   else{#creates phylogenetic tree of clones
     Tree<-phylo_tree_generation(number_of_clones = number_of_clones,number_of_samples)
   }
-  #print(Tree) 
-  Cellularities<-cbind(as.matrix(Tree[Tree[,'mutated']==1,3:dim(Tree)[2]]))
+  #print(Tree)
+  Cellularities<-cbind(as.matrix(Tree[Tree$mutated,3:ncol(Tree)]))
   Clonal_attribution<-(rep(1,times = number_of_mutations))
   while(length(unique(Clonal_attribution))<number_of_clones){
     Clonal_attribution<-sample(x=(1:number_of_clones),size=number_of_mutations,replace = T)

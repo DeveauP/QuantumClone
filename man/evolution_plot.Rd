@@ -16,5 +16,6 @@ Plots evolution in time of clones
 }
 \examples{
 require(ggplot2)
+evolution_plot(QC_output)
 }
 

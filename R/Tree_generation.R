@@ -95,11 +95,16 @@ check_leaf<-function(new_leaf,Proportions_mutated){
     # The cellularity is lower than 0 (not biological)
     return(FALSE)
   }
-  check<-apply(Proportions_mutated,
-               MARGIN = 1,
-               FUN = function(row){
-                 max(abs(row-new_leaf))
-               })
+  if(is.matrix(Proportions_mutated)){
+    check<-apply(Proportions_mutated,
+                 MARGIN = 1,
+                 FUN = function(row){
+                   max(abs(row-new_leaf))
+                 })
+  }
+  else{
+    check<-abs(Proportions_mutated-new_leaf)
+  }
   if(sum(check<=2)){ ### There is a less than 2% difference between new clone and another clone in ALL samples
     return(FALSE)
   }

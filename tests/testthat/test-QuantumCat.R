@@ -4,7 +4,7 @@ context("Phylogenetic generation")
 test_that("Cellularity is higher than 0", {
     set.seed(123)
     result<-TRUE
-    for(s in 2:5){
+    for(s in 1:5){
       for(i in 1:2){
        QCat<-QuantumCat(number_of_clones = 4,number_of_mutation = 100, depth = 100, number_of_samples = s) 
        for(samp in 1:s){

@@ -220,6 +220,7 @@ plot_QC_out<-function(QClone_Output,Sample_names=NULL, simulated = FALSE,sample_
 #' @export evolution_plot
 #' @examples 
 #' require(ggplot2)
+#' evolution_plot(QC_output)
 evolution_plot<-function(QC_out,Sample_names=NULL){
   L<-length(QC_out$EM.output$centers)
   if(is.null(Sample_names)){

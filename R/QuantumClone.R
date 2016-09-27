@@ -21,13 +21,12 @@
 #' @param ncores Number of cores to be used during EM algorithm
 #' @param output_directory Path to output directory
 #' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights 
-#' between two optimization steps. If NULL, will take 1/(average depth). Also used for integration size.
+#' between two optimization steps. If NULL, will take 1/(average depth).
 #' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
 #'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
 #' @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
-#' @param integrate Should QuantumClone integrate probabilities over epsilon interval?
 #' @keywords Clonal inference Cancer phylogeny
 #' @import optimx compiler DEoptim
 #' @importFrom grDevices colorRampPalette
@@ -66,8 +65,7 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
                        timepoints=NULL,
                        ncores=1,output_directory=NULL,
                        model.selection = "BIC",optim = "default", keep.all.models = FALSE,
-                       force.single.copy = FALSE,
-                       integrate = TRUE){
+                       force.single.copy = FALSE){
   
   
   r<-One_step_clustering(SNV_list = SNV_list,FREEC_list = FREEC_list,contamination = contamination,nclone_range = nclone_range,
@@ -76,8 +74,7 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
                          simulated = simulated,
                          save_plot = save_plot,ncores=ncores,output_directory=output_directory,
                          model.selection = model.selection,optim = optim, keep.all.models = keep.all.models,
-                         force.single.copy = force.single.copy,
-                         integrate = TRUE)
+                         force.single.copy = force.single.copy)
   
   #   t<-Tree_generation(Clone_cellularities = r$pamobject$medoids,timepoints = timepoints)
   #
@@ -119,7 +116,6 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
 #'uses a variant of the BIC by multiplication of the k*ln(n) factor. 
 #'If >1, it will select models with lower complexity.
 #' @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
-#' @param integrate Should QuantumClone integrate probabilities over epsilon interval?
 #' @keywords Clonal inference
 #' @export
 #' @examples
@@ -152,7 +148,7 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                               save_plot = TRUE,ncores=1,
                               restrict.to.AB = FALSE,output_directory=NULL,
                               model.selection = 6,optim = "default", keep.all.models = FALSE,
-                              force.single.copy = FALSE,integrate = TRUE){
+                              force.single.copy = FALSE){
   # if(Initializations >1 && preclustering){
   #   message("Only 1 iteration will be run if preclustering is successful")
   # }
@@ -236,14 +232,16 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                             Sample_names = Sample_names,
                             preclustering = preclustering,
                             clone_priors = clone_priors,
-                            prior_weight = prior_weight,Initializations = Initializations,
-                            simulated = simulated,save_plot=save_plot,contamination = contamination,
+                            prior_weight = prior_weight,
+                            Initializations = Initializations,
+                            simulated = simulated,
+                            save_plot=save_plot,
+                            contamination = contamination,
                             ncores=ncores,
                             output_directory=output_directory,
                             model.selection = model.selection,
                             optim = optim,
-                            keep.all.models = keep.all.models,
-                            integrate = integrate)
+                            keep.all.models = keep.all.models)
   
   
   if(length(SNV_list)==1 & save_plot){
@@ -293,7 +291,8 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                    SNV_list = SNV_list)
     
     message("Reclustering with most likely state of each variant...")
-    r<-Cluster_plot_from_cell(Cell = r$filtered.data,nclone_range = nclone_range,
+    r<-Cluster_plot_from_cell(Cell = r$filtered.data,
+                              nclone_range = nclone_range,
                               epsilon = epsilon,
                               Sample_names = Sample_names,
                               preclustering = preclustering,
@@ -307,8 +306,7 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                               output_directory=output_directory,
                               model.selection = model.selection,
                               optim = optim,
-                              keep.all.models = keep.all.models,
-                              integrate = integrate)
+                              keep.all.models = keep.all.models)
     
   }
   
@@ -554,7 +552,6 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
     }
     Genotype<-as.character(tail(Freec_ratio[FChr==chr & Freec_ratio[,'Start']<position,'Genotype'],1))
   }
-  alpha<-double()
   if(length(Genotype)==0){
     message(paste("Genotype is not available at position",chr,position))
     return(NA)
@@ -584,8 +581,7 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
                          Depth = Depth,
                          NC = 1,
                          NCh = Ns)
-      alpha<-1
-      
+
     }
     else{
       
@@ -598,7 +594,6 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
                          Depth = Depth,
                          NC = 1:As,
                          NCh = Ns)
-      alpha<-choose(As,1:As)+choose(Ns-As,1:As)
     }
   }
   else{ ## Two possibilities: belong to clone or subclone
@@ -610,7 +605,6 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
       spare<-data.frame(chr,position,Cellularity, Genotype,Alt,Depth,i,Ns)
       colnames(spare)<-c('Chr','Start','Cellularity','Genotype',"Alt","Depth","NC","NCh")
       result<-rbind(result,spare)
-      alpha<-c(alpha,(1-subclone.cell)*(choose(As,i)+choose(Ns-As,i)))
     }
     A.sub<-strcount(x=subclone.genotype,pattern = "A",split = '')
     N.sub<-nchar(subclone.genotype)
@@ -622,19 +616,12 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
         spare<-data.frame(chr,position,Cellularity, subclone.genotype,Alt,Depth,j,N.sub)
         colnames(spare)<-c('Chr','Start','Cellularity','Genotype',"Alt","Depth","NC","NCh")
         result<-rbind(result,spare)
-        alpha<-c(alpha,(subclone.cell)*(choose(A.sub,j)+choose(N.sub-A.sub,j)))
       }
     }
   }
-  if(sum(is.nan(alpha))>0){
-    
-    return(NA)
-  }
-  else{
-    alpha<-alpha/(sum(alpha))
-  }
-  result<-data.frame(result,alpha)
-  colnames(result)<-c('Chr','Start','Cellularity','Genotype',"Alt","Depth","NC","NCh",'alpha')
+ 
+  result<-data.frame(result)
+  colnames(result)<-c('Chr','Start','Cellularity','Genotype',"Alt","Depth","NC","NCh")
   return(result)
 }
 
@@ -672,7 +659,6 @@ strcount <- function(x, pattern='', split=''){
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
 #'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
-#' @param integrate Should QuantumClone integrate probabilities over epsilon interval?
 #' @importFrom fpc pamk
 #' @importFrom ggplot2 ggsave
 #' @keywords Clonal inference
@@ -680,7 +666,7 @@ strcount <- function(x, pattern='', split=''){
 Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
                                  contamination, clone_priors,prior_weight,nclone_range,Initializations,preclustering=TRUE,
                                  epsilon=5*(10**(-3)),ncores = 2,output_directory=NULL,
-                                 model.selection = "BIC",optim = "default", keep.all.models = FALSE,integrate = TRUE){
+                                 model.selection = "BIC",optim = "default", keep.all.models = FALSE){
   preclustering_success<-FALSE
   preclustering_FLASH<-FALSE
   ##### PRECLUSTERING
@@ -748,8 +734,7 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
                             model.selection = model.selection,
                             optim = optim, 
                             keep.all.models = keep.all.models,
-                            FLASH = TRUE,
-                            integrate = TRUE)
+                            FLASH = TRUE)
     }
   }
   else{
@@ -765,14 +750,13 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
                             prior_weight = p_weight,clone_priors = p_clone,Initializations = Initializations,
                             nclone_range = nclone_range,ncores = ncores,
                             model.selection = model.selection,optim = optim, 
-                            keep.all.models = keep.all.models,integrate = integrate)
+                            keep.all.models = keep.all.models)
     }
     else{
       result<-EM_clustering(Schrod = Cell,contamination = contamination,epsilon = epsilon,
                             prior_weight = p_weight,clone_priors = p_clone,Initializations = Initializations,
                             nclone_range = nclone_range,ncores = ncores,
-                            model.selection = model.selection,optim = optim,keep.all.models = keep.all.models,
-                            integrate = integrate)
+                            model.selection = model.selection,optim = optim,keep.all.models = keep.all.models)
     }
   }
   
@@ -795,7 +779,6 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
 #' @param clone_prevalence List of numeric vectors giving the cellular prevalence of each clone in each sample
 #' @param contamination Numeric vector giving the contamination by normal cells
 #' @param clone_weights Numeric vector giving the proportion of mutations in each clone
-#' @param integrate Should QuantumClone integrate probabilities over epsilon interval?
 #' @keywords Clonal inference phylogeny
 #' @export
 #' @examples
@@ -807,15 +790,7 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
 Probability.to.belong.to.clone<-function(SNV_list,
                                          clone_prevalence,
                                          contamination,
-                                         clone_weights=NULL,
-                                         integrate = TRUE){
-  if(integrate){
-    epsilon<-1/median(unlist(lapply(SNV_list,function(df){df$Depth})))
-    message(paste("epsilon value:",epsilon))
-  }
-  else{
-    epsilon<-NULL
-  }
+                                         clone_weights=NULL){
   if(is.null(clone_weights)){
     clone_weights<-rep(1/(length(clone_prevalence[[1]])),times = length(clone_prevalence[[1]]))
   }
@@ -823,14 +798,11 @@ Probability.to.belong.to.clone<-function(SNV_list,
     Schrod<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided = TRUE,
                                               contamination = contamination)
     
-    alpha<-list_prod(Schrod,col = "alpha")
     result<- eval.fik(Schrod = Schrod,
                       centers = clone_prevalence,
-                      alpha= alpha,
                       weights= clone_weights,keep.all.poss = TRUE,
-                      adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination),
-                      integrate = integrate,
-                      epsilon = epsilon)
+                      adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination)
+                      )
     filtered<-filter_on_fik(Schrod = Schrod,fik = result)
     filtered_prob<-Probability.to.belong.to.clone(SNV_list = filtered,
                                                   clone_prevalence,
@@ -843,11 +815,9 @@ Probability.to.belong.to.clone<-function(SNV_list,
     adj.fact<-Compute.adj.fact(SNV_list,contamination)
     result<-eval.fik(Schrod = SNV_list,centers = clone_prevalence,
                      weights =clone_weights,
-                     alpha = rep(1,times=nrow(SNV_list[[1]])),
                      keep.all.poss = TRUE,
-                     adj.factor = adj.fact,
-                     integrate = integrate,
-                     epsilon = epsilon)
+                     adj.factor = adj.fact
+    )
     filtered_prob<-result
     filtered <-SNV_list
   }

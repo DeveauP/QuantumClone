@@ -243,12 +243,10 @@ FlashQC<-function(Cells,conta,Nclus,model.selection = "tree"){
   )
   if(recluster){
     message("Keeping most likely positions and reclustering...")
-    alpha<-list_prod(L = Schrod_cells, col = "alpha")
     adj.factor<-Compute.adj.fact(Schrod_cells,conta)
     fik<-eval.fik(Schrod = Schrod_cells,
                   centers = priors$centers,
                   weights = priors$weights,
-                  alpha = alpha,
                   adj.factor = adj.factor,
                   keep.all.poss = TRUE)
     filtered.data<-filter_on_fik(Schrod_cells,fik = fik)
@@ -303,16 +301,14 @@ FlashQC<-function(Cells,conta,Nclus,model.selection = "tree"){
 #' @param conta Numeric value of contamination fraction in each sample
 Compute_objective<-function(tree,nclus,Schrod,conta){
   priors<-Create_prior_cutTree(tree = tree,Schrod_cells = Schrod,NClus = nclus)
-  alpha<-list_prod(L = Schrod, col = "alpha")
-  
+
   adj.factor<-Compute.adj.fact(Schrod,conta)
   fik<-eval.fik(Schrod = Schrod,
            centers = priors$centers,
            weights = priors$weights,
-           alpha = alpha,
            adj.factor = adj.factor,
-           keep.all.poss = TRUE,
-           integrate = FALSE)
+           keep.all.poss = TRUE
+           )
   w<-which(fik == 0)
   if(length(w)){
     fik<--fik *log(fik )

@@ -9,7 +9,7 @@ One_step_clustering(SNV_list, FREEC_list = NULL, contamination,
   Initializations = 1, preclustering = "FLASH", simulated = FALSE,
   epsilon = NULL, save_plot = TRUE, ncores = 1, restrict.to.AB = FALSE,
   output_directory = NULL, model.selection = 6, optim = "default",
-  keep.all.models = FALSE, force.single.copy = FALSE, integrate = TRUE)
+  keep.all.models = FALSE, force.single.copy = FALSE)
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
@@ -56,8 +56,6 @@ If >1, it will select models with lower complexity.}
 \item{keep.all.models}{Should the function output the best model (default; FALSE), or all models tested (if set to true)}
 
 \item{force.single.copy}{Should all mutations in overdiploid regions set to single copy? Default is FALSE}
-
-\item{integrate}{Should QuantumClone integrate probabilities over epsilon interval?}
 }
 \description{
 Wrap up function that clusters cellularities. This is based on the most likely possibility for each mutation, give ints frequency and genotype.

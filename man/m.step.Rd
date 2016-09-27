@@ -4,9 +4,9 @@
 \alias{m.step}
 \title{Maximization step}
 \usage{
-m.step(fik, Schrod, previous.weights, previous.centers, contamination, alpha,
+m.step(fik, Schrod, previous.weights, previous.centers, contamination,
   adj.factor, optim = "default", initialpop = NULL, itermax = NULL,
-  integrate, epsilon)
+  epsilon)
 }
 \arguments{
 \item{fik}{Matrix giving the probability of each mutation to belong to a specific clone}
@@ -19,8 +19,6 @@ m.step(fik, Schrod, previous.weights, previous.centers, contamination, alpha,
 
 \item{contamination}{Numeric vector with the fraction of normal cells contaminating the sample}
 
-\item{alpha}{Weight of each possibility / normalization so that the sum of all possibilities weighs equal to 1 mutation}
-
 \item{adj.factor}{Factor to compute the probability: makes transition between the cellularity of the clone and the frequency observed}
 
 \item{optim}{use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")}
@@ -29,10 +27,8 @@ m.step(fik, Schrod, previous.weights, previous.centers, contamination, alpha,
 
 \item{itermax}{itermax parameter for DEoptim}
 
-\item{integrate}{Should we perform local integration of binomial density?}
-
 \item{epsilon}{Stop value: maximal admitted value of the difference in cluster position and weights 
-between two optimization steps. If NULL, will take 1/(median depth). Also used for integration size.}
+between two optimization steps. If NULL, will take 1/(median depth).}
 }
 \description{
 Optimization of clone positions and proportion of mutations in each clone, based on the previously calculated expectation

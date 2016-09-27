@@ -5,7 +5,7 @@
 \title{Eval probability for M step
 Computes the log directly as log density is faster to compute}
 \usage{
-eval.fik.m(Schrod, centers, weights, alpha, adj.factor, epsilon, integrate)
+eval.fik.m(Schrod, centers, weights, alpha, adj.factor, epsilon, log = TRUE)
 }
 \arguments{
 \item{Schrod}{The shcrodinger list of matrices}
@@ -14,14 +14,14 @@ eval.fik.m(Schrod, centers, weights, alpha, adj.factor, epsilon, integrate)
 
 \item{weights}{weight of each cluster}
 
-\item{alpha}{weight of each status (number of copies for a mutation)}
+\item{alpha}{Corrective value (if some variants are more likely than others) 
+between two optimization steps. If NULL, will take 1/(median depth).}
 
 \item{adj.factor}{The adjusting factor, taking into account contamination, copy number, number of copies}
 
-\item{epsilon}{Stop value: maximal admitted value of the difference in cluster position and weights 
-between two optimization steps. If NULL, will take 1/(median depth). Also used for integration size.}
+\item{epsilon}{Stop value: maximal admitted value of the difference in cluster position and weights}
 
-\item{integrate}{Should QuantumClone integrate probabilities over epsilon interval?}
+\item{log}{Should it compute the log distribution (TRUE) or probability (FALSE)}
 }
 \description{
 Eval probability for M step

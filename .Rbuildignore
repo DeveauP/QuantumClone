@@ -1,6 +1,9 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.*.yml
+.travis.yml
+appveyor.yml
+codecov.yml
 ^\Images
 GUI_windows.R
 ^\reproducible_testing
