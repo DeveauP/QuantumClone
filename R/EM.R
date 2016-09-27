@@ -72,19 +72,30 @@ m.step<-function(fik,Schrod,previous.weights,
                                                             log = TRUE)
                                              
   )
-  if(is.nan(r)){
-    r<--.Machine$double.xmax
-  }
   r
   },
   options = list(optimize = 3)
   )
   
   if(optim == "default"){
-    spare<-optim(par = unlist(previous.centers),
-                 fn = fnx ,
-                 gr= function(x){grbase(fik = fik,adj.factor = adj.factor,centers = x,Alt = Alt,Depth=Depth)},
-                 method = "L-BFGS-B",lower = rep(0,times = length(unlist(previous.centers))),upper=rep(1,length(unlist(previous.centers)))) 
+    spare<-tryCatch(optim(par = unlist(previous.centers),
+                          fn = fnx ,
+                          gr= function(x){grbase(fik = fik,adj.factor = adj.factor,centers = x,Alt = Alt,Depth=Depth)},
+                          method = "L-BFGS-B",
+                          lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
+                          upper=rep(1,length(unlist(previous.centers)))),
+                    #### IF FAILS DUE TO INFINITE VALUE:
+                    ####################################
+                    error = function(e){
+                      message("Gradient failed")
+                      optim(par = unlist(previous.centers),
+                            fn = fnx ,
+                            method = "L-BFGS-B",
+                            lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
+                            upper=rep(1,length(unlist(previous.centers)))
+                      )
+                    }
+    )
     if(!is.list(spare)){
       return(NA)
     }
@@ -93,15 +104,45 @@ m.step<-function(fik,Schrod,previous.weights,
   else if(optim =="optimx"){
     
     spare<-optimx::optimx(par = unlist(previous.centers),
-                          fn = fnx,
-                          gr = function(x){grbase(fik = fik,
-                                                  adj.factor = adj.factor,
-                                                  centers = x,
-                                                  Alt = Alt,
-                                                  Depth = Depth)},
-                          method = "L-BFGS-B",
-                          lower = rep(0,times = length(unlist(previous.centers))),
-                          upper=rep(1,length(unlist(previous.centers)))) 
+                                          fn = fnx,
+                                          gr = function(x){grbase(fik = fik,
+                                                                  adj.factor = adj.factor,
+                                                                  centers = x,
+                                                                  Alt = Alt,
+                                                                  Depth = Depth)},
+                                          method = "L-BFGS-B",
+                          lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
+                          upper=rep(1,length(unlist(previous.centers))))
+                    
+              
+    if(sum(is.na(spare))){
+      #### IF FAILS DUE TO returning NA:
+      ####################################
+      message("Gradient failed for position:")
+      message(paste(unlist(previous.centers),collapse = " "))
+      spare<-optimx::optimx(par = unlist(previous.centers),
+                            fn = fnx,
+                            gr = function(x){grbase(fik = fik,
+                                                    adj.factor = adj.factor,
+                                                    centers = x,
+                                                    Alt = Alt,
+                                                    Depth = Depth)},
+                            method = "L-BFGS-B",
+                            lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
+                            upper=rep(1,length(unlist(previous.centers))))
+      
+      if(sum(is.na(spare[1:length(unlist(previous.centers))]))){
+        message("switching to optim...")
+        spare<-optim(par = unlist(previous.centers),
+              fn = fnx ,
+              method = "L-BFGS-B",
+              lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
+              upper=rep(1,length(unlist(previous.centers)))
+        )
+        return(list(weights=weights,centers=spare$par,val=spare$val))
+        
+      }
+    }
     return(list(weights=weights,centers=spare[1:length(unlist(previous.centers))],val=spare$value))
   }
   else if(optim =="DEoptim"){
@@ -203,7 +244,6 @@ EM.algo<-function(Schrod, nclust=NULL,
   initialpop<-NULL
   itermax<-50
   while(eval>epsilon){
-    
     tik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,
                 adj.factor = adj.factor)
     m<-m.step(fik = tik,Schrod = Schrod,previous.weights = cur.weight,

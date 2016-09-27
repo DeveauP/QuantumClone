@@ -2,9 +2,9 @@
 #' 
 #' Compute the normalized mutual information to assess clustering quality
 #' @param  QC_out output from QuantumClone clustering 
-#' @export
 #' @examples 
 #' Compute_NMI(QC_output)
+#' @export
 Compute_NMI<-function(QC_out){
   # Probabilities
   cluster<-as.numeric(as.character(QC_out$cluster))

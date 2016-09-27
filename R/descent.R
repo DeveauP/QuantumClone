@@ -1,12 +1,15 @@
 ### Store functions that are used for gradient descent:
 ### peak, grx, eval.fik, eval.fik.m, list.prod
+
 #'List product
 #'
 #' Returns the product of all elements in a list, e.g. a vector if the elements of the list are vectors, etc.
 #' @param L list used
 #' @param col If it is a list of matrices, and only one column should be used, name of the column.
 #' @keywords List handling
-#' #Write example for list_prod
+#' @examples 
+#' list_prod(list(matrix(1:4,nrow = 2),matrix(1:4,nrow = 2)))
+#' @export
 list_prod<-function(L,col=NULL){
   if(is.null(col)){
     if(length(L)>1){
@@ -33,33 +36,6 @@ list_prod<-function(L,col=NULL){
   return(result)
 }
 
-fik.from.al<-function(al,id=NULL,keep.all.poss = TRUE){
-  
-  spare<-list_prod(al)
-  #tab<-table(u)
-  if(keep.all.poss){
-    return(spare)
-  }
-  else{
-    fik<-matrix(nrow = length(unique(id)),ncol = ncol(al[[1]]))
-    u<-unique(id)
-    # fik<- as.data.frame(cbind(spare,id =id)) %>% group_by(id) %>% summarise_all(funs(sum)) # takes longer on matrices of 100 rows
-    for(i in 1:length(u)){
-      if(sum(id==u[i])>1){ ##more than one possibility for a mutation
-        fik[i,]<-apply(X = spare[id==u[i],],MARGIN = 2, sum) ##normalize by sum of possibilities...
-      }
-      else{ ## only one possibility for a mutation
-        fik[i,]<-spare[id==u[i],]
-      }
-    }
-    
-  }
-  fik[fik==0]<-.Machine$double.xmin ## replace by machine limit to avoid the log(0) issue
-  #print(cbind(fik2,fik))
-  #return(as.matrix(fik[,-1]))
-  return(as.matrix(fik))
-}
-
 
 eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,alpha,adj.factor,epsilon,log = FALSE){
   al<-list()
@@ -77,6 +53,8 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,alpha,adj.factor,ep
     Alt<-Schrod[[i]]$Alt
     Depth<-Schrod[[i]]$Depth
     adj<-adj.factor[,i]
+    
+    
     for(k in 1:length(weights)){ ## k is a clone
       idx<-idx+1
       pro<-centers[idx]*adj
@@ -94,7 +72,6 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,alpha,adj.factor,ep
       
     }
   }
-  
   al
 }
 
@@ -117,6 +94,10 @@ eval.fik.m<-function(Schrod,centers,weights,alpha,adj.factor,epsilon,log = TRUE)
                   adj.factor= adj.factor,
                   epsilon= epsilon,
                   log = log)
+  test<-is.infinite(spare)
+  if(sum(test)){
+    spare[test]<--log(.Machine$double.xmax)
+  }
   spare
 }
 
@@ -127,35 +108,65 @@ eval.fik.m<-function(Schrod,centers,weights,alpha,adj.factor,epsilon,log = TRUE)
 #' @param centers vector with cellularity of each clone (numeric vector, ordered by samples)
 #' @param Alt Matrix with number of draws in rows for a mutation/possibility, and samples in columns
 #' @param Depth Matrix with number of not draws (Depth - Alt) in rows for a mutation/possibility, and samples in columns
+#' @examples 
+#' fik<-matrix(c(1,0,0,1),nrow = 2)
+#' adj.factor<-matrix(1/2,nrow =2 ,ncol =1)
+#' centers<-c(0.25,0.75)
+#' Alt<-c(125,375)
+#' Depth<-c(1000,1000)
+#' grbase(fik,adj.factor,centers,Alt,Depth)
+#' @export
 grbase<-compiler::cmpfun(function(fik,adj.factor,centers,Alt,Depth){
   result<-numeric(length = length(centers))
-  centers.per.sample<-length(centers)/ncol(adj.factor)
   ## fik has the Schrod possibilities in rows and clones in cols
   ## adj.factors has mutations in row and samples in cols
-  index<-0
-  for(s in 1:ncol(adj.factor)){
-    for(i in 1:centers.per.sample){
-      index<-index+1
-      pro<-adj.factor[,s]*centers[index]
-      # test<-pro >= 0 & pro <= 1
-      # 
-      # spare<-sum(fik[test,i]*
-      #     {Alt[test,s]/centers[index]} - {adj.factor[test,s]*( Depth[test,s] - Alt[test,s])}/
-      #     {1-adj.factor[test,s]*centers[index]}
-      # )
+  if(is.matrix(adj.factor) && ncol(adj.factor)>1){
+    ###
+    # MULTISAMPLE CASE
+    ###
+    index<-0
+    centers.per.sample<-length(centers)/ncol(adj.factor)
+    for(s in 1:ncol(adj.factor)){
       
-      
-      spare<--sum(
-        fik[,i]*{
-          
+      for(i in 1:centers.per.sample){
+        index<-index+1
+        pro<-adj.factor[,s]*centers[index]
+        # test<-pro >= 0 & pro <= 1
+        # 
+        # spare<-sum(fik[test,i]*
+        #     {Alt[test,s]/centers[index]} - {adj.factor[test,s]*( Depth[test,s] - Alt[test,s])}/
+        #     {1-adj.factor[test,s]*centers[index]}
+        # )
+        
+        
+        spare<-fik[,i]*{
           {Alt[,s]/centers[index]} - {adj.factor[,s]*( Depth[,s] - Alt[,s])}/
           {1-adj.factor[,s]*centers[index]}
-        })
+        }
+        spare[is.infinite(spare)]<-sign(is.infinite(spare))*log(.Machine$double.xmax)
+        result[index]<--sum(spare)
+      }
+    }
+  }else{
+    ###
+    # SINGLE SAMPLE
+    ###
+    centers.per.sample<-length(centers)
+    
+    for(i in 1:centers.per.sample){
+      
+      pro<-adj.factor*centers[i]
+      spare<-fik[,i]*{
+        {Alt/centers[i]} - {adj.factor*( Depth - Alt)}/
+        {1-adj.factor*centers[i]}
+      }
+      spare[is.infinite(spare)]<-sign(is.infinite(spare))*log(.Machine$double.xmax)
+      spare<--sum(spare)
       if(is.infinite(spare)){
-        result[index]<-sign(spare)*.Machine$double.xmax
+        result[i]<-sign(spare)*log(.Machine$double.xmax)
       }
       else{
-        result[index]<-spare
+        result[i]<-spare
       }
     }
   }
