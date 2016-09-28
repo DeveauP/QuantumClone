@@ -130,20 +130,26 @@ grbase<-compiler::cmpfun(function(fik,adj.factor,centers,Alt,Depth){
       
       for(i in 1:centers.per.sample){
         index<-index+1
-        pro<-adj.factor[,s]*centers[index]
-        # test<-pro >= 0 & pro <= 1
-        # 
-        # spare<-sum(fik[test,i]*
-        #     {Alt[test,s]/centers[index]} - {adj.factor[test,s]*( Depth[test,s] - Alt[test,s])}/
-        #     {1-adj.factor[test,s]*centers[index]}
-        # )
-        
-        
-        spare<-fik[,i]*{
-          {Alt[,s]/centers[index]} - {adj.factor[,s]*( Depth[,s] - Alt[,s])}/
-          {1-adj.factor[,s]*centers[index]}
+        ### Gradient is defined by continuity if fik = 0 or Alt  = 0
+        spare<-ifelse(test = fik[,i]==0,
+                      yes = 0,
+                      no = ifelse(
+                        test = Alt[,s]==0,
+                        yes = {
+                           -fik[,i]*adj.factor[,s]*Depth[,s]/
+                         {1-adj.factor[,s]*{centers[index]}}
+                           },
+                        no = fik[,i]*{
+                          {Alt[,s]/centers[index]} - {adj.factor[,s]*( Depth[,s] - Alt[,s])}/
+                          {1-adj.factor[,s]*centers[index]}
+                        }
+                      )
+          
+        )
+        test<-is.infinite(spare)
+        if(sum(test)){
+          spare[test]<-sign(spare[test])*log(.Machine$double.xmax)
         }
-        spare[is.infinite(spare)]<-sign(is.infinite(spare))*log(.Machine$double.xmax)
         result[index]<--sum(spare)
       }
     }
@@ -155,11 +161,19 @@ grbase<-compiler::cmpfun(function(fik,adj.factor,centers,Alt,Depth){
     
     for(i in 1:centers.per.sample){
       
-      pro<-adj.factor*centers[i]
-      spare<-fik[,i]*{
-        {Alt/centers[i]} - {adj.factor*( Depth - Alt)}/
-        {1-adj.factor*centers[i]}
-      }
+      spare<-ifelse(test = fik[,i]==0,
+                    yes = 0,
+                    no = ifelse(
+                      test = Alt==0,
+                      yes = -fik[,i]*adj.factor/
+                      {1-adj.factor*{centers[i]}},
+                      no = fik[,i]*{
+                        {Alt/centers[i]} - {adj.factor*( Depth - Alt)}/
+                        {1-adj.factor*centers[i]}
+                      }
+                    )
+                    
+      )
       spare[is.infinite(spare)]<-sign(is.infinite(spare))*log(.Machine$double.xmax)
       spare<--sum(spare)
       if(is.infinite(spare)){

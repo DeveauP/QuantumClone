@@ -68,23 +68,15 @@ m.step<-function(fik,Schrod,previous.weights,
     }
   }
   fnx<-compiler::cmpfun(function(x) {
-    test<-fik==0
-    if(sum(test)){
-      tmp<-fik*eval.fik.m(Schrod = Schrod,centers = x,adj.factor = adj.factor,
-                          weights = previous.weights,epsilon = epsilon,
-                          log = TRUE)
-      r<--sum(tmp[!test])
-    }
-    else{
-      r<--sum(fik*eval.fik.m(Schrod = Schrod,centers = x,adj.factor = adj.factor,
-                             weights = previous.weights,epsilon = epsilon,
-                             log = TRUE),
-              na.rm = TRUE
-      )
-    }
-  r
-  },
-  options = list(optimize = 3)
+    r<--fik*eval.fik.m(Schrod = Schrod,centers = x,adj.factor = adj.factor,
+                       weights = previous.weights,epsilon = epsilon,
+                       log = TRUE)
+    
+    r[fik==0]<-0
+    sum(r,
+        na.rm = TRUE
+    )},
+    options = list(optimize = 3)
   )
   
   if(optim == "default"){
@@ -115,13 +107,13 @@ m.step<-function(fik,Schrod,previous.weights,
     
     spare<-optimx::optimx(par = unlist(previous.centers),
                           fn = fnx,
-                          gr = function(x){grbase(fik = fik,
-                                                  adj.factor = adj.factor,
-                                                  centers = x,
-                                                  Alt = Alt,
-                                                  Depth = Depth)},
+                          gr = function(x) grbase(fik = fik,
+                                       adj.factor = adj.factor,
+                                       centers = x,
+                                       Alt = Alt,
+                                       Depth = Depth),
                           method = "L-BFGS-B",
-                          lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
+                          lower = rep(0,times = length(unlist(previous.centers))),
                           upper=rep(1,length(unlist(previous.centers))))
     
     
@@ -143,10 +135,10 @@ m.step<-function(fik,Schrod,previous.weights,
                       error = function(e){
                         message("optimx failed")
                         op<-optim(par = unlist(previous.centers),
-                              fn = fnx ,
-                              method = "L-BFGS-B",
-                              lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
-                              upper=rep(1,length(unlist(previous.centers)))
+                                  fn = fnx ,
+                                  method = "L-BFGS-B",
+                                  lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
+                                  upper=rep(1,length(unlist(previous.centers)))
                         )
                         result<-c(op$par,op$val)
                         names(result<-c(paste0("p",1:length(op$par)),"value"))
