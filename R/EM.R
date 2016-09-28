@@ -67,11 +67,21 @@ m.step<-function(fik,Schrod,previous.weights,
       Depth[,i]<-Schrod[[i]]$Depth
     }
   }
-  fnx<-compiler::cmpfun(function(x) {r<--sum(fik*eval.fik.m(Schrod = Schrod,centers = x,adj.factor = adj.factor,
-                                                            weights = previous.weights,epsilon = epsilon,
-                                                            log = TRUE)
-                                             
-  )
+  fnx<-compiler::cmpfun(function(x) {
+    test<-fik==0
+    if(sum(test)){
+      tmp<-fik*eval.fik.m(Schrod = Schrod,centers = x,adj.factor = adj.factor,
+                          weights = previous.weights,epsilon = epsilon,
+                          log = TRUE)
+      r<--sum(tmp[!test])
+    }
+    else{
+      r<--sum(fik*eval.fik.m(Schrod = Schrod,centers = x,adj.factor = adj.factor,
+                             weights = previous.weights,epsilon = epsilon,
+                             log = TRUE),
+              na.rm = TRUE
+      )
+    }
   r
   },
   options = list(optimize = 3)

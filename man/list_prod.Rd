@@ -14,10 +14,9 @@ list_prod(L, col = NULL)
 \description{
 Returns the product of all elements in a list, e.g. a vector if the elements of the list are vectors, etc.
 }
-\keyword{2)))}
-\keyword{2),matrix(1:4,nrow}
-\keyword{=}
+\examples{
+list_prod(list(matrix(1:4,nrow = 2),matrix(1:4,nrow = 2)))
+}
 \keyword{List}
 \keyword{handling}
-\keyword{list_prod(list(matrix(1:4,nrow}
 
