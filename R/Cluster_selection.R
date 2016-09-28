@@ -27,7 +27,7 @@ BIC_criterion<-function(EM_out_list,model.selection){
     }
     Mut_num<-nrow(EM_out_list[[1]]$EM.output$fik)
     for(i in 1:length(EM_out_list)){
-      k<-ncol(EM_out_list[[1]]$EM.output$fik)
+      k<-ncol(EM_out_list[[i]]$EM.output$fik)
       Bic[i]<-2*EM_out_list[[i]]$EM.output$val+model.selection * k *log(Mut_num)
     }
     W<-which.min(Bic)
@@ -42,7 +42,7 @@ BIC_criterion<-function(EM_out_list,model.selection){
     Mut_num<-nrow(EM_out_list[[1]]$EM.output$fik)
     
     for(i in 1:length(EM_out_list)){
-      k<-ncol(EM_out_list[[1]]$EM.output$fik)
+      k<-ncol(EM_out_list[[i]]$EM.output$fik)
       Bic[i]<-2*EM_out_list[[i]]$EM.output$val+k*log(Mut_num)
     }
     return(Bic)
@@ -53,7 +53,7 @@ BIC_criterion<-function(EM_out_list,model.selection){
       return(0)
     }
     for(i in 1:length(EM_out_list)){
-      Aic[i]<-2*EM_out_list[[i]]$EM.output$val+2*ncol(EM_out_list[[1]]$EM.output$fik)
+      Aic[i]<-2*EM_out_list[[i]]$EM.output$val+2*ncol(EM_out_list[[i]]$EM.output$fik)
     }
     return(Aic)
     

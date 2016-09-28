@@ -104,40 +104,53 @@ m.step<-function(fik,Schrod,previous.weights,
   else if(optim =="optimx"){
     
     spare<-optimx::optimx(par = unlist(previous.centers),
-                                          fn = fnx,
-                                          gr = function(x){grbase(fik = fik,
-                                                                  adj.factor = adj.factor,
-                                                                  centers = x,
-                                                                  Alt = Alt,
-                                                                  Depth = Depth)},
-                                          method = "L-BFGS-B",
+                          fn = fnx,
+                          gr = function(x){grbase(fik = fik,
+                                                  adj.factor = adj.factor,
+                                                  centers = x,
+                                                  Alt = Alt,
+                                                  Depth = Depth)},
+                          method = "L-BFGS-B",
                           lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
                           upper=rep(1,length(unlist(previous.centers))))
-                    
-              
-    if(sum(is.na(spare))){
+    
+    
+    if(sum(is.na(spare[1:length(unlist(previous.centers))]))){
       #### IF FAILS DUE TO returning NA:
       ####################################
       message("Gradient failed for position:")
       message(paste(unlist(previous.centers),collapse = " "))
-      spare<-optimx::optimx(par = unlist(previous.centers),
-                            fn = fnx,
-                            gr = function(x){grbase(fik = fik,
-                                                    adj.factor = adj.factor,
-                                                    centers = x,
-                                                    Alt = Alt,
-                                                    Depth = Depth)},
-                            method = "L-BFGS-B",
-                            lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
-                            upper=rep(1,length(unlist(previous.centers))))
+      spare<-tryCatch(optimx::optimx(par = unlist(previous.centers),
+                                     fn = fnx,
+                                     gr = function(x){grbase(fik = fik,
+                                                             adj.factor = adj.factor,
+                                                             centers = x,
+                                                             Alt = Alt,
+                                                             Depth = Depth)},
+                                     method = "L-BFGS-B",
+                                     lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
+                                     upper=rep(1,length(unlist(previous.centers)))),
+                      error = function(e){
+                        message("optimx failed")
+                        op<-optim(par = unlist(previous.centers),
+                              fn = fnx ,
+                              method = "L-BFGS-B",
+                              lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
+                              upper=rep(1,length(unlist(previous.centers)))
+                        )
+                        result<-c(op$par,op$val)
+                        names(result<-c(paste0("p",1:length(op$par)),"value"))
+                        result
+                      }
+      )
       
       if(sum(is.na(spare[1:length(unlist(previous.centers))]))){
         message("switching to optim...")
         spare<-optim(par = unlist(previous.centers),
-              fn = fnx ,
-              method = "L-BFGS-B",
-              lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
-              upper=rep(1,length(unlist(previous.centers)))
+                     fn = fnx ,
+                     method = "L-BFGS-B",
+                     lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
+                     upper=rep(1,length(unlist(previous.centers)))
         )
         return(list(weights=weights,centers=spare$par,val=spare$val))
         
