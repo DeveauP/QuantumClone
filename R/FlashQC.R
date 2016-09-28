@@ -88,7 +88,7 @@ Create_prior_cutTree<-function(tree,Schrod_cells,NClus,jitter = FALSE){
       )
     }
     centers[[i]][centers[[i]]>1]<-1
-    centers[[i]][centers[[i]]<0]<-0
+    centers[[i]][centers[[i]]<=0]<-.Machine$double.eps
     
   }
   list(weights = weights,centers = centers)
