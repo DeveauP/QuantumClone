@@ -157,6 +157,7 @@ plot_QC_out<-function(QClone_Output,Sample_names=NULL, simulated = FALSE,sample_
       ggplot2::ylab(Sample_names[2])
   }
   else if(sum(grepl(pattern = "filtered.data",x = names(QClone_Output)))){
+    message("Only one model identified")
     Cell <- QClone_Output$filtered.data
     M<-max(as.numeric(as.character(QClone_Output$cluster)))
     cluster<-factor(QClone_Output$cluster)
@@ -167,6 +168,7 @@ plot_QC_out<-function(QClone_Output,Sample_names=NULL, simulated = FALSE,sample_
       
     }
     if(length(sample_selected)==2){
+      message("Two samples identified...")
       result<-list()
       if(!simulated){
         q<-ggplot2::qplot(x=Cell[[sample_selected[1]]]$Cellularity,y=Cell[[sample_selected[2]]]$Cellularity, asp = 1,main=paste('Cellular prevalence',Sample_names[sample_selected[1]],Sample_names[sample_selected[2]]),
@@ -184,6 +186,7 @@ plot_QC_out<-function(QClone_Output,Sample_names=NULL, simulated = FALSE,sample_
       return(q)
     }
     else if(length(sample_selected)==1){
+      message("One sample identified...")
       if(!simulated){
         result<-ggplot2::qplot(x=Cell[[sample_selected[1]]]$Cellularity, y=jitter(rep(0.5,times=length(Cell[[sample_selected[1]]]$Cellularity)),factor = 5) , asp = 1,main=paste('Cellular prevalence',Sample_names[sample_selected[1]]),
                                xlab=paste('cellularity',Sample_names[sample_selected[1]]),ylab='', 
