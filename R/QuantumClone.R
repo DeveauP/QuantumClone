@@ -307,7 +307,6 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
       )
       r<-r[which.min(Crits)]
     }
-    print(r)
     r<-Tidy_output(r =r,
                    Genotype_provided = Genotype_provided,
                    SNV_list = SNV_list)
@@ -391,7 +390,6 @@ Tidy_output<-function(r, Genotype_provided,SNV_list){
     
     return(which(t))
   })
-  print(Order)
   result$cluster<-result$cluster[Order]
   result$EM.output$fik<-result$EM.output$fik[Order,]
   
