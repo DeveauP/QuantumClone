@@ -229,6 +229,10 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
       
     }
   }
+  else if(is.data.frame(SNV_list) && length(contamination >1 )){
+    warning("length of contamination > 1 but only one sample, will use only first element")
+    contamination<-contamination[1]
+  }
   
   ### Pre-processing data
   message(paste("Checking all possibilities for",Sample_name))
@@ -303,6 +307,7 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
       )
       r<-r[which.min(Crits)]
     }
+    print(r)
     r<-Tidy_output(r =r,
                    Genotype_provided = Genotype_provided,
                    SNV_list = SNV_list)
@@ -386,6 +391,7 @@ Tidy_output<-function(r, Genotype_provided,SNV_list){
     
     return(which(t))
   })
+  print(Order)
   result$cluster<-result$cluster[Order]
   result$EM.output$fik<-result$EM.output$fik[Order,]
   

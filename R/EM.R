@@ -241,7 +241,7 @@ EM.algo<-function(Schrod, nclust=NULL,
                 previous.centers =cur.center,
                 adj.factor=adj.factor,optim = optim , initialpop = initialpop,
                 itermax = itermax)
-    
+      
       if(!is.list(m)){
         test<-create_priors(nclust = 2,nsample = 2)
         eval_1<-max(abs(prior_center-unlist(test)))
@@ -267,7 +267,7 @@ EM.algo<-function(Schrod, nclust=NULL,
     fik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,
                 adj.factor = adj.factor)
     return(list(fik=fik,weights=cur.weight,centers=cur.center,val=cur.val))
-
+    
   }
   else{
     ### DIRECT EVALUATION WITH DEoptim
@@ -279,14 +279,14 @@ EM.algo<-function(Schrod, nclust=NULL,
                 centers = m$centers,
                 adj.factor = adj.factor,
                 rep(1,times = length(prior_weight))
-                )
+    )
     cur.val<-sum(fik * eval.fik.m(Schrod= Schrod,
                                   centers = m$centers,
                                   weights = cur.weight,
                                   adj.factor = adj.factor,
                                   log = TRUE))
     return(list(fik=fik,weights=cur.weight,centers=m$centers,
-                  val=cur.val,initialpop = m$itialpop))
+                val=cur.val,initialpop = m$itialpop))
   }
 }
 
@@ -297,26 +297,27 @@ EM.algo<-function(Schrod, nclust=NULL,
 #' @param fik matrix of probability of each possibility to belong to a clone
 #' @keywords filter
 filter_on_fik<-function(Schrod,fik){
-  keep<-numeric()
   tmp<-unique(Schrod[[1]]$id)
-  for(i in 1:length(unique(Schrod[[1]]$id))){
+  keep<-numeric(length = length(tmp))
+  
+  for(i in 1:length(tmp)){
     u<-Schrod[[1]]$id==tmp[i]
     if(sum(u)>1){
       spare<-fik[u,]
       M<-max(spare)
       if(sum(spare==M)==1){
-        l<-which(apply(X = spare,MARGIN = 1,FUN = function(z) sum(grepl(pattern = M,x = z))>0))
+        l<-which(apply(X = spare,MARGIN = 1,FUN = function(z) sum(z== M)>0))
       }
       else{
-        l<-which(apply(X = spare,MARGIN = 1,FUN = function(z) sum(grepl(pattern = M,x = z))>0))
+        l<-which(apply(X = spare,MARGIN = 1,FUN = function(z) sum(z== M)>0))
         if(length(l)>1){
           l<-l[which.max(apply(X = spare[l,],MARGIN = 1,FUN = sum))]
         }
       }
-      keep<-c(keep,which(u)[l])
+      keep[i]<-which(u)[l]
     }
     else{
-      keep<-c(keep,which(u))
+      keep[i]<-which(u)
     }
   }
   result<-Schrod
