@@ -4,7 +4,7 @@
 \alias{BIC_criterion_FLASH}
 \title{Compute criterion FLASH}
 \usage{
-BIC_criterion_FLASH(Obj, Mut_num, k, model.selection)
+BIC_criterion_FLASH(Obj, Mut_num, k, model.selection, s)
 }
 \arguments{
 \item{Obj}{Numeric vector with objective function values}
@@ -14,6 +14,8 @@ BIC_criterion_FLASH(Obj, Mut_num, k, model.selection)
 \item{k}{the number of clusters (in the same order as Obj)}
 
 \item{model.selection}{The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function}
+
+\item{s}{Number of samples}
 }
 \description{
 Computes BIC from a list of outputs of EM algorithm, then returns the position with minimal BIC

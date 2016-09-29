@@ -42,18 +42,11 @@ e.step<-function(Schrod,centers,weights,adj.factor){
 #' @param adj.factor Factor to compute the probability: makes transition between the cellularity of the clone and the frequency observed
 #' @param contamination Numeric vector with the fraction of normal cells contaminating the sample
 #' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")
-#' @param initialpop Previous population to reuse for genetic algorithm
-#' @param itermax itermax parameter for DEoptim
-#' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights 
-#' between two optimization steps. If NULL, will take 1/(median depth).
 #' @keywords EM Maximization
-
 m.step<-function(fik,Schrod,previous.weights,
                  previous.centers,contamination,adj.factor,
-                 optim ="default",
-                 initialpop = NULL,
-                 itermax = NULL,
-                 epsilon){
+                 optim ="default"
+                 ){
   if(!is.null(fik)){
     weights<-apply(X = fik,MARGIN = 2,FUN = mean)
   }
@@ -129,8 +122,9 @@ m.step<-function(fik,Schrod,previous.weights,
     spare<-optimx::optimx(par = unlist(previous.centers),
                           fn = fnx,
                           method = "L-BFGS-B",
-                          lower = rep(0,times = length(unlist(previous.centers))),
+                          lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
                           upper=rep(1,length(unlist(previous.centers))))
+
     return(list(weights=weights,centers=spare[1:length(unlist(previous.centers))],val=spare$value))
   }
   else if(optim =="DEoptim"){
@@ -139,16 +133,16 @@ m.step<-function(fik,Schrod,previous.weights,
                                              upper=rep(1,length(unlist(previous.centers))),
                                              control = DEoptim::DEoptim.control(
                                                NP = min(10*length(unlist(previous.centers)),40),
-                                               strategy =1,
-                                               itermax = itermax,
-                                               initialpop = initialpop,
+                                               strategy= 3,
+                                               itermax = 200,
+                                               initialpop = NULL,
                                                CR = 0.9
                                              )
     )
     )
     
     return(list(weights = weights, centers = spare$optim$bestmem,val = spare$optim$bestval, 
-                initialpop = spare$member$pop,itermax = itermax)
+                initialpop = spare$member$pop,itermax = 200)
     )
   }
   else if(optim == "exact"){
@@ -200,8 +194,6 @@ EM.algo<-function(Schrod, nclust=NULL,
   prior_center<-unlist(cur.center)
   cur.val<-NULL
   eval<-1
-  initialpop<-NULL
-  itermax<-100
   adj.factor<-Compute.adj.fact(Schrod = Schrod,contamination = contamination)
   if(grepl(pattern = optim,x = "compound",ignore.case = TRUE)){
     if(is.matrix(adj.factor) && ncol(adj.factor)>1){
@@ -235,12 +227,12 @@ EM.algo<-function(Schrod, nclust=NULL,
     iters<-0
     while(eval>epsilon && iters<100){
       iters<-iters+1 ### exact can be stuck with meta stable values
+      print(paste("iters:", iters))
       tik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,
                   adj.factor = adj.factor)
       m<-m.step(fik = tik,Schrod = Schrod,previous.weights = cur.weight,
                 previous.centers =cur.center,
-                adj.factor=adj.factor,optim = optim , initialpop = initialpop,
-                itermax = itermax)
+                adj.factor=adj.factor,optim = optim)
       
       if(!is.list(m)){
         test<-create_priors(nclust = 2,nsample = 2)
@@ -263,7 +255,7 @@ EM.algo<-function(Schrod, nclust=NULL,
         cur.val<-n.val
       }
     }
-    
+    print("exiting EM")
     fik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,
                 adj.factor = adj.factor)
     return(list(fik=fik,weights=cur.weight,centers=cur.center,val=cur.val))
@@ -273,8 +265,7 @@ EM.algo<-function(Schrod, nclust=NULL,
     ### DIRECT EVALUATION WITH DEoptim
     m<-m.step(fik = NULL,Schrod = Schrod,previous.weights = rep(1,times = length(prior_weight)),
               previous.centers =unlist(prior_center),
-              adj.factor=adj.factor,optim = optim , initialpop = initialpop,
-              itermax = itermax)
+              adj.factor=adj.factor,optim = "DEoptim")
     fik<-e.step(Schrod = Schrod,
                 centers = m$centers,
                 adj.factor = adj.factor,
@@ -614,46 +605,4 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
     
     return(list_out_EM)
   }
-}
-
-#' Find clusters to fuse
-#' 
-#' @param centers list or vector with centers of clusters
-#' @param epsilon maximal distance in each sample between two cluster centers to fuse
-#' @return Returns numbers of clusters to drop
-# centers <- list(c(1,0.95,0.98,9,0.95),c(1,0.95,0.98,9,0))
-# epsilon = 0.05
-# cld<-Cluster_drop(centers,epsilon)
-Cluster_drop<-function(centers,epsilon){
-  fuse<-NULL
-  #fuse_with<-NULL
-  if(is.list(centers)){
-    grid.test<-expand.grid(1:length(centers[[1]]),1:length(centers[[1]]))
-    grid.test<-grid.test[grid.test[,1]<grid.test[,2],]
-    for(i in 1:nrow(grid.test)){
-      row<-as.numeric(grid.test[i,])
-      test<-logical(length = length(centers))
-      
-      for(j in 1:length(centers)){
-        test[j]<-abs(centers[[j]][row[1]]-centers[[j]][row[2]])<epsilon
-      }
-      if(sum(test)==length(test)){
-        fuse<-c(fuse,row[1])
-        #fuse_with<-c(fuse_with,row[2])
-      }
-    }
-  }
-  else{
-    grid.test<-expand.grid(1:length(centers[[1]]),1:length(centers[[1]]))
-    grid.test<-grid.test[grid.test[,1]<grid.test[,2],]
-    for(i in 1:nrow(grid.test)){
-      row<-grid.test[i,]
-      test<-abs(centers[row[1]]-centers[row[2]])<epsilon
-      if(test){
-        fuse<-c(fuse,row[1])
-        #fuse_with<-c(fuse_with,row[2])
-      }
-    }
-  }
-  length(fuse)
 }
