@@ -25,7 +25,6 @@ Cellular_preclustering<-function(Schrod_cells){
   
   DistMat<-ProbDistMatrix(Schrod_cells)
   dissimMatrix<-as.dist(1-DistMat)
-  #print(sum(is.na(DistMat)))
   tree<-hclust(d = dissimMatrix,method = "ward.D2")
   #cut_tree<-cutree(tree = tree,k = majority)
   result<-list(similarityMatrix = DistMat,
@@ -227,7 +226,6 @@ FlashQC<-function(Cells,conta,Nclus,model.selection = "tree"){
   DistMat<-ProbDistMatrix(Schrod_cells)
   dissimMatrix<-as.dist(1-DistMat)
   tree<-hclust(d = dissimMatrix,method = "ward.D2")
-  
   ##################################
   ### Find correct number of clusters
   ##################################
@@ -235,7 +233,6 @@ FlashQC<-function(Cells,conta,Nclus,model.selection = "tree"){
                        model.selection = model.selection,
                        conta = conta,Nclus = Nclus,tree = tree,
                        dissimMatrix = dissimMatrix)
-  
   cut_tree<-cutree(tree = tree,k = majority)
   priors<-Create_prior_cutTree(tree = tree,
                                Schrod_cells = Schrod_cells,
@@ -328,8 +325,9 @@ Compute_objective<-function(tree,nclus,Schrod,conta){
 #' @param Mut_num Number of mutations to cluster
 #' @param k the number of clusters (in the same order as Obj)
 #' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
+#' @param s Number of samples
 #' @keywords EM clustering number
-BIC_criterion_FLASH<-function(Obj,Mut_num,k ,model.selection){
+BIC_criterion_FLASH<-function(Obj,Mut_num,k ,model.selection,s){
   ### Criterion should be minimized
   # Here we assimilate EM.output$val to -ln(L) where L is the likelihood of the model
   # BIC is written -2*ln(L)+k*ln(k)
@@ -347,19 +345,17 @@ BIC_criterion_FLASH<-function(Obj,Mut_num,k ,model.selection){
     
     #k<-length(EM_out_list[[i]]$EM.output$centers[[1]])
 
-    Bic<-2*Obj+model.selection * k *log(Mut_num)
-    #W<-which.min(Bic)
-    #L<-0
+    Bic<-2*Obj+model.selection * s * k *log(Mut_num)
+
     return(Bic)
   }
   else if(model.selection == "BIC"){
-    #print(Obj)
-    Bic<-2*Obj + k *log(Mut_num)
+    Bic<-2*Obj +s* k *log(Mut_num)
     
     return(Bic)
   }
   else if(model.selection == "AIC"){
-    Aic<-2*Obj+2*k
+    Aic<-2*Obj+2*k*s
     
     return(Aic)
   }
@@ -387,7 +383,7 @@ FLASH_main<-function(Schrod_cells,model.selection,conta,Nclus,tree = NULL,dissim
     index<- c("ch","ccc","gap")
     method<-"ward.D2"
     if(ncol(Cells)==1){
-      Cells<-cbind(Cells,1-Cells)
+      Cells<-cbind(Cells,jitter(Cells))
     }
     selected<-unlist(sapply(X =index,function(name){
       NbClust::NbClust(data = Cells,diss = dissimMatrix, distance =  NULL,
@@ -407,11 +403,17 @@ FLASH_main<-function(Schrod_cells,model.selection,conta,Nclus,tree = NULL,dissim
                         conta = conta)
     }
     )
-    #print(obj)
     ### Adapt to BIC selection
+    if(is.list(Schrod_cells)){
+      s<-length(Schrod_cells)
+    }
+    else{
+      s<-1
+    }
     Crit<-BIC_criterion_FLASH(Obj = obj,Mut_num = nrow(Schrod_cells[[1]]),
                               k = Nclus,
-                              model.selection = model.selection
+                              model.selection = model.selection,
+                              s = s
     )
     majority<-Nclus[which.min(Crit)]
   }
