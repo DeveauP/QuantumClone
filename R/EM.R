@@ -9,7 +9,7 @@
 #' @param weights Proportion of mutation in a clone
 #' @param adj.factor Factor to compute the probability: makes transition between the cellularity of the clone and the frequency observed
 #' @keywords E-Step
-e.step<-function(Schrod,centers,weights,adj.factor){ 
+e.step<-function(Schrod,centers,weights,adj.factor){
   f<-eval.fik(Schrod = Schrod,centers = centers,weights = weights,
               adj.factor = adj.factor)
   for(k in 1:length(weights)){ ##k corresponds to a clone
@@ -54,11 +54,16 @@ m.step<-function(fik,Schrod,previous.weights,
                  initialpop = NULL,
                  itermax = NULL,
                  epsilon){
-  weights<-apply(X = fik,MARGIN = 2,FUN = mean)
+  if(!is.null(fik)){
+    weights<-apply(X = fik,MARGIN = 2,FUN = mean)
+  }
+  else{
+    weights<-rep(1,times = length(previous.weights))
+  }
   # weights<-weights/sum(weights) # Overkill
   cur.cent<-list()
   
-  if(optim == "default" | optim == "optimx"){
+  if(optim == "default" | optim == "optimx" | optim == "exact"){
     Alt<-matrix(nrow = nrow(Schrod[[1]]),ncol = length(Schrod))
     Depth<-matrix(nrow = nrow(Schrod[[1]]),ncol = length(Schrod))
     
@@ -67,9 +72,25 @@ m.step<-function(fik,Schrod,previous.weights,
       Depth[,i]<-Schrod[[i]]$Depth
     }
   }
+  
+  ### Function for maximization step
   fnx<-compiler::cmpfun(function(x) {
     r<--fik*eval.fik.m(Schrod = Schrod,centers = x,adj.factor = adj.factor,
-                       weights = previous.weights,epsilon = epsilon,
+                       weights = previous.weights,
+                       log = TRUE)
+    
+    r[fik==0]<-0
+    sum(r,
+        na.rm = TRUE
+    )},
+    options = list(optimize = 3)
+  )
+  
+  ### Exact function with recomputation of fik
+  efnx<-compiler::cmpfun(function(x) {
+    fik<-e.step(Schrod = Schrod, centers = x, weights = previous.weights,adj.factor = adj.factor)
+    r<--fik*eval.fik.m(Schrod = Schrod,centers = x,adj.factor = adj.factor,
+                       weights = previous.weights,
                        log = TRUE)
     
     r[fik==0]<-0
@@ -107,109 +128,34 @@ m.step<-function(fik,Schrod,previous.weights,
     
     spare<-optimx::optimx(par = unlist(previous.centers),
                           fn = fnx,
-                          gr = function(x) grbase(fik = fik,
-                                       adj.factor = adj.factor,
-                                       centers = x,
-                                       Alt = Alt,
-                                       Depth = Depth),
                           method = "L-BFGS-B",
                           lower = rep(0,times = length(unlist(previous.centers))),
                           upper=rep(1,length(unlist(previous.centers))))
-    
-    
-    if(sum(is.na(spare[1:length(unlist(previous.centers))]))){
-      #### IF FAILS DUE TO returning NA:
-      ####################################
-      message("Gradient failed for position:")
-      message(paste(unlist(previous.centers),collapse = " "))
-      spare<-tryCatch(optimx::optimx(par = unlist(previous.centers),
-                                     fn = fnx,
-                                     gr = function(x){grbase(fik = fik,
-                                                             adj.factor = adj.factor,
-                                                             centers = x,
-                                                             Alt = Alt,
-                                                             Depth = Depth)},
-                                     method = "L-BFGS-B",
-                                     lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
-                                     upper=rep(1,length(unlist(previous.centers)))),
-                      error = function(e){
-                        message("optimx failed")
-                        op<-optim(par = unlist(previous.centers),
-                                  fn = fnx ,
-                                  method = "L-BFGS-B",
-                                  lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
-                                  upper=rep(1,length(unlist(previous.centers)))
-                        )
-                        result<-c(op$par,op$val)
-                        names(result<-c(paste0("p",1:length(op$par)),"value"))
-                        result
-                      }
-      )
-      
-      if(sum(is.na(spare[1:length(unlist(previous.centers))]))){
-        message("switching to optim...")
-        spare<-optim(par = unlist(previous.centers),
-                     fn = fnx ,
-                     method = "L-BFGS-B",
-                     lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
-                     upper=rep(1,length(unlist(previous.centers)))
-        )
-        return(list(weights=weights,centers=spare$par,val=spare$val))
-        
-      }
-    }
     return(list(weights=weights,centers=spare[1:length(unlist(previous.centers))],val=spare$value))
   }
   else if(optim =="DEoptim"){
-    if(!is.null(initialpop)){
-      
-      spare<-suppressWarnings(DEoptim::DEoptim(fn = fnx,
-                                               lower = rep(0,times = length(unlist(previous.centers))),
-                                               upper=rep(1,length(unlist(previous.centers))),
-                                               control = DEoptim::DEoptim.control(
-                                                 NP = min(10*length(unlist(previous.centers)),40),
-                                                 strategy =1,
-                                                 itermax = itermax,
-                                                 initialpop = initialpop,
-                                                 CR = 0.9
-                                               )
-      )
-      )
-      #control that sufficient iterations were run for convergence:
-      
-    }
-    else{
-      spare<-suppressWarnings(DEoptim::DEoptim(fn = fnx,
-                                               lower = rep(0,times = length(unlist(previous.centers))),
-                                               upper=rep(1,length(unlist(previous.centers))),
-                                               control = DEoptim::DEoptim.control(
-                                                 NP = min(10*length(unlist(previous.centers)),40),
-                                                 CR = 0.9,
-                                                 strategy =1,
-                                                 itermax = itermax
-                                               )
-      )
-      )
-      if(max(abs(spare$member$bestmemit[itermax,]-spare$member$bestmemit[itermax-1,]))){
-        ### Convergence if the last two iterations have centers with less than 1% change
-        itermax<-itermax +10
-      }
-    }
+    spare<-suppressWarnings(DEoptim::DEoptim(fn = efnx,
+                                             lower = rep(0,times = length(unlist(previous.centers))),
+                                             upper=rep(1,length(unlist(previous.centers))),
+                                             control = DEoptim::DEoptim.control(
+                                               NP = min(10*length(unlist(previous.centers)),40),
+                                               strategy =1,
+                                               itermax = itermax,
+                                               initialpop = initialpop,
+                                               CR = 0.9
+                                             )
+    )
+    )
     
     return(list(weights = weights, centers = spare$optim$bestmem,val = spare$optim$bestval, 
                 initialpop = spare$member$pop,itermax = itermax)
     )
   }
-  # else if(optim =="RcppDE"){
-  #   spare<-RcppDE::DEoptim(fn = fnx,
-  #                          lower = rep(0,times = length(unlist(previous.centers))),
-  #                          upper=rep(1,length(unlist(previous.centers))),
-  #                          control = RcppDE::DEoptim.control(
-  #                            strategy = min(2* length(length(unlist(previous.centers))),40),
-  #                            itermax = 50
-  #                          )
-  #   )
-  # }
+  else if(optim == "exact"){
+    new.centers<-grzero(fik,adj.factor,Alt,Depth)
+    val<-fnx(new.centers)
+    return(list(centers = new.centers,weights = weights, val = val))
+  }
   return(list(weights=weights,centers=spare[1:length(unlist(previous.centers))],val=spare$value))
 }
 
@@ -254,53 +200,91 @@ EM.algo<-function(Schrod, nclust=NULL,
   prior_center<-unlist(cur.center)
   cur.val<-NULL
   eval<-1
-  
-  adj.factor<-Compute.adj.fact(Schrod = Schrod,contamination = contamination)
   initialpop<-NULL
-  itermax<-50
-  while(eval>epsilon){
-    tik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,
-                adj.factor = adj.factor)
-    m<-m.step(fik = tik,Schrod = Schrod,previous.weights = cur.weight,
-              previous.centers =cur.center,
-              adj.factor=adj.factor,optim = optim , initialpop = initialpop,
-              itermax = itermax)
-    if(optim == "DEoptim"){
-      initialpop<-m$initialpop
-      itermax<-m$itermax
-      
-    }
-    
-    if(!is.list(m)){
-      test<-create_priors(nclust = 2,nsample = 2)
-      eval_1<-max(abs(prior_center-unlist(test)))
-      break      
+  itermax<-100
+  adj.factor<-Compute.adj.fact(Schrod = Schrod,contamination = contamination)
+  if(grepl(pattern = optim,x = "compound",ignore.case = TRUE)){
+    if(is.matrix(adj.factor) && ncol(adj.factor)>1){
+      unicity_test<-TRUE
+      for(i in 1:ncol(adj.factor)){
+        if(length(unique(adj.factor[,i]))>1){
+          unicity_test<-FALSE
+        }
+      }
+      if(unicity_test){
+        message("EM...")
+        optim<-"exact"
+      }
+      else{
+        message("DEoptim")
+        optim<-"DEoptim"
+      }
     }
     else{
-      n.weights<-unlist(m$weights)
-      n.centers<-list()
-      n.val<-m$val
-      
-      for(i in 1:length(cur.center)){
-        n.centers[[i]]<-m$centers[((i-1)*length(cur.center[[1]])+1):((i)*length(cur.center[[1]]))]
+      if(length(unique(adj.factor))==1){
+        message("EM evaluation...")
+        optim<-"exact"
       }
-      
-      eval<-max(abs(c(n.weights,unlist(n.centers))-c(cur.weight,unlist(cur.center))))
-      cur.weight<-n.weights
-      prior_center<-c(prior_center,unlist(n.centers))
-      cur.center<-n.centers
-      cur.val<-n.val
+      else{
+        message("DEoptim use...")
+        optim<-"DEoptim"
+      }
     }
   }
-  fik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,
-              adj.factor = adj.factor)
   if(optim!="DEoptim"){
+    while(eval>epsilon){
+      tik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,
+                  adj.factor = adj.factor)
+      m<-m.step(fik = tik,Schrod = Schrod,previous.weights = cur.weight,
+                previous.centers =cur.center,
+                adj.factor=adj.factor,optim = optim , initialpop = initialpop,
+                itermax = itermax)
+    
+      if(!is.list(m)){
+        test<-create_priors(nclust = 2,nsample = 2)
+        eval_1<-max(abs(prior_center-unlist(test)))
+        break      
+      }
+      else{
+        n.weights<-unlist(m$weights)
+        n.centers<-list()
+        n.val<-m$val
+        
+        for(i in 1:length(cur.center)){
+          n.centers[[i]]<-m$centers[((i-1)*length(cur.center[[1]])+1):((i)*length(cur.center[[1]]))]
+        }
+        
+        eval<-max(abs(c(n.weights,unlist(n.centers))-c(cur.weight,unlist(cur.center))))
+        cur.weight<-n.weights
+        prior_center<-c(prior_center,unlist(n.centers))
+        cur.center<-n.centers
+        cur.val<-n.val
+      }
+    }
+    
+    fik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,
+                adj.factor = adj.factor)
     return(list(fik=fik,weights=cur.weight,centers=cur.center,val=cur.val))
+
   }
   else{
-    return(list(fik=fik,weights=cur.weight,centers=cur.center,
-                val=cur.val,initialpop = m$itialpop))
-    
+    ### DIRECT EVALUATION WITH DEoptim
+    m<-m.step(fik = NULL,Schrod = Schrod,previous.weights = rep(1,times = length(prior_weight)),
+              previous.centers =unlist(prior_center),
+              adj.factor=adj.factor,optim = optim , initialpop = initialpop,
+              itermax = itermax)
+    fik<-e.step(Schrod = Schrod,
+                centers = m$centers,
+                adj.factor = adj.factor,
+                rep(1,times = length(prior_weight))
+                )
+    cur.val<-sum(fik * eval.fik.m(Schrod= Schrod,
+                                  centers = m$centers,
+                                  weights = cur.weight,
+                                  adj.factor = adj.factor,
+                                  log = TRUE))
+    return(list(fik=fik,weights=cur.weight,centers=m$centers,
+                  val=cur.val,initialpop = m$itialpop))
   }
 }
 
@@ -367,11 +351,6 @@ FullEM<-function(Schrod, nclust, prior_center, prior_weight=NULL,
                  optim = optim)
   if(is.list(E_out)){
     F_out<-filter_on_fik(Schrod = Schrod,fik = E_out$fik)
-    ### Reclustering has been moved afterwards, to reduce number of clusters if necessary
-    # E_out<-EM.algo(Schrod = F_out,nclust = nclust,
-    #                prior_center = E_out$centers,prior_weight = E_out$weights,
-    #                contamination = contamination,epsilon =epsilon,
-    #                optim = optim)
   }
   return(list(EM.output = E_out, filtered.data=F_out))
 }
@@ -597,12 +576,11 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
     #     list_out_EM[[w]]$EM.output$val <- NA
     #   }
     # }
-    ###  Can be uncommented for use, not recommended (tested on Imput_Example)
+    ###  Can be uncommented for use, not recommended (tested on Input_Example)
     
     ### 
     # Criterion
     #
-    
     result<-list_out_EM[[which.min(BIC_criterion(EM_out_list = list_out_EM, model.selection = model.selection))]]
     
     

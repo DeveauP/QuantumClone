@@ -37,7 +37,7 @@ list_prod<-function(L,col=NULL){
 }
 
 
-eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,alpha,adj.factor,epsilon,log = FALSE){
+eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,adj.factor,log = FALSE){
   al<-list()
   if(is.list(centers)){
     centers<-unlist(centers)
@@ -62,7 +62,11 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,alpha,adj.factor,ep
       #pro_0<-pro
       #pro_0[pro>1 | pro<0]<-0
       if(log){
-        al[test,k]<-al[test,k]+dbinom(x =Alt[test] ,size = Depth[test],prob = pro[test],log = TRUE)
+        al[test,k]<-al[test,k]+ifelse(test = Alt[test]==0,
+                                      yes = Depth[test]*log(1 - pro[test]),
+                                      no =  dbinom(x =Alt[test] ,size = Depth[test],prob = pro[test],log = TRUE)
+        )
+         
       }
       else{
         al[test,k]<-al[test,k]*dbinom(x =Alt[test] ,size = Depth[test],prob = pro[test],log = FALSE)
@@ -82,23 +86,50 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,alpha,adj.factor,ep
 #' @param centers centers of the clusters
 #' @param weights weight of each cluster
 #' @param adj.factor The adjusting factor, taking into account contamination, copy number, number of copies
-#' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights
 #' @param log Should it compute the log distribution (TRUE) or probability (FALSE)
-#' @param alpha Corrective value (if some variants are more likely than others) 
 #' between two optimization steps. If NULL, will take 1/(median depth).
-eval.fik.m<-function(Schrod,centers,weights,alpha,adj.factor,epsilon,log = TRUE){
+eval.fik.m<-function(Schrod,centers,weights,adj.factor,log = TRUE){
   spare<-eval.fik(Schrod = Schrod,
                   centers=centers,
                   weights = weights,
-                  alpha = alpha, 
                   adj.factor= adj.factor,
-                  epsilon= epsilon,
                   log = log)
   test<-is.infinite(spare)
   if(sum(test)){
-    spare[test]<--log(.Machine$double.xmax)
+    spare[test]<--log(.Machine$double.eps)
   }
   spare
+}
+
+#' Gradient 0
+#' 
+#' Return center values for max if adj.factor has a single value for all variants/possibilities in each samples
+#' @param fik matrix with probability of each possibility to belong to clone k
+#' @param adj.factor matrix with coefficient making transition between cellularity and frequency
+#' @param Alt matrix with samples in columns and number of alternative reads in rows
+#' @param Depth matrix with samples in coluns and depth of coverage in rows
+#' @export
+grzero<-function(fik,adj.factor,Alt,Depth){
+  #adj.factor has samples in cols
+  #fik has clusters in cols
+  if(is.matrix(Alt) && ncol(Alt)>1){
+    centers<-numeric(length = ncol(fik)*ncol(Alt))
+    index<-0
+    for(k in 1:ncol(fik)){
+      for(s in 1:ncol(Alt)){
+        index<-index+1
+        centers[index]<-{1/adj.factor[1,s]}*sum(fik[,k]*Alt[,s])/sum(fik[,k]*Depth[,s]) 
+      }
+    }
+  }
+  else{
+    centers<-numeric(length = ncol(fik))
+    for(k in 1:ncol(fik)){
+      centers[k]<-1/adj.factor[1]*sum(fik[,k]*Alt)/sum(fik[,k]*Depth)
+      
+    }
+  }
+  centers
 }
 
 #' Computes gradient of function
@@ -136,15 +167,15 @@ grbase<-compiler::cmpfun(function(fik,adj.factor,centers,Alt,Depth){
                       no = ifelse(
                         test = Alt[,s]==0,
                         yes = {
-                           -fik[,i]*adj.factor[,s]*Depth[,s]/
-                         {1-adj.factor[,s]*{centers[index]}}
-                           },
+                          -fik[,i]*adj.factor[,s]*Depth[,s]/
+                          {1-adj.factor[,s]*{centers[index]}}
+                        },
                         no = fik[,i]*{
                           {Alt[,s]/centers[index]} - {adj.factor[,s]*( Depth[,s] - Alt[,s])}/
                           {1-adj.factor[,s]*centers[index]}
                         }
                       )
-          
+                      
         )
         test<-is.infinite(spare)
         if(sum(test)){

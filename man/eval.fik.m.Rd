@@ -5,7 +5,7 @@
 \title{Eval probability for M step
 Computes the log directly as log density is faster to compute}
 \usage{
-eval.fik.m(Schrod, centers, weights, alpha, adj.factor, epsilon, log = TRUE)
+eval.fik.m(Schrod, centers, weights, adj.factor, log = TRUE)
 }
 \arguments{
 \item{Schrod}{The shcrodinger list of matrices}
@@ -14,14 +14,10 @@ eval.fik.m(Schrod, centers, weights, alpha, adj.factor, epsilon, log = TRUE)
 
 \item{weights}{weight of each cluster}
 
-\item{alpha}{Corrective value (if some variants are more likely than others) 
-between two optimization steps. If NULL, will take 1/(median depth).}
-
 \item{adj.factor}{The adjusting factor, taking into account contamination, copy number, number of copies}
 
-\item{epsilon}{Stop value: maximal admitted value of the difference in cluster position and weights}
-
-\item{log}{Should it compute the log distribution (TRUE) or probability (FALSE)}
+\item{log}{Should it compute the log distribution (TRUE) or probability (FALSE)
+between two optimization steps. If NULL, will take 1/(median depth).}
 }
 \description{
 Eval probability for M step

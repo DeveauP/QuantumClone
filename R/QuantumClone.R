@@ -22,7 +22,11 @@
 #' @param output_directory Path to output directory
 #' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights 
 #' between two optimization steps. If NULL, will take 1/(average depth).
-#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")
+#' @param optim use L-BFS-G optimization from R, with exact gradient, ("default"), 
+#' or L-BFS-G with numerical gradient computation from optimx ("optimx"), 
+#' or Differential Evolution ("DEoptim"),
+#' or a mixture of EM with exact center computation (if fully diploid), or DEoptim if this fails ("compound").
+#' Note that DEoptim is the only one that does not use EM algorithm
 #' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
 #' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
 #'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
@@ -205,12 +209,12 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
   }
   ### check optim:
   #optims_accepted<-c("default","optimx","DEoptim","RcppDE")
-  optims_accepted<-c("default","optimx","DEoptim")
+  optims_accepted<-c("default","optimx","DEoptim","compound")
   if(length(optim)!=1){
     stop("optim argument can only be of length 1")
   }
   else if(!(optim %in% optims_accepted)){
-    stop(paste("optim can only be one of:",optims_accepted))
+    stop(paste("optim can only be one of:", paste(optims_accepted,collapse = ",")))
   }
   
   ### Pre-processing data
