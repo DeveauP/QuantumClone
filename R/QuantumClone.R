@@ -276,11 +276,10 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
   }
   
   #### New version
-
+  
   if(length(unique(Cell[[1]]$id))==length(Cell[[1]]$id)){ # All mutations had a single possible state
     message("Post-processing output")
     if(keep.all.models){
-      #print(r)
       r<-lapply(r, FUN = function(z){
         Tidy_output(r = z,
                     Genotype_provided = Genotype_provided,
@@ -305,7 +304,7 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
       }))
       )
       )
-      r<-r[which.min(Crits)]
+      r<-r[[which.min(Crits)]]
     }
     r<-Tidy_output(r =r,
                    Genotype_provided = Genotype_provided,
@@ -332,16 +331,17 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
   }
   
   if(is.list(r$EM.output$centers)){
-    normalized.centers<-list()
-    for(i in 1:length(r$EM.output$centers)){
-      normalized.centers[[i]]<-r$EM.output$centers[[i]]/(1-contamination[i])
+    if(!keep.all.models){
+      normalized.centers<-list()
+      for(i in 1:length(r$EM.output$centers)){
+        normalized.centers[[i]]<-r$EM.output$centers[[i]]/(1-contamination[i])
+      }
+      r$EM.output$normalized.centers<-normalized.centers
     }
-    r$EM.output$normalized.centers<-normalized.centers
+    else{
+      r$EM.output$normalized.centers<-r$EM.output$centers/(1-contamination)
+    }
   }
-  else{
-    r$EM.output$normalized.centers<-r$EM.output$centers/(1-contamination)
-  }
-  
   r
 }
 
@@ -602,7 +602,7 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
                          Depth = Depth,
                          NC = 1,
                          NCh = Ns)
-
+      
     }
     else{
       
@@ -640,7 +640,7 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
       }
     }
   }
- 
+  
   result<-data.frame(result)
   colnames(result)<-c('Chr','Start','Cellularity','Genotype',"Alt","Depth","NC","NCh")
   return(result)
@@ -785,9 +785,9 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
   
   if(save_plot && length(Cell)>1){
     plot_cell_from_Return_out(result$filtered.data,
-                                     Sample_names = Sample_names,
-                                     output_dir=output_directory)
-    }
+                              Sample_names = Sample_names,
+                              output_dir=output_directory)
+  }
   return(result)
 }
 
@@ -823,7 +823,7 @@ Probability.to.belong.to.clone<-function(SNV_list,
                       centers = clone_prevalence,
                       weights= clone_weights,keep.all.poss = TRUE,
                       adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination)
-                      )
+    )
     filtered<-filter_on_fik(Schrod = Schrod,fik = result)
     filtered_prob<-Probability.to.belong.to.clone(SNV_list = filtered,
                                                   clone_prevalence,

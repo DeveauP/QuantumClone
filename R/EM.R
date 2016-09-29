@@ -558,20 +558,6 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
     }
   }
   if(!keep.all.models){
-    # ####
-    # ## Dropping clusters that are closer than epsilon in all samples
-    # ####
-    # To_drop<-which(unlist(lapply(list_out_EM,function(out_EM){
-    #   Cluster_drop(centers = out_EM$EM.output$centers, epsilon = epsilon)
-    # }))>0)
-    # 
-    # if(length(To_drop) && length(To_drop) < length(list_out_EM)){
-    #   for(w in To_drop){
-    #     list_out_EM[[w]]$EM.output$val <- NA
-    #   }
-    # }
-    ###  Can be uncommented for use, not recommended (tested on Input_Example)
-    
     ### 
     # Criterion
     #
