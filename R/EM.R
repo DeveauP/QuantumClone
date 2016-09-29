@@ -232,7 +232,9 @@ EM.algo<-function(Schrod, nclust=NULL,
     }
   }
   if(optim!="DEoptim"){
-    while(eval>epsilon){
+    iters<-0
+    while(eval>epsilon && iters<100){
+      iters<-iters+1 ### exact can be stuck with meta stable values
       tik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,
                   adj.factor = adj.factor)
       m<-m.step(fik = tik,Schrod = Schrod,previous.weights = cur.weight,

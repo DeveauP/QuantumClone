@@ -217,6 +217,19 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
     stop(paste("optim can only be one of:", paste(optims_accepted,collapse = ",")))
   }
   
+  # Checking length of contamination vector:
+  if(is.list(SNV_list) && length(contamination)!=length(SNV_list)){
+    if(length(contamination)<length(SNV_list)){
+      warning("contamination and SNV_list have different lengths, will repeat contamination")
+      contamination<-rep(contamination, times = length(SNV_list))
+    }
+    else if(length(contamination)<length(SNV_list)){
+      warning("contamination and SNV_list have different lengths, will use first arguments of contamination")
+      contamination<-contamination[1:length(SNV_list)]
+      
+    }
+  }
+  
   ### Pre-processing data
   message(paste("Checking all possibilities for",Sample_name))
   

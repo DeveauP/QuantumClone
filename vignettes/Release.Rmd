@@ -8,6 +8,14 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEncoding{UTF-8}
 ---
+<h3<Release of 29/9/2016 </h3>
+<b> Second important update </b>
+<ul>
+<li> Changed optimization procedures (see `One_step_clustering` documentation); </li>
+<li> Added grzero: returns value that zeros the gradient (used in diploid cases); </li>
+<li> Added tests. </li>
+
+</ul>
 <h3<Release of 27/9/2016 </h3>
 <b> Massive update </b>
 <ul>
