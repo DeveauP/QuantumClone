@@ -506,7 +506,6 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
                                                     jitter <- FALSE
                                                   }
                                                   priors<-Create_prior_cutTree(tree,Schrod,i,jitter)
-                                                  save(list = "priors",file = "priors.Rda")
                                                   return(parallelEM(Schrod = Schrod,nclust = i,epsilon = epsilon,
                                                                     contamination = contamination,prior_center = priors$centers,
                                                                     prior_weight = priors$weights,Initializations = 1,
