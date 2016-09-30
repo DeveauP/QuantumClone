@@ -207,7 +207,7 @@ EM.algo<-function(Schrod, nclust=NULL,
         optim<-"exact"
       }
       else{
-        optim<-"optim"
+        optim<-"default"
       }
     }
     else{
@@ -216,8 +216,8 @@ EM.algo<-function(Schrod, nclust=NULL,
         optim<-"exact"
       }
       else{
-        message("DEoptim use...")
-        optim<-"DEoptim"
+        message("default use...")
+        optim<-"default"
       }
     }
   }
