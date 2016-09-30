@@ -52,7 +52,7 @@ uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it wil
 \item{optim}{use L-BFS-G optimization from R, with exact gradient, ("default"), 
 or L-BFS-G with numerical gradient computation from optimx ("optimx"), 
 or Differential Evolution ("DEoptim"),
-or a mixture of EM with exact center computation (if fully diploid), or DEoptim if this fails ("compound").
+or a mixture of EM with exact center computation (if fully diploid), or "optim" if this fails ("compound").
 Note that DEoptim is the only one that does not use EM algorithm}
 
 \item{keep.all.models}{Should the function output the best model (default; FALSE), or all models tested (if set to true)}

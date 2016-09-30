@@ -117,6 +117,9 @@ grzero<-function(fik,adj.factor,Alt,Depth){
     index<-0
     for(k in 1:ncol(fik)){
       for(s in 1:ncol(Alt)){
+        if(sum(fik[,k])==0){ ### The cluster has 0 probability
+          fik[,k]<-.Machine$double.eps
+        }
         index<-index+1
         centers[index]<-{1/adj.factor[1,s]}*sum(fik[,k]*Alt[,s])/sum(fik[,k]*Depth[,s]) 
       }
