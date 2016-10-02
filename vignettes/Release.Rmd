@@ -8,6 +8,13 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEncoding{UTF-8}
 ---
+<h3<Release of 2/10/2016 </h3>
+<ul>
+<li> Added corrective term for weight of each cluster; </li>
+<li> Switched back default model selection to "BIC".
+</ul>
+
+
 <h3<Release of 29/9/2016 </h3>
 <b> Second important update </b>
 <ul>

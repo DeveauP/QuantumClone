@@ -8,7 +8,7 @@ One_step_clustering(SNV_list, FREEC_list = NULL, contamination,
   nclone_range = 2:5, clone_priors = NULL, prior_weight = NULL,
   Initializations = 1, preclustering = "FLASH", simulated = FALSE,
   epsilon = NULL, save_plot = TRUE, ncores = 1, restrict.to.AB = FALSE,
-  output_directory = NULL, model.selection = 6, optim = "default",
+  output_directory = NULL, model.selection = "BIC", optim = "default",
   keep.all.models = FALSE, force.single.copy = FALSE)
 }
 \arguments{

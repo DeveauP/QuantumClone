@@ -151,7 +151,7 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                               simulated = FALSE, epsilon = NULL,
                               save_plot = TRUE,ncores=1,
                               restrict.to.AB = FALSE,output_directory=NULL,
-                              model.selection = 6,optim = "default", keep.all.models = FALSE,
+                              model.selection = "BIC",optim = "default", keep.all.models = FALSE,
                               force.single.copy = FALSE){
   # if(Initializations >1 && preclustering){
   #   message("Only 1 iteration will be run if preclustering is successful")

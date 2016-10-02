@@ -48,10 +48,10 @@ m.step<-function(fik,Schrod,previous.weights,
                  optim ="default"
                  ){
   if(!is.null(fik)){
-    weights<-apply(X = fik,MARGIN = 2,FUN = mean)
+    weights<-apply(X = fik,MARGIN = 2,FUN = function(z) sum(z)/length(unique(Schrod[[1]]$id)))
   }
   else{
-    weights<-rep(1,times = length(previous.weights))
+    weights<-rep(1/length(previous.weights),times = length(previous.weights))
   }
   # weights<-weights/sum(weights) # Overkill
   cur.cent<-list()
@@ -69,7 +69,7 @@ m.step<-function(fik,Schrod,previous.weights,
   ### Function for maximization step
   fnx<-compiler::cmpfun(function(x) {
     r<--fik*eval.fik.m(Schrod = Schrod,centers = x,adj.factor = adj.factor,
-                       weights = previous.weights,
+                       weights = weights,
                        log = TRUE)
     
     r[fik==0]<-0
@@ -81,13 +81,20 @@ m.step<-function(fik,Schrod,previous.weights,
   
   ### Exact function with recomputation of fik
   efnx<-compiler::cmpfun(function(x) {
-    fik<-e.step(Schrod = Schrod, centers = x, weights = previous.weights,adj.factor = adj.factor)
+    fik<-e.step(Schrod = Schrod, centers = x, weights = weights,adj.factor = adj.factor)
     r<--fik*eval.fik.m(Schrod = Schrod,centers = x,adj.factor = adj.factor,
-                       weights = previous.weights,
+                       weights = weights,
                        log = TRUE)
+      
     
     r[fik==0]<-0
-    sum(r,
+    PI<-matrix(nrow = nrow(fik),ncol = ncol(fik))
+    
+    for(i in 1:length(weights)){
+      PI[,i]<-fik[,i]*log(weights[i])
+    }
+    PI[PI==0]<-0
+    sum(r-PI,
         na.rm = TRUE
     )},
     options = list(optimize = 3)
@@ -251,13 +258,19 @@ EM.algo<-function(Schrod, nclust=NULL,
         cur.weight<-n.weights
         prior_center<-c(prior_center,unlist(n.centers))
         cur.center<-n.centers
-        cur.val<-n.val
+        ### Add fik*log(weights) if EM not direct optimization
+        PI<-matrix(nrow = nrow(tik),ncol= ncol(tik))
+        for(i in 1:length(cur.weight)){
+          PI[,i]<-tik[,i]*log(cur.weight[i])
+        }
+        PI[PI==0]<-0
+        cur.val<-n.val - sum(PI) 
       }
     }
     fik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,
                 adj.factor = adj.factor)
-    return(list(fik=fik,weights=cur.weight,centers=cur.center,val=cur.val))
     
+    return(list(fik=fik,weights=cur.weight,centers=cur.center,val=cur.val))
   }
   else{
     ### DIRECT EVALUATION WITH DEoptim

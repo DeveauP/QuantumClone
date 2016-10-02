@@ -26,6 +26,7 @@ test_that("plot_QC_out returns a ggplot object single sample - also uses Quantum
                    preclustering = "fpc") 
   g<-QuantumClone::plot_QC_out(QC,Sample_names = c("Diag"),sample_selected = 1)
   expect_identical(class(g),c("gg","ggplot"))
+  expect_identical(Compute_NMI(QC),1)
 }
 )
 
