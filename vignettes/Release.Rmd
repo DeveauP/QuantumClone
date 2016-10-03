@@ -8,14 +8,14 @@ vignette: >
   %\VignetteIndexEntry{Release}
   %\VignetteEncoding{UTF-8}
 ---
-<h3<Release of 2/10/2016 </h3>
+<h3>Release of 2/10/2016 </h3>
 <ul>
 <li> Added corrective term for weight of each cluster; </li>
 <li> Switched back default model selection to "BIC".
 </ul>
 
 
-<h3<Release of 29/9/2016 </h3>
+<h3>Release of 29/9/2016 </h3>
 <b> Second important update </b>
 <ul>
 <li> Changed optimization procedures (see `One_step_clustering` documentation); </li>
@@ -23,7 +23,7 @@ vignette: >
 <li> Added tests. </li>
 
 </ul>
-<h3<Release of 27/9/2016 </h3>
+<h3>Release of 27/9/2016 </h3>
 <b> Massive update </b>
 <ul>
 <li> Fixed gradient computation; </li>
@@ -34,7 +34,7 @@ vignette: >
 
 </ul>
 
-<h3<Release of 23/9/2016 </h3>
+<h3>Release of 23/9/2016 </h3>
 <ul>
 <li> Added computation of gradient for "optim" and "optimx"; </li>
 <li> Corrected priors creation from FLASH for QuantumClone; </li>
@@ -42,14 +42,14 @@ vignette: >
 
 </ul>
 
-<h3<Release of 22/9/2016 </h3>
+<h3>Release of 22/9/2016 </h3>
 <ul>
 <li> Fixed errors from FlashQC; </li>
 <li> Updated validation tools. </li>
 
 </ul>
 
-<h3<Release of 20/9/2016 </h3>
+<h3>Release of 20/9/2016 </h3>
 <ul>
 <li> Added integration of binomial density over 2xEpsilon interval; </li>
 <li> Added computation of Precision, Recall, F1, Rand Index in `Precision_Recall`; </li>
@@ -57,21 +57,21 @@ vignette: >
 
 </ul>
 
-<h3<Release of 12/9/2016 </h3>
+<h3>Release of 12/9/2016 </h3>
 <ul>
 <li> Changed parameters for DEoptim controls; </li>
 <li> Solved tree generation issue if the progeny can only come from one node. </li>
 
 </ul>
 
-<h3<Release of 12/9/2016 </h3>
+<h3>Release of 12/9/2016 </h3>
 <ul>
 <li> Solved fik*log(fik) when fik = 0 issue in FlashQC; </li>
 <li> Added controls to DEoptim; </li>
 <li> Prepared for integration of RcppDE. </li>
 </ul>
 
-<h3<Release of 12/9/2016 </h3>
+<h3>Release of 12/9/2016 </h3>
 <ul>
 <li>Changes in weight computation: normalization by sum of weights; </li>
 <li>Added <a href=https://www.jstatsoft.org/article/view/v040i06>DEoptim </a> solver for EM;</li>
@@ -80,7 +80,7 @@ vignette: >
 
 </ul>
 
-<h3<Release of 9/9/2016 </h3>
+<h3>Release of 9/9/2016 </h3>
 <h4>MAY BE UNSTABLE</h4>
 <ul>
 <li> Added FlashQC : using hierarchical clustering and distance on the p-value of 2 variants being from the same distribution; </li>

@@ -233,6 +233,7 @@ EM.algo<-function(Schrod, nclust=NULL,
     while(eval>epsilon && iters<100){
       if(optim == "exact"){
         iters<-iters+1 ### exact can be stuck with meta stable values
+        ### Contradictory with convergence of EM...
       }
       tik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,
                   adj.factor = adj.factor)
@@ -256,18 +257,21 @@ EM.algo<-function(Schrod, nclust=NULL,
         
         eval<-max(abs(c(n.weights,unlist(n.centers))-c(cur.weight,unlist(cur.center))))
         cur.weight<-n.weights
-        prior_center<-c(prior_center,unlist(n.centers))
+        #prior_center<-c(prior_center,unlist(n.centers))
         cur.center<-n.centers
         ### Add fik*log(weights) if EM not direct optimization
-        PI<-matrix(nrow = nrow(tik),ncol= ncol(tik))
-        for(i in 1:length(cur.weight)){
-          PI[,i]<-tik[,i]*log(cur.weight[i])
-        }
-        PI[PI==0]<-0
-        cur.val<-n.val - sum(PI) 
+
       }
+      PI<-matrix(nrow = nrow(tik),ncol= ncol(tik))
+      for(i in 1:length(cur.weight)){
+        PI[,i]<-tik[,i]*log(cur.weight[i])
+      }
+      PI[PI==0]<-0
+      cur.val<-n.val - sum(PI) 
     }
-    fik<-e.step(Schrod = Schrod,centers = cur.center,weights = cur.weight,
+    fik<-e.step(Schrod = Schrod,
+                centers = cur.center,
+                weights = cur.weight,
                 adj.factor = adj.factor)
     
     return(list(fik=fik,weights=cur.weight,centers=cur.center,val=cur.val))
