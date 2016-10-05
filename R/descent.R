@@ -73,7 +73,6 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,adj.factor,log = FA
         
       }
       al[!test,k]<-NA
-      
     }
   }
   al
@@ -115,20 +114,20 @@ grzero<-function(fik,adj.factor,Alt,Depth){
   if(is.matrix(Alt) && ncol(Alt)>1){
     centers<-numeric(length = ncol(fik)*ncol(Alt))
     index<-0
-    for(k in 1:ncol(fik)){
-      for(s in 1:ncol(Alt)){
+    for(s in 1:ncol(Alt)){
+      for(k in 1:ncol(fik)){
         if(sum(fik[,k])==0){ ### The cluster has 0 probability
           fik[,k]<-.Machine$double.eps
         }
         index<-index+1
-        centers[index]<-{1/adj.factor[1,s]}*sum(fik[,k]*Alt[,s])/sum(fik[,k]*Depth[,s]) 
+        centers[index]<-sum(fik[,k]*Alt[,s])/{adj.factor[1,s]*sum(fik[,k]*Depth[,s])} 
       }
     }
   }
   else{
     centers<-numeric(length = ncol(fik))
     for(k in 1:ncol(fik)){
-      centers[k]<-1/adj.factor[1]*sum(fik[,k]*Alt)/sum(fik[,k]*Depth)
+      centers[k]<-sum(fik[,k]*Alt)/{adj.factor[1]*sum(fik[,k]*Depth)}
       
     }
   }

@@ -155,7 +155,7 @@ m.step<-function(fik,Schrod,previous.weights,
   else if(optim == "exact"){
     new.centers<-grzero(fik,adj.factor,Alt,Depth)
     val<-fnx(new.centers)
-    return(list(centers = new.centers,weights = weights, val = val))
+    return(list(weights = weights,centers = new.centers, val = val))
   }
   return(list(weights=weights,centers=spare[1:length(unlist(previous.centers))],val=spare$value))
 }
@@ -230,7 +230,7 @@ EM.algo<-function(Schrod, nclust=NULL,
   }
   if(optim!="DEoptim"){
     iters<-0
-    while(eval>epsilon && iters<100){
+    while(eval>epsilon){
       if(optim == "exact"){
         iters<-iters+1 ### exact can be stuck with meta stable values
         ### Contradictory with convergence of EM...
@@ -254,7 +254,6 @@ EM.algo<-function(Schrod, nclust=NULL,
         for(i in 1:length(cur.center)){
           n.centers[[i]]<-m$centers[((i-1)*length(cur.center[[1]])+1):((i)*length(cur.center[[1]]))]
         }
-        
         eval<-max(abs(c(n.weights,unlist(n.centers))-c(cur.weight,unlist(cur.center))))
         cur.weight<-n.weights
         #prior_center<-c(prior_center,unlist(n.centers))
@@ -267,7 +266,7 @@ EM.algo<-function(Schrod, nclust=NULL,
         PI[,i]<-tik[,i]*log(cur.weight[i])
       }
       PI[PI==0]<-0
-      cur.val<-n.val - sum(PI) 
+      cur.val<-n.val - sum(PI)
     }
     fik<-e.step(Schrod = Schrod,
                 centers = cur.center,
