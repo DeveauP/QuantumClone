@@ -106,7 +106,7 @@ paper_pipeline<- function(filtered,
   clustering<-One_step_clustering(SNV_list = filtered,
                                   contamination = contamination,
                                   nclone_range = 2:10,
-                                  maxit = 2,ncores = 4,
+                                  Init =  2,ncores = 4,
                                   save_plot = FALSE
   )
   
@@ -142,7 +142,7 @@ extended<- function(filtered,
   clustering<-One_step_clustering(SNV_list = input,
                                   contamination = contamination,
                                   nclone_range = 2:10,
-                                  maxit = 2,ncores = 4,
+                                  Init =  2,ncores = 4,
                                   save_plot = FALSE
   )
   
@@ -163,7 +163,7 @@ All<-function(filtered,
   clustering<-One_step_clustering(SNV_list = input,
                                   contamination = contamination,
                                   nclone_range = 2:10,
-                                  maxit = 2,ncores = 4,
+                                  Init =  2,ncores = 4,
                                   save_plot = FALSE
   )
   

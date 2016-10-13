@@ -93,7 +93,7 @@ m.step<-function(fik,Schrod,previous.weights,
     for(i in 1:length(weights)){
       PI[,i]<-fik[,i]*log(weights[i])
     }
-    PI[PI==0]<-0
+    PI[fik==0]<-0
     sum(r-PI,
         na.rm = TRUE
     )},

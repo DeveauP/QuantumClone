@@ -145,7 +145,7 @@ paper_pipeline<-function(cleaned.data, drivers){
   Clusters<-One_step_clustering(SNV_list = filtered.data,
                                 contamination = c(0.3,0.4),
                                 nclone_range = 2:10,
-                                maxit = 2,
+                                Init = 2,
                                 save_plot = FALSE,
                                 ncores = ncores
   )
@@ -162,7 +162,7 @@ All_clustering<-function(noisy)
   return(One_step_clustering(SNV_list = noisy,
                              contamination = c(0.3,0.4),
                              nclone_range = 2:10,
-                             maxit = 2,
+                             Init = 2,
                              save_plot = FALSE,
                              ncores = ncores
   )
@@ -183,7 +183,7 @@ filter_drivers<-function(cleaned.data,noisy_data,id_drivers_less_stringent){
   return(One_step_clustering(SNV_list = input,
                              contamination = c(0.3,0.4),
                              nclone_range = 2:10,
-                             maxit = 2,
+                             Init = 2,
                              save_plot = FALSE,
                              ncores = ncores
   ))
