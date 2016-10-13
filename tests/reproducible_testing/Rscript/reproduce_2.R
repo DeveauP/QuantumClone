@@ -207,10 +207,10 @@ compare_qual<-function(paper,
   # average and max error for drivers
   pap.err<-sqrt({
     cellularities[[1]][paper$driver_info$filtered_data[[1]]$Chr]/100-
-      paper$EM.output$centers[[1]][paper$driver_info$cluster]}**2+
+      paper$EM.output$centers[[1]][paper$driver_info$cluster]/(1-0.3)}**2+
       {
         cellularities[[2]][paper$driver_info$filtered_data[[2]]$Chr]/100-
-          paper$EM.output$centers[[2]][paper$driver_info$cluster]}**2
+          paper$EM.output$centers[[2]][paper$driver_info$cluster]/(1-0.4)}**2
   )
 
   ext.test<-cnum(extended$filtered.data[[1]]$Start) %in% cnum(drivers_id)
@@ -219,9 +219,9 @@ compare_qual<-function(paper,
   
 
   ext.err<-sqrt({cellularities[[1]][ext.Chr]/100-
-      extended$EM.output$centers[[1]][ext.clust]}**2+
+      extended$EM.output$centers[[1]][ext.clust]/(1-0.3)}**2+
       {cellularities[[2]][ext.Chr]/100-
-          extended$EM.output$centers[[2]][ext.clust]}**2
+          extended$EM.output$centers[[2]][ext.clust]/(1-0.4)}**2
   )
   
 
@@ -231,9 +231,9 @@ compare_qual<-function(paper,
   
   
   all.err<-sqrt({cellularities[[1]][all.Chr]/100-
-      all$EM.output$centers[[1]][all.clust]}**2+
+      all$EM.output$centers[[1]][all.clust]/(1-0.3)}**2+
       {cellularities[[2]][all.Chr]/100-
-          all$EM.output$centers[[2]][all.clust]}**2
+          all$EM.output$centers[[2]][all.clust]/(1-0.4)}**2
   )
   
   max.driv.error<-c(max(pap.err),
@@ -266,8 +266,8 @@ MaxDistance<-function(cellularit, cluster_cells){
   result<-matrix(nrow = nclus,ncol = nclones)
   
   for(i in 1:nclus){
-    result[i,]<-sqrt((cnum(cluster_cells[[1]][i])-xclon)**2+
-                       (cnum(cluster_cells[[2]][i])-yclon)**2
+    result[i,]<-sqrt((cnum(cluster_cells[[1]][i]/(1-0.3))-xclon)**2+ ### Correct for renormalization
+                       (cnum(cluster_cells[[2]][i]/(1-0.4))-yclon)**2
     )
   }
   minClustClon<-apply(X = result,MARGIN = 1,min) ### Find the clone that is closest to cluster

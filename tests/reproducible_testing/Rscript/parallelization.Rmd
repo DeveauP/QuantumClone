@@ -43,7 +43,8 @@ print(max.cores)
 
 analysis<-function(ncores = 1,Start.data){
   set.seed(123)
-  One_step_clustering(SNV_list = Start.data,ncores = ncores,contamination = c(0,0), save_plot = FALSE
+  One_step_clustering(SNV_list = Start.data,ncores = ncores,contamination = c(0,0), 
+                      save_plot = FALSE, Initializations = 2,preclustering = "FLASH",nclone_range = 2:10
 )
 }
 
@@ -56,5 +57,5 @@ mb<-microbenchmark(analysis(1,Start.data),analysis(2,Start.data),analysis(max.co
 ```{r disp_ana}
 print(mb)
 
-autoplot(mb)
+autoplot(mb)+ylim(c(0,10))
 ```
