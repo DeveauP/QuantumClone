@@ -123,7 +123,6 @@ plot_with_margins_densities<-function(QClone_Output){
 plot_QC_out<-function(QClone_Output,Sample_names=NULL, simulated = FALSE,sample_selected = 1:2){
   if(is.null(names(QClone_Output)) && sum(grepl(pattern = "Crit",x = names(QClone_Output[[1]])))>0){
     #### All models are kept
-    
     if(is.null(Sample_names)){
       Sample_names<-unlist(lapply(X = QClone_Output[[1]]$filtered.data,FUN = function(df){
         df[1,1]
@@ -225,7 +224,12 @@ plot_QC_out<-function(QClone_Output,Sample_names=NULL, simulated = FALSE,sample_
 #' require(ggplot2)
 #' evolution_plot(QC_output)
 evolution_plot<-function(QC_out,Sample_names=NULL){
-  L<-length(QC_out$EM.output$centers)
+  if(sum(grepl(x = names(QC_out$EM.output),pattern = "normalized.centers"))){
+    L<-length(QC_out$EM.output$normalized.centers)
+  }
+  else{
+    L<-length(QC_out$EM.output$centers)
+  }
   if(is.null(Sample_names)){
     warning(paste("Samples_names is empty, will use 1 to",L))
     Sample_names<-1:L

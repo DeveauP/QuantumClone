@@ -339,7 +339,13 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
       r$EM.output$normalized.centers<-normalized.centers
     }
     else{
-      r$EM.output$normalized.centers<-r$EM.output$centers/(1-contamination)
+      for(mod in 1:length(r)){
+        normalized.centers<-list()
+        for(i in 1:length(r$EM.output$centers)){
+          normalized.centers[[i]]<-r[[mod]]$EM.output$centers[[i]]/(1-contamination[i])
+        }
+        r[[mod]]$EM.output$normalized.centers<-normalized.centers
+      }
     }
   }
   r
