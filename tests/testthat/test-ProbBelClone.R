@@ -15,6 +15,6 @@ test_that("Returns correct clustering",{
                                        clone_prevalence=cellularities,
                                        contamination=0
   )
-  expect_identical(sum(test$cluster!=SNVs[[1]]$Chr),0)
+  expect_equal(sum(test$cluster!=SNVs[[1]]$Chr),0)
 }
 )
