@@ -12,7 +12,8 @@ Probability.to.belong.to.clone(SNV_list, clone_prevalence, contamination,
 the chromosome "Chr",the position of the mutation "Start", the number of reads supporting the mutation "Alt", the depth of coverage at this locus "Depth",
 and if the output from FREEC for the samples are not associated, the genotype "Genotype".}
 
-\item{clone_prevalence}{List of numeric vectors giving the cellular prevalence of each clone in each sample}
+\item{clone_prevalence}{List of numeric vectors giving the cellular prevalence of each clone in each sample, not normalized for contamination. 
+This should be stored in `QC_output$EM.output$centers`}
 
 \item{contamination}{Numeric vector giving the contamination by normal cells}
 

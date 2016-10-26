@@ -160,7 +160,7 @@ m.step<-function(fik,Schrod,previous.weights,
   return(list(weights=weights,centers=spare[1:length(unlist(previous.centers))],val=spare$value))
 }
 
-Compute.adj.fact<-function(Schrod,contamination){ ##Factor used to compute the probability of the binomial distribution
+Compute.adj.fact<-function(Schrod){ ##Factor used to compute the probability of the binomial distribution
   n<-length(Schrod)
   adj.factor<-matrix(ncol = n,nrow=nrow(Schrod[[1]]))
   for(i in 1:n){
@@ -201,7 +201,7 @@ EM.algo<-function(Schrod, nclust=NULL,
   prior_center<-unlist(cur.center)
   cur.val<-NULL
   eval<-1
-  adj.factor<-Compute.adj.fact(Schrod = Schrod,contamination = contamination)
+  adj.factor<-Compute.adj.fact(Schrod = Schrod)
   if(grepl(pattern = optim,x = "compound",ignore.case = TRUE)){
     if(is.matrix(adj.factor) && ncol(adj.factor)>1){
       unicity_test<-TRUE

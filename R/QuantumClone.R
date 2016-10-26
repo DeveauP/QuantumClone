@@ -803,14 +803,15 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
 #' @param SNV_list A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
 #' the chromosome "Chr",the position of the mutation "Start", the number of reads supporting the mutation "Alt", the depth of coverage at this locus "Depth",
 #' and if the output from FREEC for the samples are not associated, the genotype "Genotype".
-#' @param clone_prevalence List of numeric vectors giving the cellular prevalence of each clone in each sample
+#' @param clone_prevalence List of numeric vectors giving the cellular prevalence of each clone in each sample, not normalized for contamination. 
+#' This should be stored in `QC_output$EM.output$centers`
 #' @param contamination Numeric vector giving the contamination by normal cells
 #' @param clone_weights Numeric vector giving the proportion of mutations in each clone
 #' @keywords Clonal inference phylogeny
 #' @export
 #' @examples
 #' set.seed(123)
-#' SNVs<-QuantumCat(number_of_clones = 2,number_of_mutations = 50,number_of_samples = 1)
+#' SNVs<-QuantumCat(number_of_clones = 2,number_of_mutations = 50,number_of_samples = 1,ploidy = "AB")
 #' Probability.to.belong.to.clone(SNV_list=SNVs,
 #' clone_prevalence=list(c(0.5,1),c(0.5,1)),contamination=c(0,0))
 
@@ -828,19 +829,18 @@ Probability.to.belong.to.clone<-function(SNV_list,
     result<- eval.fik(Schrod = Schrod,
                       centers = clone_prevalence,
                       weights= clone_weights,keep.all.poss = TRUE,
-                      adj.factor = Compute.adj.fact(Schrod = Schrod,contamination = contamination)
+                      adj.factor = Compute.adj.fact(Schrod = Schrod)
     )
     filtered<-filter_on_fik(Schrod = Schrod,fik = result)
-    filtered_prob<-Probability.to.belong.to.clone(SNV_list = filtered,
-                                                  clone_prevalence,
-                                                  contamination,
-                                                  clone_weights)$filtered_prob
+    filtered_prob<-Probability.to.belong.to.clone(SNV_list = filtered,clone_prevalence = clone_prevalence,
+                                                  contamination = contamination,clone_weights = clone_weights)$filtered_prob
     
   }
   else{### The output has  been through clustering
     Schrod<-SNV_list
-    adj.fact<-Compute.adj.fact(SNV_list,contamination)
-    result<-eval.fik(Schrod = SNV_list,centers = clone_prevalence,
+    adj.fact<-Compute.adj.fact(SNV_list)
+    result<-eval.fik(Schrod = SNV_list,
+                     centers = clone_prevalence,
                      weights =clone_weights,
                      keep.all.poss = TRUE,
                      adj.factor = adj.fact
@@ -848,8 +848,6 @@ Probability.to.belong.to.clone<-function(SNV_list,
     filtered_prob<-result
     filtered <-SNV_list
   }
-  
-  
   clustering<-apply(X = filtered_prob,MARGIN = 1,FUN = function(z) {
     if(sum(z==max(z))>1){ ### Look for the multiple clones, and attribute with probability proportional to the weight
       if(max(z)>0){

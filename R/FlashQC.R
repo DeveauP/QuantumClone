@@ -240,7 +240,7 @@ FlashQC<-function(Cells,conta,Nclus,model.selection = "tree"){
   )
   if(recluster){
     message("Keeping most likely positions and reclustering...")
-    adj.factor<-Compute.adj.fact(Schrod_cells,conta)
+    adj.factor<-Compute.adj.fact(Schrod_cells)
     fik<-eval.fik(Schrod = Schrod_cells,
                   centers = priors$centers,
                   weights = priors$weights,
@@ -299,7 +299,7 @@ FlashQC<-function(Cells,conta,Nclus,model.selection = "tree"){
 Compute_objective<-function(tree,nclus,Schrod,conta){
   priors<-Create_prior_cutTree(tree = tree,Schrod_cells = Schrod,NClus = nclus)
 
-  adj.factor<-Compute.adj.fact(Schrod,conta)
+  adj.factor<-Compute.adj.fact(Schrod)
   fik<-eval.fik(Schrod = Schrod,
            centers = priors$centers,
            weights = priors$weights,
