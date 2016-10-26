@@ -8,11 +8,11 @@ test_that("Check optim",{
 })
 test_that("Check optimx",{
   expect_identical(Compute_NMI(
-    QuantumClone::One_step_clustering(Input_Example,contamination = c(0,0),
+    QuantumClone::One_step_clustering(Input_Example,contamination = 0,
                                       nclone_range = 3:5,
                                       optim = "optimx",
                                       save_plot = FALSE,
-                                      preclustering = "FLASH")
+                                      preclustering = "kmedoid")
   ), 1)
   
 })
