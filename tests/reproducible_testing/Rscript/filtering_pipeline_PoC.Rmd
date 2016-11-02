@@ -10,6 +10,8 @@ self_contained: no
 fig_width: 7
 fig_height: 7
 ---
+**N.B.:** This simulation is to show the paper pipeline when the number of biologically meaningful variants difficult to cluster is high compared to stringent mutations.
+
 
 #Creating data
 
@@ -28,17 +30,18 @@ if(!require(ggplot2)) install.packages("ggplot2")
 if(!require(reshape2)) install.packages("reshape2")
 
 # Creating reproducible example
-source("reproduce_2.R")
+source("reproduce.R")
 
 set.seed(123)
 
 ````
 
-*All functions are stored inside the reproduce_2.R, to avoid long display of codes. Below are the values that will be used throughout the testing *
+**All functions are stored inside the reproduce.R, to avoid long display of codes. Below are the values that will be used throughout the testing. **
+
 ```{r setup_values}
-number_iterations <- 10
-number_mutations <- 200
-ndrivers <- 20
+number_iterations <- 20
+number_mutations <- 150
+ndrivers <- 100
 ```
 
 We will first create a test set with `QuantumCat` with 6 clones, `r number_mutations` variants, diploid, with an average depth of 100X, two samples with respective purity 70% and 60%. We make sure these variants correspond to stringent filters (i.e. depth $> 50$X).
@@ -68,11 +71,11 @@ kable(permissive[[1]][1:6,])
 
 ````
 
-We are now going to select `r ndrivers` drivers, with probability $3/4$ of being in the permissive filters.
+We are now going to select `r ndrivers` drivers, with probability $10/11$ of being in the permissive filters.
 
 ````{r select_drivers}
-drivers_id<-sample(1:(2*number_mutations),size = ndrivers,prob = rep(c(1/{4*number_mutations},
-                                                                       3/{4*number_mutations}),
+drivers_id<-sample(1:(2*number_mutations),size = ndrivers,prob = rep(c(1/{20*number_mutations},
+                                                                       19/{20*number_mutations}),
                                                                      each = number_mutations)
                    )
 drivers_id<-drivers_id[order(drivers_id)]
@@ -98,10 +101,10 @@ pap<-paper_pipeline(filtered = toy.data,
 ```
 
 We are now going to compare the quality of clustering using the Normalized Mutual Information, the number of clusters found (the truth being 6), the maximal and average error in the distance of a driver to its real position.
-*N.B*: 
+**N.B.:** 
 
   - NMI is computed on the 200 filtered variants + drivers from permissive filters;
-  - mean.error is the average distance between the real cellularity and its found position for ~ 215 variants;
+  - mean.error is the average distance between the real cellularity and its found position for ~ `r number_mutations+ndrivers` variants;
   - mean.driv.error is the average distance between the real cellularity and its found position for drivers only.
 
 

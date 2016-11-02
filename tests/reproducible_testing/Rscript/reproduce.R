@@ -46,6 +46,9 @@ QuantumCat_permissive<-function(fromQuantumCat,number_of_mutations = 200,
   chr<-sample(1:max(fromQuantumCat[[1]]$Chr),size = number_of_mutations,
               replace = TRUE)
   Start<-(1:number_of_mutations)+nrow(fromQuantumCat[[1]])
+  AB<-round(number_of_mutations/4)
+  AAB<-round(number_of_mutations/2)
+  AABB<-number_of_mutations-(AB+AAB)
   for(i in 1:2){
     cells[[i]]<-sapply(clones,function(z){
       fromQuantumCat[[1]]$Cellularit[fromQuantumCat[[1]]$Chr==z][1]
@@ -53,10 +56,10 @@ QuantumCat_permissive<-function(fromQuantumCat,number_of_mutations = 200,
     )
     variants[[i]]<-data.frame(Chr = chr,Start = Start,
                               Cellularit = cells[[i]][chr],
-                              Genotype = rep(c("AB","AAB","AABB"),times = c(round(number_of_mutations/4),
-                                                                            round(number_of_mutations/2),
-                                                                            round(number_of_mutations/4)
-                              )),
+                              Genotype = rep(c("AB","AAB","AABB"),times = c(AB,
+                                                                            AAB,
+                                                                            AABB)
+                              ),
                               number_of_copies = c(rep(1,times = round(number_of_mutations/4)),
                                                    sample(1:2,size = round(3*number_of_mutations/4),replace = TRUE)
                               ),
@@ -102,13 +105,15 @@ paper_pipeline<- function(filtered,
                           permissive,
                           drivers_id,
                           contamination = c(0.3,0.4)
-                          ){
+){
+  ptm<-proc.time()
   clustering<-One_step_clustering(SNV_list = filtered,
                                   contamination = contamination,
                                   nclone_range = 2:10,
-                                  Init =  2,ncores = 2,
+                                  Init =  2,ncores = 4,
                                   save_plot = FALSE
   )
+  clustering$time<-sum((proc.time()-ptm)[1:3])
   
   ext<-list()
   for(i in 1:length(filtered)){
@@ -127,11 +132,11 @@ paper_pipeline<- function(filtered,
     clustering$filtered.data[[i]]<-rbind(clustering$filtered.data[[i]],
                                          cbind(clustering$driver_info$filtered_data[[i]],
                                                ext[[i]][,c("Cellularit","number_of_copies","Frequency")])
-                                         )
+    )
   }
   clustering$cluster<-c(clustering$cluster,clustering$driver_info$cluster)
   ### adding data from a posteriori clustering
-
+  
   return(clustering)
   
 }
@@ -148,12 +153,14 @@ extended<- function(filtered,
                       permissive[[i]][drivers_id[drivers_id>max(filtered[[1]]$Start)]-max(filtered[[1]]$Start),])
     
   }
+  ptm<-proc.time()
   clustering<-One_step_clustering(SNV_list = input,
                                   contamination = contamination,
                                   nclone_range = 2:10,
-                                  Init =  2,ncores = 2,
+                                  Init =  2,ncores = 4,
                                   save_plot = FALSE
   )
+  clustering$time<-sum((proc.time()-ptm)[1:3])
   
   clustering$driver_clust<-clustering$cluster[clustering$filtered.data[[1]]$Start %in% drivers_id]
   return(clustering)
@@ -169,13 +176,14 @@ All<-function(filtered,
                       permissive[[i]])
     
   }
+  ptm<-proc.time()
   clustering<-One_step_clustering(SNV_list = input,
                                   contamination = contamination,
                                   nclone_range = 2:10,
                                   Init =  2,ncores = 4,
                                   save_plot = FALSE
   )
-  
+  clustering$time<-sum((proc.time()-ptm)[1:3])
   ### keep only 215 meaningful
   keep<-clustering$filtered.data[[1]]$Start %in% c(filtered[[1]]$Start,drivers_id)
   for(s in 1:2){
@@ -207,7 +215,7 @@ compare_qual<-function(paper,
     ) 
   }
   )
-
+  
   #maximal distance to closest clone
   Max.Distance.to.clone<-c(
     MaxDistance(cellularit = cellularities, cluster_cells = paper$EM.output$normalized.centers),
@@ -232,7 +240,7 @@ compare_qual<-function(paper,
         cellularities[[2]][paper$filtered.data[[1]]$Chr[test.driver]]-
           paper$EM.output$normalized.centers[[2]][paper$cluster[test.driver]]}**2
   )
-
+  
   pap.mut.err<-sqrt({
     paper$filtered.data[[1]]$Cellularit/100-
       paper$EM.output$normalized.centers[[1]][paper$cluster]}**2+
@@ -240,12 +248,12 @@ compare_qual<-function(paper,
         paper$filtered.data[[2]]$Cellularit/100-
           paper$EM.output$normalized.centers[[2]][paper$cluster]}**2
   )
-
+  
   ext.test<-cnum(extended$filtered.data[[1]]$Start) %in% cnum(drivers_id)
   ext.Chr<-extended$filtered.data[[1]]$Chr[ext.test]
   ext.clust<-extended$cluster[ext.test]
   
-
+  
   ext.err<-sqrt({cellularities[[1]][ext.Chr]-
       extended$EM.output$normalized.centers[[1]][ext.clust]}**2+
       {cellularities[[2]][ext.Chr]-
@@ -274,8 +282,8 @@ compare_qual<-function(paper,
   )
   
   mean.error<-c(mean(pap.mut.err),
-                    mean(ext.mut.err),
-                    mean(all.mut.err))
+                mean(ext.mut.err),
+                mean(all.mut.err))
   
   mean.driv.error<-c(mean(pap.err),
                      mean(ext.err),
@@ -286,7 +294,8 @@ compare_qual<-function(paper,
                      Max.Distance.to.clone = Max.Distance.to.clone,
                      nclusters = nclusters,
                      mean.mut.error=mean.error,
-                     mean.driv.error = mean.driv.error
+                     mean.driv.error = mean.driv.error,
+                     time = c(pap$time, ext$time,all$time)
   )
   return(result)
 }
@@ -300,7 +309,7 @@ MaxDistance<-function(cellularit, cluster_cells){
   nclus<-length(cluster_cells[[1]])
   xclon<-cellularit[[1]]
   yclon<-cellularit[[2]]
-
+  
   result<-matrix(nrow = nclus,ncol = nclones)
   
   for(i in 1:nclus){

@@ -66,13 +66,13 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,adj.factor,log = FA
                                       yes = Depth[test]*log(1 - pro[test]),
                                       no =  dbinom(x =Alt[test] ,size = Depth[test],prob = pro[test],log = TRUE)
         )
-         
+        al[!test,k]<-log(.Machine$double.xmin)
+        
       }
       else{
         al[test,k]<-al[test,k]*dbinom(x =Alt[test] ,size = Depth[test],prob = pro[test],log = FALSE)
-        
+        al[!test,k]<-sqrt(.Machine$double.xmin)
       }
-      al[!test,k]<-NA
     }
   }
   al
@@ -95,7 +95,7 @@ eval.fik.m<-function(Schrod,centers,weights,adj.factor,log = TRUE){
                   log = log)
   test<-is.infinite(spare)
   if(sum(test)){
-    spare[test]<--log(.Machine$double.eps)
+    spare[test]<--log(.Machine$double.xmin)
   }
   spare
 }
