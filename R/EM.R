@@ -544,7 +544,6 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
     index<-0
     for(i in 1:length(nclone_range)){
       for(init in 1:Initializations){
-        
         if(FLASH){
           if(init == 1){
             priors<-Create_prior_cutTree(tree,Schrod,nclone_range[i],jitter = FALSE)
@@ -563,14 +562,14 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
                                            optim = optim,
                                            keep.all.models = keep.all.models)
         }
-      }
-      else{
-        index<-index+1
-        list_out_EM[[index]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],epsilon = epsilon,
-                                         contamination = contamination,prior_center = clone_priors,
-                                         prior_weight = prior_weight,Initializations = Initializations,
-                                         optim = optim,
-                                         keep.all.models = keep.all.models)
+        else{
+          index<-index+1
+          list_out_EM[[index]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],epsilon = epsilon,
+                                           contamination = contamination,prior_center = clone_priors,
+                                           prior_weight = prior_weight,Initializations = Initializations,
+                                           optim = optim,
+                                           keep.all.models = keep.all.models)
+        }
       }
     }
   }
