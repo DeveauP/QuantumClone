@@ -556,7 +556,7 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
                                        contamination = contamination,
                                        prior_center = priors$centers,
                                        prior_weight = priors$weights,
-                                       Initializations = Initializations,
+                                       Initializations = 1,
                                        optim = optim,
                                        keep.all.models = keep.all.models)
         }

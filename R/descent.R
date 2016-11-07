@@ -95,7 +95,7 @@ eval.fik.m<-function(Schrod,centers,weights,adj.factor,log = TRUE){
                   log = log)
   test<-is.infinite(spare)
   if(sum(test)){
-    spare[test]<--log(.Machine$double.xmin)
+    spare[test]<-log(.Machine$double.xmin)
   }
   spare
 }
