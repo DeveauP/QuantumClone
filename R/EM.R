@@ -46,7 +46,7 @@ e.step<-function(Schrod,centers,weights,adj.factor){
 m.step<-function(fik,Schrod,previous.weights,
                  previous.centers,contamination,adj.factor,
                  optim ="default"
-                 ){
+){
   if(!is.null(fik)){
     weights<-apply(X = fik,MARGIN = 2,FUN = function(z) sum(z)/length(unique(Schrod[[1]]$id)))
   }
@@ -85,7 +85,7 @@ m.step<-function(fik,Schrod,previous.weights,
     r<--fik*eval.fik.m(Schrod = Schrod,centers = x,adj.factor = adj.factor,
                        weights = weights,
                        log = TRUE)
-      
+    
     
     r[fik==0]<-0
     PI<-matrix(nrow = nrow(fik),ncol = ncol(fik))
@@ -131,7 +131,7 @@ m.step<-function(fik,Schrod,previous.weights,
                           method = "L-BFGS-B",
                           lower = rep(.Machine$double.eps,times = length(unlist(previous.centers))),
                           upper=rep(1,length(unlist(previous.centers))))
-
+    
     return(list(weights=weights,centers=spare[1:length(unlist(previous.centers))],val=spare$value))
   }
   else if(optim =="DEoptim"){
@@ -259,7 +259,7 @@ EM.algo<-function(Schrod, nclust=NULL,
         #prior_center<-c(prior_center,unlist(n.centers))
         cur.center<-n.centers
         ### Add fik*log(weights) if EM not direct optimization
-
+        
       }
       PI<-matrix(nrow = nrow(tik),ncol= ncol(tik))
       for(i in 1:length(cur.weight)){
@@ -541,9 +541,11 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
     parallel::stopCluster(cl)
   }
   else{
+    index<-0
     for(i in 1:length(nclone_range)){
-      if(FLASH){
-        for(init in 1:Initializations){
+      for(init in 1:Initializations){
+        
+        if(FLASH){
           if(init == 1){
             priors<-Create_prior_cutTree(tree,Schrod,nclone_range[i],jitter = FALSE)
           }
@@ -551,22 +553,24 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
             priors<-Create_prior_cutTree(tree,Schrod,nclone_range[i],jitter = TRUE)
             
           }
-          list_out_EM[[i]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],
-                                       epsilon = epsilon,
-                                       contamination = contamination,
-                                       prior_center = priors$centers,
-                                       prior_weight = priors$weights,
-                                       Initializations = 1,
-                                       optim = optim,
-                                       keep.all.models = keep.all.models)
+          index<-index+1
+          list_out_EM[[index]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],
+                                           epsilon = epsilon,
+                                           contamination = contamination,
+                                           prior_center = priors$centers,
+                                           prior_weight = priors$weights,
+                                           Initializations = 1,
+                                           optim = optim,
+                                           keep.all.models = keep.all.models)
         }
       }
       else{
-        list_out_EM[[i]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],epsilon = epsilon,
-                                     contamination = contamination,prior_center = clone_priors,
-                                     prior_weight = prior_weight,Initializations = Initializations,
-                                     optim = optim,
-                                     keep.all.models = keep.all.models)
+        index<-index+1
+        list_out_EM[[index]]<-parallelEM(Schrod = Schrod,nclust = nclone_range[i],epsilon = epsilon,
+                                         contamination = contamination,prior_center = clone_priors,
+                                         prior_weight = prior_weight,Initializations = Initializations,
+                                         optim = optim,
+                                         keep.all.models = keep.all.models)
       }
     }
   }
@@ -583,18 +587,6 @@ EM_clustering<-function(Schrod,contamination,prior_weight=NULL, clone_priors=NUL
     return(result)
   }
   else{
-    if(Initializations>1 && ncores == 1){
-      ### Clean fact that it is a list of normal results (for each clone)
-      spare<-list_out_EM
-      list_out_EM<-list()
-      index<-0
-      for(i in 1:length(spare)){
-        for(k in 1:Initializations){
-          index<-index+1
-          list_out_EM[[index]]<-spare[[i]][[k]]
-        }
-      }
-    }
     Crit<-BIC_criterion(EM_out_list = list_out_EM, model.selection = model.selection)
     
     for(i in 1:length(list_out_EM)){
