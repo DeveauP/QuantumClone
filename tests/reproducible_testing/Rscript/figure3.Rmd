@@ -1,0 +1,174 @@
+---
+title: "Proof of concept: filtering pipeline (Clustering quality) "
+author: "Paul Deveau"
+date: "`r Sys.Date()`"
+output: 
+html_document:
+  highlight: tango
+  theme: cosmo
+self_contained: no
+fig_width: 7
+fig_height: 7
+---
+**N.B.:** This simulation is to show the paper pipeline when the number of biologically meaningful variants difficult to cluster is high compared to stringent mutations.
+
+
+#Creating data
+
+This script is to show the importance of clustering high confidence variants and then attribute meaningful ones to the identified clusters
+
+````{r set_env,echo = FALSE,warning = FALSE, message = FALSE}
+# Loading libraries
+if(!require(QuantumClone)){
+  if(!require(devtools)){
+    install.packages("devtools")
+  }
+  devtools::install_github(repo = "DeveauP/QuantumClone")
+}
+if(!require(knitr)) install.packages("knitr")
+if(!require(ggplot2)) install.packages("ggplot2")
+if(!require(reshape2)) install.packages("reshape2")
+
+# Creating reproducible example
+source("reproduce.R")
+
+set.seed(123)
+
+````
+
+**All functions are stored inside the reproduce.R, to avoid long display of codes. Below are the values that will be used throughout the testing. **
+
+```{r setup_values}
+number_iterations <- 20
+number_mutations <- 150
+ndrivers <- 100
+```
+
+We will first create a test set with `QuantumCat` with 6 clones, `r number_mutations` variants, diploid, with an average depth of 100X, two samples with respective purity 70% and 60%. We make sure these variants correspond to stringent filters (i.e. depth $> 50$X).
+
+````{r create_data}
+toy.data<-QuantumCat_stringent(number_of_clones = 6,number_of_mutations = number_mutations,
+                     ploidy = "AB",depth = 100,
+                     contamination = c(0.3,0.4),min_depth = 50)
+
+````
+
+We check that all these variants are within the stringent filters (i.e depth $\geq 50$ X), and display the first six rows of the first sample:
+
+````{r check_input_s}
+sum(toy.data[[1]]$Depth<50 | toy.data[[2]]$Depth<50)
+kable(toy.data[[1]][1:6,])
+````
+
+
+Then we create `r number_mutations` mutations that are in permissive filters. For that we take `r round(number_mutations/4)` mutations with 30 to 50 depth, `r round(number_mutations/2)` that have a depth $\geq 30$ in triploid (AAB) loci and `r round(number_mutations/4)` that have a depth $\geq 30$ in a tetraploid (AABB) locus.
+
+````{r check_input_p}
+permissive<-QuantumCat_permissive(fromQuantumCat = toy.data ,number_of_mutations = number_mutations,
+                               ploidy = "AB",depth = 100,
+                               contamination = c(0.3,0.4),max_depth = 50, min_depth = 30)
+kable(permissive[[1]][1:6,])
+
+````
+
+We are now going to select `r ndrivers` drivers, with probability $10/11$ of being in the permissive filters.
+
+````{r select_drivers}
+drivers_id<-sample(1:(2*number_mutations),size = ndrivers,prob = rep(c(1/{20*number_mutations},
+                                                                       19/{20*number_mutations}),
+                                                                     each = number_mutations)
+                   )
+drivers_id<-drivers_id[order(drivers_id)]
+drivers_id
+````
+
+We now want to cluster mutations using only the filtered mutations (Paper pipeline), the filtered and drivers (extended), or all mutations alltogether (All), and compare the clustering quality of these different methods.
+
+```{r cluster,message = FALSE}
+
+ext<-extended(filtered = toy.data,
+              permissive = permissive,
+              drivers_id = drivers_id)
+
+all<-All(filtered = toy.data,
+         permissive = permissive,
+         drivers_id = drivers_id
+)
+
+pap<-paper_pipeline(filtered = toy.data,
+                    permissive = permissive,
+                    drivers_id = drivers_id)
+```
+
+We are now going to compare the quality of clustering using the Normalized Mutual Information, the number of clusters found (the truth being 6), the maximal and average error in the distance of a driver to its real position.
+**N.B.:** 
+
+  - NMI is computed on the 200 filtered variants + drivers from permissive filters;
+  - mean.error is the average distance between the real cellularity and its found position for ~ `r number_mutations+ndrivers` variants;
+  - mean.driv.error is the average distance between the real cellularity and its found position for drivers only.
+
+
+```{r compare_qual}
+Quality<-compare_qual(paper = pap,
+                      extended = ext,
+                      all = all,
+                      drivers_id = drivers_id)
+
+kable(Quality)
+```
+
+We are now going to reproduce this test `r number_iterations-1` times.
+
+```{r iterate,message = FALSE}
+
+Quality<-rbind(Quality,
+               reproduce(number_iterations-1,
+                         number_mutations,
+                         ndrivers)
+               )
+
+``` 
+
+We can plot these results:
+
+```{r plot,echo = FALSE}
+Melt<-melt(cbind(Quality),id = "Pipeline")
+Melt$value<-as.numeric(as.character(Melt$value))
+
+ggplot(Melt,aes_string(x= "Pipeline",y = "value",facet = "variable"))+geom_boxplot()+facet_wrap( ~ variable,nrow = floor(sqrt(length(unique(Melt$variable))))+1,scales = "free_y")+theme_bw()+theme(axis.text.x = element_text(angle = 90))
+
+
+```
+
+```{r create_figure,echo = FALSE}
+library(cowplot)
+Melt$Pipeline<-as.character(Melt$Pipeline)
+head(Melt)
+Melt$Pipeline[Melt$Pipeline=="paper"]<-"Two step"
+Melt$Pipeline[Melt$Pipeline=="extended"]<-"Selective"
+Melt$Pipeline[Melt$Pipeline=="all"]<-"Classic"
+
+
+NMI_df<-Melt[Melt$variable=="NMI",]
+NMI_plot<-ggplot(NMI_df,aes_string(x= "Pipeline",y = "value"))+geom_boxplot()+ylab("Normalized Mutual Information")+
+    theme(axis.text.x = element_text(angle = 45,vjust = 0.6),legend.position = "none")+xlab("")+ylim(c(0,1))
+
+L2_df<-Melt[Melt$variable=="mean.mut.error",]
+L2_plot<-ggplot(L2_df,aes_string(x= "Pipeline",y = "value"))+geom_boxplot()+ylab("Average L2 error")+
+    theme(axis.text.x = element_text(angle = 45,vjust = 0.6),legend.position = "none")+xlab("")+ylim(c(0,1))
+
+Time_df<-Melt[Melt$variable=="time",]
+Time_plot<-ggplot(Time_df,aes_string(x= "Pipeline",y = "value"))+geom_boxplot()+ylab("Time (s)")+
+    theme(axis.text.x = element_text(angle = 45,vjust = 0.6),legend.position = "none")+scale_y_log10(breaks = c(1,5,10,20,50,100),lim = c(5,50))+xlab("")
+
+head(NMI_df)
+NMI_plot
+L2_plot
+Time_plot
+
+Figure3<-plot_grid(NMI_plot,L2_plot,Time_plot,labels = c("b","c","d"),ncol = 3)
+Figure3
+save_plot("Figure3.pdf",Figure3,base_height = 6,base_width = 12)
+
+write.table(x = Quality,file = "data.df",quote = FALSE,sep = "\t" ,row.names = FALSE,col.names = TRUE)
+```
