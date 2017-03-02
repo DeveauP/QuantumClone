@@ -29,4 +29,3 @@ plot_QC_out(QC_out,Sample_names = c("Diagnosis","Relapse"))
 
 }
 \keyword{Plot}
-

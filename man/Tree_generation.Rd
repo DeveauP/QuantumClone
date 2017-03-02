@@ -18,4 +18,3 @@ Assumption is made the different clones are on different lines of the matrix
 \keyword{Clonal}
 \keyword{inference}
 \keyword{phylogeny}
-

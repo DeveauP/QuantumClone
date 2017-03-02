@@ -24,4 +24,3 @@ to determine the number of clusters. "BIC","AIC" or numeric values will use meth
 \description{
 Returns number of clusters based on model selection
 }
-

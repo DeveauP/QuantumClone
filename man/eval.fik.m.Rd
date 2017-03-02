@@ -23,4 +23,3 @@ between two optimization steps. If NULL, will take 1/(median depth).}
 Eval probability for M step
 Computes the log directly as log density is faster to compute
 }
-

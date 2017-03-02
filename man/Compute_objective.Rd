@@ -18,4 +18,3 @@ Compute_objective(tree, nclus, Schrod, conta)
 \description{
 Compute the value of clustering based on same principles as QuantumClone EM
 }
-

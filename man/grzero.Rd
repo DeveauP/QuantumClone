@@ -18,4 +18,3 @@ grzero(fik, adj.factor, Alt, Depth)
 \description{
 Return center values for max if adj.factor has a single value for all variants/possibilities in each samples
 }
-

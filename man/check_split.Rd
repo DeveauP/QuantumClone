@@ -12,4 +12,3 @@ check_split(leaf)
 \description{
 Check if node can be split further, i.e. cellularity > 10% in at least 1 sample
 }
-

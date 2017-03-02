@@ -52,4 +52,3 @@ NMI_cutree( FQC$cluster,chr = In[[1]]$Chr)
 \seealso{
 QuantumClone
 }
-

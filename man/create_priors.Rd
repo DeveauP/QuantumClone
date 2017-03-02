@@ -17,4 +17,3 @@ create_priors(nclust, nsample, prior = NULL)
 Semi-random generation of clonal priors
 }
 \keyword{EM}
-

@@ -22,4 +22,3 @@ plot_with_margins_densities(QC_out)
 }
 \keyword{Densities}
 \keyword{Plot}
-

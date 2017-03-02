@@ -15,4 +15,3 @@ Compute the normalized mutual information to assess clustering quality
 \examples{
 Compute_NMI(QC_output)
 }
-

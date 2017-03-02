@@ -24,4 +24,3 @@ WARNING: Tree_generation recreates a tree from data while phylo_tree_generation 
 \keyword{Data}
 \keyword{creation}
 \keyword{phylogeny}
-

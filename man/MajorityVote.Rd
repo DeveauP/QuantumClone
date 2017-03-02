@@ -15,4 +15,3 @@ Numeric value of the number of clusters to chose
 \description{
 Extract majority vote from multiple indices
 }
-

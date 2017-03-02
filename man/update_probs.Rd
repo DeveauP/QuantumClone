@@ -14,4 +14,3 @@ update_probs(Proportions, can_split)
 \description{
 Creates vector with probability to be sampled
 }
-

@@ -17,4 +17,3 @@ Creates density plot when only one sample is given
 \keyword{Clonal}
 \keyword{inference}
 \keyword{phylogeny}
-

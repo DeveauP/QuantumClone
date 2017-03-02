@@ -15,4 +15,3 @@ returns a square numeric matrix
 \description{
 Creates a matrix of distance between two points based on the p-value to be from the same distribution
 }
-

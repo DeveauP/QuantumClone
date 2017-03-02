@@ -23,4 +23,3 @@ Adds a leaf to an already built tree. Output is a list of all possibilities.
 \keyword{Clonal}
 \keyword{inference}
 \keyword{phylogeny}
-

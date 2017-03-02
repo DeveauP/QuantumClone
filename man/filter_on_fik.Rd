@@ -15,4 +15,3 @@ filter_on_fik(Schrod, fik)
 Keep one possibility per position and ajust weight accordingly
 }
 \keyword{filter}
-

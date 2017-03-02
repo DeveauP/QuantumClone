@@ -19,4 +19,3 @@ Computes the position of a node on the graph, based on the interaction matrix.
 \keyword{Clonal}
 \keyword{inference}
 \keyword{phylogeny}
-

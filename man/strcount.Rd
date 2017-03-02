@@ -18,4 +18,3 @@ Counting the number of characters for each element of a vector
 }
 \keyword{Text}
 \keyword{handling}
-

@@ -28,4 +28,3 @@ Alt<-c(125,375)
 Depth<-c(1000,1000)
 grbase(fik,adj.factor,centers,Alt,Depth)
 }
-

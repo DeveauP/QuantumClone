@@ -41,4 +41,3 @@ Maximization of the likelihood given a mixture of binomial distributions
 \keyword{EM}
 \keyword{clustering}
 \keyword{number}
-

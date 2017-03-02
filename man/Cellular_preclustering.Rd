@@ -24,4 +24,3 @@ It first computes the zscore associated with a normalized number of alternative 
 The "normalized" number of reads is the number of alternative reads expected if the mutation was at a single 
 copy in a diploid genome.
 }
-

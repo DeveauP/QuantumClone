@@ -27,4 +27,3 @@ between two optimization steps. If NULL, will take 1/(median depth).}
 Optimization of clone positions and proportion of mutations in each clone.
 }
 \keyword{EM}
-

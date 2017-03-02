@@ -26,4 +26,3 @@ epsilon = 0.01)
 On October, 30th 2015
 }
 \keyword{datasets}
-

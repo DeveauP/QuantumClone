@@ -24,4 +24,3 @@ Input_Example<-QuantumCat(number_of_clones = 4,
                          contamination = c(0,0))
 }
 \keyword{datasets}
-

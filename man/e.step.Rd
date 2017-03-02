@@ -19,4 +19,3 @@ e.step(Schrod, centers, weights, adj.factor)
 Expectation step calculation
 }
 \keyword{E-Step}
-

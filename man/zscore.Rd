@@ -17,4 +17,3 @@ returns a square numeric matrix
 \description{
 Computes the z-score of mutations being from the same distribution
 }
-

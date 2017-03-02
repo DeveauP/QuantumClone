@@ -16,4 +16,3 @@ Tidy_output(r, Genotype_provided, SNV_list)
 \description{
 Tidying input by Chr Start
 }
-

@@ -17,4 +17,3 @@ Computes the length from the clone on the n-th row of the matrix, to the most an
 \keyword{Clonal}
 \keyword{inference}
 \keyword{phylogeny}
-

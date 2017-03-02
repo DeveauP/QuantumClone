@@ -42,4 +42,3 @@ truth<-c(rep(1,5),2,
          rep(1,2),rep(3,3))
 Precision_Recall(cluster,truth)
 }
-

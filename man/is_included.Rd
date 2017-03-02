@@ -17,4 +17,3 @@ Clone2 is included in Clone1 if all values of Clone2 are lower or equal to the o
 \keyword{Clonal}
 \keyword{inference}
 \keyword{phylogeny}
-

@@ -29,4 +29,3 @@ Creates weights and position priors from the hierachical clustering (tree) given
 a number of clusters Nclust. The centers of each cluster is found by
 \eqn{Center = \frac{\sum\limits_{m \in cluster}{Normalized Alt_{m}}}{\sum\limits_{m \in cluster}{Normalized Alt_{m}}}}
 }
-

@@ -18,4 +18,3 @@ Computes BIC from a list of outputs of EM algorithm, then returns the position w
 \keyword{EM}
 \keyword{clustering}
 \keyword{number}
-

@@ -19,4 +19,3 @@ list_prod(list(matrix(1:4,nrow = 2),matrix(1:4,nrow = 2)))
 }
 \keyword{List}
 \keyword{handling}
-

@@ -26,4 +26,3 @@ manual_plot_trees(Example_tree[[1]], d= 4,p = Example_tree[[2]])
 \keyword{Clonal}
 \keyword{inference}
 \keyword{phylogeny}
-

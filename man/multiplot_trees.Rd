@@ -22,4 +22,3 @@ multiplot_trees(QuantumClone::Tree, d= 4)
 \keyword{Clonal}
 \keyword{inference}
 \keyword{phylogeny}
-
