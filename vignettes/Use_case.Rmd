@@ -1,8 +1,10 @@
 ---
 title: "Use case"
 author: "Paul Deveau"
-date: "`r Sys.Date()`"
-output:  rmarkdown::html_vignette
+date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+output:
+  html_vignette:
+    self_contained: TRUE
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{Use case}
@@ -10,7 +12,9 @@ vignette: >
 ---
 ```{r, include = FALSE}
 library(QuantumClone)
-knitr::opts_chunk$set(fig.dpi = 96)
+knitr::opts_chunk$set(collapse = TRUE, fig.width = 7, fig.height = 7, 
+                      fig.align = "center",
+                      fig.dpi = 96)
 ```
 # QuantumClone and QuantumCat
 

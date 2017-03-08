@@ -1,20 +1,29 @@
 ---
 title: "Release"
 author: "Paul Deveau"
-date: "`r Sys.Date()`"
-output: html_vignette 
+date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+output: 
+  html_vignette:
+    self_contained: TRUE
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{Release}
   %\VignetteEncoding{UTF-8}
+  
 ---
-<h3< Release of 25/10/2016 </h3>
+
+<h3> Release of 8/03/2017 </h3>
+<ul>
+<li> Added normalization by contamination if "keep.all.model"</li>
+<li> Added clause to check if normalized.center exist in evolution plot</li>
+</ul>
+
+<h3> Release of 25/10/2016 </h3>
 
 <ul>
 <li> Added normalization by contamination if "keep.all.model"</li>
 <li> Added clause to check if normalized.center exist in evolution plot</li>
-<li></li>
-<li></li>
+
 </ul>
 
 <h3>Release of 2/10/2016 </h3>
