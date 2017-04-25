@@ -16,11 +16,8 @@ R package also available on [CRAN](http://cran.r-project.org/web/packages/Quantu
 Maintainer: Paul Deveau (paul.deveau at curie.fr)
 
 ## Clonal Reconstruction from High-Throughput Sequencing data
-Beginners instruction are designed so that you don't see a line of code. Use this if you are not familiar with R programming, and thus that you will use the Graphical User Interface (GUI).
 
-Advanced instructions assume you know the basics of programming (downloading and using packages from CRAN).
-
-This Readme is divided in four parts:
+This Readme is divided in two parts:
 
 [1. Installation instructions ](#IIA)
 
