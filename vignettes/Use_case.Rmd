@@ -79,11 +79,12 @@ The QuantumClone package is divided in two:
 #### <a name="CR"></a> Clonal reconstruction
 One_step_clustering() has several parameters required (some have default configuration):
 ````{r One_step_example, eval = FALSE}
-  One_step_clustering(SNV_list, FREEC_list = NULL, contamination,
+  One_step_clustering(SNV_list = Input_Example, FREEC_list = NULL, contamination = c(0,0),
   nclone_range = 2:5, clone_priors = NULL, prior_weight = NULL,
-  maxit = 1 , preclustering = T, simulated = F, epsilon = 5 * (10^(-3)),
-  save_plot = T, ncores = 1, plot_3D = F, plot_3D_before_clustering = F,
-  restrict.to.AB = F, output_directory = NULL)
+  Initializations = 1 , preclustering = "Flash", 
+  simulated = FALSE, epsilon = 5 * (10^(-3)),
+  save_plot = TRUE, ncores = 1, 
+  restrict.to.AB = FALSE, output_directory = NULL)
 ````
 
 * SNV_list: list of dataframes. See [previous section](#SNVD) for description.

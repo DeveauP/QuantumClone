@@ -1,4 +1,4 @@
----
+    ---
 title: "Release"
 author: "Paul Deveau"
 date: "`r format(Sys.Date(), '%d/%m/%Y')`"
@@ -11,6 +11,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
   
 ---
+
+<h3> Release of 1/10/2017 </h3>
+<ul>
+<li> Corrected syntax for clustering function call in example vignette</li>
+</ul>
+
 
 <h3> Release of 8/03/2017 </h3>
 <ul>
