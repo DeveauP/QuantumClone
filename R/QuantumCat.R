@@ -114,7 +114,8 @@ QuantumCat<-function(number_of_clones,number_of_mutations,ploidy=2,depth=100,num
   recap<-list()
   if(number_of_samples>1){
     for(i in 1:number_of_samples){
-      frequency<-Cell[,i]*number_of_copies[[i]]/(A[[i]]+B[[i]])*(1-conta[i])
+        #VAF = Cell * Ncopies/(Ncancer+ {c*Nnormal/(1-c)})
+      frequency<-Cell[,i]*number_of_copies[[i]]/{A[[i]]+B[[i]]+conta[i]/(1-conta[i])*2}
       SNP_depth<-rnbinom(n=number_of_mutations,size = 4.331601,mu = depth)
       Alt_depth<-numeric()
       for(j in 1:number_of_mutations){
@@ -125,7 +126,7 @@ QuantumCat<-function(number_of_clones,number_of_mutations,ploidy=2,depth=100,num
     }
   }
   else if(number_of_samples==1){
-    frequency<-Cell*number_of_copies[[1]]/(A[[1]]+B[[1]])*(1-conta)
+    frequency<-Cell*number_of_copies[[1]]/{A[[1]]+B[[1]]+conta/(1-conta)*2}
     SNP_depth<-rnbinom(n=number_of_mutations,size = 4.331601,mu = depth)
     Alt_depth<-numeric()
     for(j in 1:number_of_mutations){

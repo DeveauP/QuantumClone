@@ -12,16 +12,17 @@ vignette: >
   
 ---
 
-<h3> Release of 1/10/2017 </h3>
+<h3> Release of 3/10/2017, v1.0.0.6 </h3>
 <ul>
-<li> Corrected syntax for clustering function call in example vignette</li>
+<li> Corrected formula for transition of cellular prevalence to VAF;
+<li> Corrected syntax for clustering function call in example vignette.</li>
 </ul>
 
 
 <h3> Release of 8/03/2017 </h3>
 <ul>
-<li> Added normalization by contamination if "keep.all.model"</li>
-<li> Added clause to check if normalized.center exist in evolution plot</li>
+<li> Added normalization by contamination if "keep.all.model";</li>
+<li> Added clause to check if normalized.center exist in evolution plot;</li>
 </ul>
 
 <h3> Release of 25/10/2016 </h3>

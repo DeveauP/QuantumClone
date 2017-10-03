@@ -602,7 +602,9 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
       ### Only one possibility per mutation
       result<-data.frame(Chr = chr,
                          Start =  position, 
-                         Cellularity = as.numeric(Alt/Depth*Ns/(1-contamination)),
+                         Cellularity = as.numeric(
+                             {Alt/Depth}*{Ns + contamination/(1-contamination)*2}
+                             ),
                          Genotype = Genotype,
                          Alt = Alt,
                          Depth = Depth,
@@ -615,7 +617,9 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
       ### Vectorized version:
       result<-data.frame(Chr = chr,
                          Start = position,
-                         Cellularity = as.numeric(Alt/Depth*Ns/((1:As)*(1-contamination))),
+                         Cellularity = as.numeric(
+                             {Alt/Depth}*{Ns + contamination/(1-contamination)*2}/(1:As)
+                         ),
                          Genotype = Genotype,
                          Alt = Alt,
                          Depth = Depth,
