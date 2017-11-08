@@ -2,7 +2,7 @@ Package: QuantumClone
 Title: Clustering Mutations using High Throughput Sequencing (HTS) Data
 Version: 1.0.0.6
 Authors@R: person("Paul", "Deveau", role = c("aut", "cre"),
-		     email = "paul.deveau@curie.fr")
+		     email = "quantumclone.package@gmail.com")
 Description: Using HTS data, clusters mutations in order to recreate putative
     clones from the data provided. It requires genotype at the location of the
     variant as well as the depth of coverage and number of reads supporting the

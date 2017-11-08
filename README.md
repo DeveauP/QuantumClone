@@ -13,7 +13,7 @@
 # QuantumClone and QuantumCat
 
 R package also available on [CRAN](http://cran.r-project.org/web/packages/QuantumClone/index.html)
-Maintainer: Paul Deveau (paul.deveau at curie.fr)
+Maintainer: Paul Deveau (quantumclone.package at gmail.com)
 
 ## Clonal Reconstruction from High-Throughput Sequencing data
 
@@ -82,6 +82,7 @@ The QuantumClone package is divided in two:
 * [The clonal reconstruction](#CR): QuantumClone / One_step_clustering functions
 * [Plots](#Plots)
 * [The clonal simulation](#CS): QuantumCat (not included in the GUI)
+* [VariantFiltering](#VariantFiltering): Suggestion for variant filtering prior the QuantumClone analysis
 
 All of this is detailed in the vignette that can be accessed with:
 > vignette("Use_case",package = "QuantumClone")
@@ -137,6 +138,20 @@ This part is about generating data to test clonal reconstruction algorithms. Its
 * contamination: estimation of the contamination by normal cells
 
 For multiple testings, and calculation of the Normalized Mutual Information (NMI), see Multitest() and statistics_on_Multitest()
+
+
+#### <a name="VariantFiltering"></a> Suggestions for variant filtering
+We suggest to run QuantumClone on somatic variants only detected, for example, using <a name="http://dkoboldt.github.io/varscan/">VarScan2</a>. We suggest to apply the following filters to select variants for clonal reconstruction:
+
+* minimal depth of coverage: 50x
+* minimal percentage of reads supporting the mutation (in at least one sample per patient): 10%
+* require variants to be located in regions of high local mappability (based on the 100 bp mappability track), and outside of repeats and duplicated genomic regions. The latter can be assessed using the UCSC repeat masker, simple repeat, and segmental duplication regions. 
+* delete variants that created a stretch of four or more identical nucleotides
+* require variants to be located in regions where the genotype evaluated by Control-FREEC was available.
+* filter out variants corresponding to polymorphisms present in more than 1% of the population (snp138, 1000Genomes, esp6500) except if it is a known cancer related variant (COSMIC database for coding and non-coding mutations)
+* when working with cancer samples from several patients, you can consider removing variants annotated as germline in un-matched normal (blood) samples
+
+Any other variants can be mapped on the clonal structure using the QuantumClone function *Probability.to.belong.to.clone()*. 
 
 ### Acknowledgments
 Many thanks to the contributors of this work: my supervisors, Elodie for the features improvement and Linux debugging and more generally to the U830 & U900 people. 
