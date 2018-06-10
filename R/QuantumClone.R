@@ -70,24 +70,24 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
                        ncores=1,output_directory=NULL,
                        model.selection = "BIC",optim = "default", keep.all.models = FALSE,
                        force.single.copy = FALSE){
-  
-  
-  r<-One_step_clustering(SNV_list = SNV_list,FREEC_list = FREEC_list,contamination = contamination,nclone_range = nclone_range,
-                         clone_priors = clone_priors,prior_weight =prior_weight ,
-                         Initializations = Initializations,preclustering = preclustering,
-                         simulated = simulated,
-                         save_plot = save_plot,ncores=ncores,output_directory=output_directory,
-                         model.selection = model.selection,optim = optim, keep.all.models = keep.all.models,
-                         force.single.copy = force.single.copy)
-  
-  #   t<-Tree_generation(Clone_cellularities = r$pamobject$medoids,timepoints = timepoints)
-  #
-  #   if(save_plot){
-  #     pdf(paste(as.character(SNV_list[[1]][1,1]),'trees.pdf',sep='_'))
-  #     multiplot_trees(result_list =t,d = dim(r$pamobject$medoids)[1],cex = 0.8)
-  #     dev.off()
-  #   }
-  return(r)
+    
+    
+    r<-One_step_clustering(SNV_list = SNV_list,FREEC_list = FREEC_list,contamination = contamination,nclone_range = nclone_range,
+                           clone_priors = clone_priors,prior_weight =prior_weight ,
+                           Initializations = Initializations,preclustering = preclustering,
+                           simulated = simulated,
+                           save_plot = save_plot,ncores=ncores,output_directory=output_directory,
+                           model.selection = model.selection,optim = optim, keep.all.models = keep.all.models,
+                           force.single.copy = force.single.copy)
+    
+    #   t<-Tree_generation(Clone_cellularities = r$pamobject$medoids,timepoints = timepoints)
+    #
+    #   if(save_plot){
+    #     pdf(paste(as.character(SNV_list[[1]][1,1]),'trees.pdf',sep='_'))
+    #     multiplot_trees(result_list =t,d = dim(r$pamobject$medoids)[1],cex = 0.8)
+    #     dev.off()
+    #   }
+    return(r)
 }
 
 #' Cellularity clustering
@@ -153,166 +153,102 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                               restrict.to.AB = FALSE,output_directory=NULL,
                               model.selection = "BIC",optim = "default", keep.all.models = FALSE,
                               force.single.copy = FALSE){
-  # if(Initializations >1 && preclustering){
-  #   message("Only 1 iteration will be run if preclustering is successful")
-  # }
-  
-  ### Checking input arguments
-  Sample_name<-as.character(SNV_list[[1]][1,1])
-  Sample_names<-lapply(SNV_list,FUN = function(z) z[1,1])
-  
-  
-  ### Checking genotype input
-  if(is.null(FREEC_list)){
-    message("FREEC_list is empty. Checking that there is a genotype column in all samples...")
-    check<-TRUE
-    for(i in 1:length(SNV_list)){
-      if(is.null(SNV_list[[i]][,"Genotype"])){
-        warning(paste("Sample",i,"does not have a Genotype column"))
-        check<-FALSE
-      }
-    }
-    if(!check){
-      stop("See warnings for more details")
-    }
-    else{
-      message("Genotype is provided.")
-      Genotype_provided<-TRUE
-    }
-  }
-  else{
-    message("Checking that SNV_list and FREEC_list have the same number of samples...")
-    if(length(SNV_list)!=length(FREEC_list)){
-      stop("Incorrect input: number of samples different for SNV and FREEC")
-    }
-    message("Passed")
-    Genotype_provided<-FALSE
-  }
-  
-  ### Checking model selection
-  if(length(model.selection)>1){
-    stop("Model selection can only be one of BIC,AIC or a numeric value.")
-  }
-  else{
-    if(is.character(model.selection)){
-      if(model.selection != "BIC" && model.selection != "AIC" ){
-        stop("Character value for model selection can only be BIC or AIC")
-      }
-    }
-    else if(!is.numeric(model.selection)){
-      stop("Input model.selection is not numeric - and is not BIC or AIC. Please see documentation for model.selection.")
-    }
-  }
-  if(is.null(epsilon)){
-    epsilon<-1/mean(unlist(lapply(SNV_list,function(df) df$Depth)))
-    message(paste("epsilon set to:",epsilon))
-  }
-  ### check optim:
-  #optims_accepted<-c("default","optimx","DEoptim","RcppDE")
-  optims_accepted<-c("default","optimx","DEoptim","compound")
-  if(length(optim)!=1){
-    stop("optim argument can only be of length 1")
-  }
-  else if(!(optim %in% optims_accepted)){
-    stop(paste("optim can only be one of:", paste(optims_accepted,collapse = ",")))
-  }
-  
-  # Checking length of contamination vector:
-  if(is.list(SNV_list) && length(contamination)!=length(SNV_list)){
-    if(length(contamination)<length(SNV_list)){
-      warning("contamination and SNV_list have different lengths, will repeat contamination")
-      contamination<-rep(contamination, times = length(SNV_list))
-    }
-    else if(length(contamination)<length(SNV_list)){
-      warning("contamination and SNV_list have different lengths, will use first arguments of contamination")
-      contamination<-contamination[1:length(SNV_list)]
-      
-    }
-  }
-  else if(is.data.frame(SNV_list) && length(contamination >1 )){
-    warning("length of contamination > 1 but only one sample, will use only first element")
-    contamination<-contamination[1]
-  }
-  
-  ### Pre-processing data
-  message(paste("Checking all possibilities for",Sample_name))
-  
-  Cell<-From_freq_to_cell(SNV_list = SNV_list,
-                          FREEC_list = FREEC_list,
-                          Sample_names = Sample_names,
-                          contamination = contamination,
-                          Genotype_provided = Genotype_provided,
-                          save_plot = save_plot,
-                          restrict.to.AB = restrict.to.AB,
-                          output_directory=output_directory,
-                          force.single.copy = force.single.copy)
-  
-  message("Starting clustering...")
-  r<-Cluster_plot_from_cell(Cell = Cell,nclone_range = nclone_range,
-                            epsilon = epsilon,
-                            Sample_names = Sample_names,
-                            preclustering = preclustering,
-                            clone_priors = clone_priors,
-                            prior_weight = prior_weight,
-                            Initializations = Initializations,
-                            simulated = simulated,
-                            save_plot=save_plot,
-                            contamination = contamination,
-                            ncores=ncores,
-                            output_directory=output_directory,
-                            model.selection = model.selection,
-                            optim = optim,
-                            keep.all.models = keep.all.models)
-  
-  
-  if(length(SNV_list)==1 & save_plot){
-    q<-One_D_plot(EM_out = r,contamination = contamination)
-    if(is.null(output_directory)){
-      ggplot2::ggsave(plot = q, filename = paste(Sample_name,'/', 'Density', Sample_name,'.pdf',sep=''),width = 6.04,height = 6.04)
-    }
-    else{
-      ggplot2::ggsave(plot = q, filename = paste(output_directory,'/', 'Density', Sample_name,'.pdf',sep=''),width = 6.04,height = 6.04)
-    }
-  }
-  
-  #### New version
-  
-  if(length(unique(Cell[[1]]$id))==length(Cell[[1]]$id)){ # All mutations had a single possible state
-    message("Post-processing output")
-    if(keep.all.models){
-      r<-lapply(r, FUN = function(z){
-        Tidy_output(r = z,
-                    Genotype_provided = Genotype_provided,
-                    SNV_list = SNV_list )
-      }
-      )
-    }
-    else{
-      r<-Tidy_output(r =r,
-                     Genotype_provided = Genotype_provided,
-                     SNV_list = SNV_list)
-    }
-  }
-  else{ 
-    ### Selecting best state for each variant with best criterion
-    ### Then recluster (and keep model if needed)
-    message("Keeping most likely state for each variant...")
-    ### 1. Select best clusters
-    if(keep.all.models){
-      Crits<-as.numeric(as.character(unlist(lapply(r, function(z){
-        z$Crit
-      }))
-      )
-      )
-      r<-r[[which.min(Crits)]]
-    }
-    r<-Tidy_output(r =r,
-                   Genotype_provided = Genotype_provided,
-                   SNV_list = SNV_list)
+    # if(Initializations >1 && preclustering){
+    #   message("Only 1 iteration will be run if preclustering is successful")
+    # }
     
-    message("Reclustering with most likely state of each variant...")
-    r<-Cluster_plot_from_cell(Cell = r$filtered.data,
-                              nclone_range = nclone_range,
+    ### Checking input arguments
+    Sample_name<-as.character(SNV_list[[1]][1,1])
+    Sample_names<-lapply(SNV_list,FUN = function(z) z[1,1])
+    
+    
+    ### Checking genotype input
+    if(is.null(FREEC_list)){
+        message("FREEC_list is empty. Checking that there is a genotype column in all samples...")
+        check<-TRUE
+        for(i in 1:length(SNV_list)){
+            if(is.null(SNV_list[[i]][,"Genotype"])){
+                warning(paste("Sample",i,"does not have a Genotype column"))
+                check<-FALSE
+            }
+        }
+        if(!check){
+            stop("See warnings for more details")
+        }
+        else{
+            message("Genotype is provided.")
+            Genotype_provided<-TRUE
+        }
+    }
+    else{
+        message("Checking that SNV_list and FREEC_list have the same number of samples...")
+        if(length(SNV_list)!=length(FREEC_list)){
+            stop("Incorrect input: number of samples different for SNV and FREEC")
+        }
+        message("Passed")
+        Genotype_provided<-FALSE
+    }
+    
+    ### Checking model selection
+    if(length(model.selection)>1){
+        stop("Model selection can only be one of BIC,AIC or a numeric value.")
+    }
+    else{
+        if(is.character(model.selection)){
+            if(model.selection != "BIC" && model.selection != "AIC" ){
+                stop("Character value for model selection can only be BIC or AIC")
+            }
+        }
+        else if(!is.numeric(model.selection)){
+            stop("Input model.selection is not numeric - and is not BIC or AIC. Please see documentation for model.selection.")
+        }
+    }
+    if(is.null(epsilon)){
+        epsilon<-1/mean(unlist(lapply(SNV_list,function(df) df$Depth)))
+        message(paste("epsilon set to:",epsilon))
+    }
+    ### check optim:
+    #optims_accepted<-c("default","optimx","DEoptim","RcppDE")
+    optims_accepted<-c("default","optimx","DEoptim","compound")
+    if(length(optim)!=1){
+        stop("optim argument can only be of length 1")
+    }
+    else if(!(optim %in% optims_accepted)){
+        stop(paste("optim can only be one of:", paste(optims_accepted,collapse = ",")))
+    }
+    
+    # Checking length of contamination vector:
+    if(is.list(SNV_list) && length(contamination)!=length(SNV_list)){
+        if(length(contamination)<length(SNV_list)){
+            warning("contamination and SNV_list have different lengths, will repeat contamination")
+            contamination<-rep(contamination, times = length(SNV_list))
+        }
+        else if(length(contamination)<length(SNV_list)){
+            warning("contamination and SNV_list have different lengths, will use first arguments of contamination")
+            contamination<-contamination[1:length(SNV_list)]
+            
+        }
+    }
+    else if(is.data.frame(SNV_list) && length(contamination >1 )){
+        warning("length of contamination > 1 but only one sample, will use only first element")
+        contamination<-contamination[1]
+    }
+    
+    ### Pre-processing data
+    message(paste("Checking all possibilities for",Sample_name))
+    
+    Cell<-From_freq_to_cell(SNV_list = SNV_list,
+                            FREEC_list = FREEC_list,
+                            Sample_names = Sample_names,
+                            contamination = contamination,
+                            Genotype_provided = Genotype_provided,
+                            save_plot = save_plot,
+                            restrict.to.AB = restrict.to.AB,
+                            output_directory=output_directory,
+                            force.single.copy = force.single.copy)
+    
+    message("Starting clustering...")
+    r<-Cluster_plot_from_cell(Cell = Cell,nclone_range = nclone_range,
                               epsilon = epsilon,
                               Sample_names = Sample_names,
                               preclustering = preclustering,
@@ -328,27 +264,91 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                               optim = optim,
                               keep.all.models = keep.all.models)
     
-  }
-  
-  if(is.list(r$EM.output$centers)){
-    if(!keep.all.models){
-      normalized.centers<-list()
-      for(i in 1:length(r$EM.output$centers)){
-        normalized.centers[[i]]<-r$EM.output$centers[[i]]/(1-contamination[i])
-      }
-      r$EM.output$normalized.centers<-normalized.centers
-    }
-    else{
-      for(mod in 1:length(r)){
-        normalized.centers<-list()
-        for(i in 1:length(r$EM.output$centers)){
-          normalized.centers[[i]]<-r[[mod]]$EM.output$centers[[i]]/(1-contamination[i])
+    
+    if(length(SNV_list)==1 & save_plot){
+        q<-One_D_plot(EM_out = r,contamination = contamination)
+        if(is.null(output_directory)){
+            ggplot2::ggsave(plot = q, filename = paste(Sample_name,'/', 'Density', Sample_name,'.pdf',sep=''),width = 6.04,height = 6.04)
         }
-        r[[mod]]$EM.output$normalized.centers<-normalized.centers
-      }
+        else{
+            ggplot2::ggsave(plot = q, filename = paste(output_directory,'/', 'Density', Sample_name,'.pdf',sep=''),width = 6.04,height = 6.04)
+        }
     }
-  }
-  r
+    
+    #### New version
+    
+    if(length(unique(Cell[[1]]$id))==length(Cell[[1]]$id)){ # All mutations had a single possible state
+        message("Post-processing output")
+        if(keep.all.models){
+            r<-lapply(r, FUN = function(z){
+                Tidy_output(r = z,
+                            Genotype_provided = Genotype_provided,
+                            SNV_list = SNV_list )
+            }
+            )
+        }
+        else{
+            r<-Tidy_output(r =r,
+                           Genotype_provided = Genotype_provided,
+                           SNV_list = SNV_list)
+        }
+    }
+    else{ 
+        ### Selecting best state for each variant with best criterion
+        ### Then recluster (and keep model if needed)
+        message("Keeping most likely state for each variant...")
+        ### 1. Select best clusters
+        if(keep.all.models){
+            Crits<-as.numeric(as.character(unlist(lapply(r, function(z){
+                z$Crit
+            }))
+            )
+            )
+            r<-r[[which.min(Crits)]]
+        }
+        r<-Tidy_output(r =r,
+                       Genotype_provided = Genotype_provided,
+                       SNV_list = SNV_list)
+        
+        message("Reclustering with most likely state of each variant...")
+        r<-Cluster_plot_from_cell(Cell = r$filtered.data,
+                                  nclone_range = nclone_range,
+                                  epsilon = epsilon,
+                                  Sample_names = Sample_names,
+                                  preclustering = preclustering,
+                                  clone_priors = clone_priors,
+                                  prior_weight = prior_weight,
+                                  Initializations = Initializations,
+                                  simulated = simulated,
+                                  save_plot=save_plot,
+                                  contamination = contamination,
+                                  ncores=ncores,
+                                  output_directory=output_directory,
+                                  model.selection = model.selection,
+                                  optim = optim,
+                                  keep.all.models = keep.all.models)
+        
+    }
+    
+    if(is.list(r$EM.output$centers)){
+        if(!keep.all.models){
+            normalized.centers<-list()
+            for(i in 1:length(r$EM.output$centers)){
+                normalized.centers[[i]]<-r$EM.output$centers[[i]]/(1-contamination[i])
+            }
+            r$EM.output$normalized.centers<-normalized.centers
+        }
+        else{
+            for(mod in 1:length(r)){
+                normalized.centers<-list()
+                for(i in 1:length(r$EM.output$centers)){
+                    normalized.centers[[i]]<-r[[mod]]$EM.output$centers[[i]]/(1-contamination[i])
+                }
+                r[[mod]]$EM.output$normalized.centers<-normalized.centers
+            }
+        }
+    }
+    r
 }
 
 #' Tidying output from EM
@@ -359,47 +359,47 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
 #' @param SNV_list A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
 #' 
 Tidy_output<-function(r, Genotype_provided,SNV_list){
-  Work_input<-SNV_list[[1]]
-  Work_output<-r$filtered.data[[1]]
-  if(Genotype_provided){
-    commonCols<-c("Chr","Start","Depth","Alt","Genotype")
-  }else{
-    commonCols<-c("Chr","Start","Depth","Alt")
-  }
-  Keep<-apply(Work_input[,c("Chr","Start","Depth")],MARGIN = 1, function(z){
-    t<-apply(Work_output[,c("Chr","Start","Depth")],MARGIN = 1,function(y){
-      return(all(y == z))
-      
-    })
-    
-    if(sum(t)==0){
-      return(FALSE)
+    Work_input<-SNV_list[[1]]
+    Work_output<-r$filtered.data[[1]]
+    if(Genotype_provided){
+        commonCols<-c("Chr","Start","Depth","Alt","Genotype")
+    }else{
+        commonCols<-c("Chr","Start","Depth","Alt")
     }
-    else{
-      return(TRUE)
-    }
-  })
-  Cell<-list()
-  for(i in 1:length(SNV_list)){
-    Cell[[i]]<-SNV_list[[i]][Keep,]
-  }
-  result<-r
-  for(i in 1:length(r$filtered.data)){
-    result$filtered.data[[i]]<-merge(r$filtered.data[[i]], Cell[[i]],by = commonCols)
-  }
-  
-  ### Extract new order of mutations:
-  Order<-apply(result$filtered.data[[1]][,c("Chr","Start","Depth")],MARGIN = 1, function(z){
-    t<-apply(r$filtered.data[[1]][,c("Chr","Start","Depth")],MARGIN = 1,function(y){
-      all(z == y)
+    Keep<-apply(Work_input[,c("Chr","Start","Depth")],MARGIN = 1, function(z){
+        t<-apply(Work_output[,c("Chr","Start","Depth")],MARGIN = 1,function(y){
+            return(all(y == z))
+            
+        })
+        
+        if(sum(t)==0){
+            return(FALSE)
+        }
+        else{
+            return(TRUE)
+        }
     })
+    Cell<-list()
+    for(i in 1:length(SNV_list)){
+        Cell[[i]]<-SNV_list[[i]][Keep,]
+    }
+    result<-r
+    for(i in 1:length(r$filtered.data)){
+        result$filtered.data[[i]]<-merge(r$filtered.data[[i]], Cell[[i]],by = commonCols)
+    }
     
-    return(which(t))
-  })
-  result$cluster<-result$cluster[Order]
-  result$EM.output$fik<-result$EM.output$fik[Order,]
-  
-  return(result)
+    ### Extract new order of mutations:
+    Order<-apply(result$filtered.data[[1]][,c("Chr","Start","Depth")],MARGIN = 1, function(z){
+        t<-apply(r$filtered.data[[1]][,c("Chr","Start","Depth")],MARGIN = 1,function(y){
+            all(z == y)
+        })
+        
+        return(which(t))
+    })
+    result$cluster<-result$cluster[Order]
+    result$EM.output$fik<-result$EM.output$fik[Order,]
+    
+    return(result)
 }
 
 #' Wrap-up function
@@ -423,30 +423,30 @@ Tidy_output<-function(r, Genotype_provided,SNV_list){
 From_freq_to_cell<-function(SNV_list,FREEC_list=NULL,Sample_names,Genotype_provided=FALSE,save_plot=TRUE,
                             contamination,ncores = 4, restrict.to.AB = FALSE,output_directory=NULL,
                             force.single.copy = FALSE){
-  if(save_plot){
-    if(is.null(output_directory)){
-      dir.create(path = paste(Sample_names[1]), showWarnings = FALSE)
+    if(save_plot){
+        if(is.null(output_directory)){
+            dir.create(path = paste(Sample_names[1]), showWarnings = FALSE)
+        }
+        else{
+            dir.create(path=output_directory,showWarnings = FALSE)
+        }
+    }
+    if(Genotype_provided){
+        Schrod_out<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided =TRUE,
+                                                      contamination = contamination, restrict.to.AB = restrict.to.AB,
+                                                      force.single.copy = force.single.copy)
     }
     else{
-      dir.create(path=output_directory,showWarnings = FALSE)
+        Schrod_out<-Patient_schrodinger_cellularities(SNV_list = SNV_list, FREEC_list = FREEC_list,
+                                                      contamination = contamination, restrict.to.AB = restrict.to.AB,
+                                                      force.single.copy = force.single.copy)
     }
-  }
-  if(Genotype_provided){
-    Schrod_out<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided =TRUE,
-                                                  contamination = contamination, restrict.to.AB = restrict.to.AB,
-                                                  force.single.copy = force.single.copy)
-  }
-  else{
-    Schrod_out<-Patient_schrodinger_cellularities(SNV_list = SNV_list, FREEC_list = FREEC_list,
-                                                  contamination = contamination, restrict.to.AB = restrict.to.AB,
-                                                  force.single.copy = force.single.copy)
-  }
-  
-  if(save_plot){
-    plot_cell_from_Return_out(Schrod_out,Sample_names,output_directory)
-  }
-  
-  return(Schrod_out)
+    
+    if(save_plot){
+        plot_cell_from_Return_out(Schrod_out,Sample_names,output_directory)
+    }
+    
+    return(Schrod_out)
 }
 
 #' Patient Schrodinger Cellularities
@@ -466,86 +466,86 @@ From_freq_to_cell<-function(SNV_list,FREEC_list=NULL,Sample_names,Genotype_provi
 Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_provided=FALSE,
                                             contamination, restrict.to.AB = FALSE,
                                             force.single.copy = FALSE){
-  result<-list()
-  count<-0
-  id<-1
-  chr<-SNV_list[[1]][,"Chr"]
-  chr_ante<-0
-  
-  ### Compute all possible cellularities and join them
-  for(i in 1:nrow(SNV_list[[1]])){ ##Exploring all possibilities for each mutation
-    Cell<-list()
-    test<-T
-    for(k in 1:length(SNV_list)){
-      if(test){ ## Do not look at position if it is invalid in another sample previously explored
-        if(!is.null(SNV_list[[k]]$subclone.genotype)){
-          if(is.na(SNV_list[[k]]$subclone.genotype)){
-            subclone.geno<-NULL
-          }
+    result<-list()
+    count<-0
+    id<-1
+    chr<-SNV_list[[1]][,"Chr"]
+    chr_ante<-0
+    ### Compute all possible cellularities and join them
+    for(i in 1:nrow(SNV_list[[1]])){ ##Exploring all possibilities for each mutation
+        Cell<-list()
+        test<-TRUE
+        for(k in 1:length(SNV_list)){
+            if(test){ ## Do not look at position if it is invalid in another sample previously explored
+                if(!is.null(SNV_list[[k]]$subclone.genotype)){
+                    if(is.na(SNV_list[[k]]$subclone.genotype)){
+                        subclone.geno<-NULL
+                    }
+                }
+                else{
+                    subclone.geno<-SNV_list[[k]][i,"subclone.genotype"]
+                }
+                if(Genotype_provided){
+                    Cell[[k]]<-cbind(CellularitiesFromFreq(Genotype= as.character(SNV_list[[k]][i,'Genotype']),
+                                                           Alt = SNV_list[[k]][i,"Alt"],
+                                                           Depth = SNV_list[[k]][i,"Depth"],
+                                                           subclone.genotype = subclone.geno,
+                                                           subclone.cell = SNV_list[[k]][i,"subclone.cell"],
+                                                           chr = SNV_list[[k]][i,'Chr'],
+                                                           position = SNV_list[[k]][i,'Start'],
+                                                           contamination = contamination[k],
+                                                           restrict.to.AB = restrict.to.AB,
+                                                           force.single.copy = force.single.copy),
+                                     id)
+                }
+                else{
+                    if(chr[i]!=chr_ante){
+                        #subset on working chr
+                        CHR_FREEC<-lapply(FREEC_list,
+                                          function(z){
+                                              z[as.character(z[,"Chromosome"])==as.character(chr[i])]
+                                                                                         
+                                          } )
+                        chr_ante<-chr[i]
+                    }
+                    Cell[[k]]<-cbind(CellularitiesFromFreq(Freec_ratio = CHR_FREEC[[k]],
+                                                           Alt = SNV_list[[k]][i,"Alt"],Depth = SNV_list[[k]][i,"Depth"],
+                                                           subclone.genotype = subclone.geno,
+                                                           subclone.cell = SNV_list[[k]][i,"subclone.cell"],
+                                                           chr = SNV_list[[k]][i,'Chr'], position = SNV_list[[k]][i,'Start'],
+                                                           contamination = contamination[k],
+                                                           restrict.to.AB = restrict.to.AB,
+                                                           force.single.copy = force.single.copy),
+                                     id)
+                }
+                if(sum(is.na(Cell[[k]]))>0){
+                    test<-F
+                    count<-count+1
+                }
+            }
         }
-        else{
-          subclone.geno<-SNV_list[[k]][i,"subclone.genotype"]
+        if(test){ ## Checking that genotype is available
+            L<-list()
+            for(r in 1:length(Cell)){
+                L[[r]]<-1:(nrow(Cell[[r]]))
+            }
+            U<-expand.grid(L) ##Table with all Cell row combinations
+            for(k in 1:(ncol(U))){
+                if(id==1){
+                    result[[k]]<-Cell[[k]][U[,k],]
+                }
+                else{
+                    result[[k]]<-rbind(result[[k]],Cell[[k]][U[,k],])
+                }
+            }
+            id<-id+1
         }
-        if(Genotype_provided){
-          Cell[[k]]<-cbind(CellularitiesFromFreq(Genotype= as.character(SNV_list[[k]][i,'Genotype']),
-                                                 Alt = SNV_list[[k]][i,"Alt"],
-                                                 Depth = SNV_list[[k]][i,"Depth"],
-                                                 subclone.genotype = subclone.geno,
-                                                 subclone.cell = SNV_list[[k]][i,"subclone.cell"],
-                                                 chr = SNV_list[[k]][i,'Chr'],
-                                                 position = SNV_list[[k]][i,'Start'],
-                                                 contamination = contamination[k],
-                                                 restrict.to.AB = restrict.to.AB,
-                                                 force.single.copy = force.single.copy),
-                           id)
-        }
-        else{
-          if(chr[i]!=chr_ante){
-            CHR_FREEC<-lapply(FREEC_list,
-                              function(z){
-                                z[as.character(z[,"Chromosome"])==strsplit(as.character(chr[i]),
-                                                                           split = "r")[[1]][2],]
-                              } )
-            chr_ante<-chr[i]
-          }
-          Cell[[k]]<-cbind(CellularitiesFromFreq(Freec_ratio = CHR_FREEC[[k]],
-                                                 Alt = SNV_list[[k]][i,"Alt"],Depth = SNV_list[[k]][i,"Depth"],
-                                                 subclone.genotype = subclone.geno,
-                                                 subclone.cell = SNV_list[[k]][i,"subclone.cell"],
-                                                 chr = SNV_list[[k]][i,'Chr'], position = SNV_list[[k]][i,'Start'],
-                                                 contamination = contamination[k],
-                                                 restrict.to.AB = restrict.to.AB,
-                                                 force.single.copy = force.single.copy),
-                           id)
-        }
-        if(sum(is.na(Cell[[k]]))>0){
-          test<-F
-          count<-count+1
-        }
-      }
     }
-    if(test){ ## Checking that genotype is available
-      L<-list()
-      for(r in 1:length(Cell)){
-        L[[r]]<-1:(nrow(Cell[[r]]))
-      }
-      U<-expand.grid(L) ##Table with all Cell row combinations
-      for(k in 1:(ncol(U))){
-        if(id==1){
-          result[[k]]<-Cell[[k]][U[,k],]
-        }
-        else{
-          result[[k]]<-rbind(result[[k]],Cell[[k]][U[,k],])
-        }
-      }
-      id<-id+1
+    
+    if(count>0){
+        warning(paste(count,'mutations excluded due to missing genotype or normalization issues'))
     }
-  }
-  
-  if(count>0){
-    warning(paste(count,'mutations excluded due to missing genotype or normalization issues'))
-  }
-  return(result)
+    return(result)
 }
 
 #' Cellularities from allele frequency
@@ -569,91 +569,91 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
                                 Freec_ratio=NULL, Genotype=NULL,subclone.genotype=NULL,
                                 subclone.cell=NULL,contamination, restrict.to.AB = FALSE,
                                 force.single.copy = FALSE){
-  ##For 1 mutation
-  if(!is.null(Freec_ratio)){
-    if(grepl(pattern = "chr",x = chr,ignore.case = T)){
-      FChr<-sapply(X = 'chr',FUN = paste, Freec_ratio[,'Chromosome'],sep='')
+    ##For 1 mutation
+    if(!is.null(Freec_ratio)){
+        if(grepl(pattern = "chr",x = chr,ignore.case = T)){
+            FChr<-sapply(X = 'chr',FUN = paste, Freec_ratio[,'Chromosome'],sep='')
+        }
+        else{
+            FChr<-Freec_ratio[,'Chromosome']
+        }
+        Genotype<-as.character(tail(Freec_ratio[FChr==chr & Freec_ratio[,'Start']<position,'Genotype'],1))
     }
-    else{
-      FChr<-Freec_ratio[,'Chromosome']
+    if(length(Genotype)==0){
+        message(paste("Genotype is not available at position",chr,position))
+        return(NA)
     }
-    Genotype<-as.character(tail(Freec_ratio[FChr==chr & Freec_ratio[,'Start']<position,'Genotype'],1))
-  }
-  if(length(Genotype)==0){
-    message(paste("Genotype is not available at position",chr,position))
-    return(NA)
-  }
-  else if(is.na(Genotype)){
-    message(paste("Genotype is not available at position",chr,position))
-    return(NA)
-  }
-  else if(Genotype==-1){
-    message(paste("Genotype is not available at position",chr,position))
-    return(NA)
-  }
-  else if(restrict.to.AB & (Genotype!='A' & Genotype!='AB')){
-    message(paste("Position",chr,position,"is not in an A or AB site. Genotype:",Genotype))
-    return(NA)
-  }
-  else if (is.null(subclone.genotype) | is.null(subclone.cell)){
-    As<-strcount(x = Genotype, pattern = 'A',split = '')
-    Ns<-nchar(Genotype)
-    if(force.single.copy){
-      ### Only one possibility per mutation
-      result<-data.frame(Chr = chr,
-                         Start =  position, 
-                         Cellularity = as.numeric(
-                             {Alt/Depth}*{Ns + contamination/(1-contamination)*2}
-                             ),
-                         Genotype = Genotype,
-                         Alt = Alt,
-                         Depth = Depth,
-                         NC = 1,
-                         NCh = Ns)
-      
+    else if(is.na(Genotype)){
+        message(paste("Genotype is not available at position",chr,position))
+        return(NA)
     }
-    else{
-      
-      ### Vectorized version:
-      result<-data.frame(Chr = chr,
-                         Start = position,
-                         Cellularity = as.numeric(
-                             {Alt/Depth}*{Ns + contamination/(1-contamination)*2}/(1:As)
-                         ),
-                         Genotype = Genotype,
-                         Alt = Alt,
-                         Depth = Depth,
-                         NC = 1:As,
-                         NCh = Ns)
+    else if(Genotype==-1){
+        message(paste("Genotype is not available at position",chr,position))
+        return(NA)
     }
-  }
-  else{ ## Two possibilities: belong to clone or subclone
-    result<-data.frame()
-    As<-strcount(x = Genotype, pattern = 'A',split = '')
-    Ns<-nchar(Genotype)
-    for(i in 1:As){
-      Cellularity<-as.numeric(frequency/100*{Ns+contamination/(1-contamination)*2}/i)
-      spare<-data.frame(chr,position,Cellularity, Genotype,Alt,Depth,i,Ns)
-      colnames(spare)<-c('Chr','Start','Cellularity','Genotype',"Alt","Depth","NC","NCh")
-      result<-rbind(result,spare)
+    else if(restrict.to.AB & (Genotype!='A' & Genotype!='AB')){
+        message(paste("Position",chr,position,"is not in an A or AB site. Genotype:",Genotype))
+        return(NA)
     }
-    A.sub<-strcount(x=subclone.genotype,pattern = "A",split = '')
-    N.sub<-nchar(subclone.genotype)
-    for(j in A.sub){
-      ### Keep only possibilities that have a cellularity lower than the subclonal cellularity
-      
-      Cellularity<-as.numeric(frequency/100*{N.sub+contamination/(1-contamination)*2}/j)
-      if(Cellularity<=subclone.cell){
-        spare<-data.frame(chr,position,Cellularity, subclone.genotype,Alt,Depth,j,N.sub)
-        colnames(spare)<-c('Chr','Start','Cellularity','Genotype',"Alt","Depth","NC","NCh")
-        result<-rbind(result,spare)
-      }
+    else if (is.null(subclone.genotype) | is.null(subclone.cell)){
+        As<-strcount(x = Genotype, pattern = 'A',split = '')
+        Ns<-nchar(Genotype)
+        if(force.single.copy){
+            ### Only one possibility per mutation
+            result<-data.frame(Chr = chr,
+                               Start =  position, 
+                               Cellularity = as.numeric(
+                                   {Alt/Depth}*{Ns + contamination/(1-contamination)*2}
+                               ),
+                               Genotype = Genotype,
+                               Alt = Alt,
+                               Depth = Depth,
+                               NC = 1,
+                               NCh = Ns)
+            
+        }
+        else{
+            
+            ### Vectorized version:
+            result<-data.frame(Chr = chr,
+                               Start = position,
+                               Cellularity = as.numeric(
+                                   {Alt/Depth}*{Ns + contamination/(1-contamination)*2}/(1:As)
+                               ),
+                               Genotype = Genotype,
+                               Alt = Alt,
+                               Depth = Depth,
+                               NC = 1:As,
+                               NCh = Ns)
+        }
     }
-  }
-  
-  result<-data.frame(result)
-  colnames(result)<-c('Chr','Start','Cellularity','Genotype',"Alt","Depth","NC","NCh")
-  return(result)
+    else{ ## Two possibilities: belong to clone or subclone
+        result<-data.frame()
+        As<-strcount(x = Genotype, pattern = 'A',split = '')
+        Ns<-nchar(Genotype)
+        for(i in 1:As){
+            Cellularity<-as.numeric(frequency/100*{Ns+contamination/(1-contamination)*2}/i)
+            spare<-data.frame(chr,position,Cellularity, Genotype,Alt,Depth,i,Ns)
+            colnames(spare)<-c('Chr','Start','Cellularity','Genotype',"Alt","Depth","NC","NCh")
+            result<-rbind(result,spare)
+        }
+        A.sub<-strcount(x=subclone.genotype,pattern = "A",split = '')
+        N.sub<-nchar(subclone.genotype)
+        for(j in A.sub){
+            ### Keep only possibilities that have a cellularity lower than the subclonal cellularity
+            
+            Cellularity<-as.numeric(frequency/100*{N.sub+contamination/(1-contamination)*2}/j)
+            if(Cellularity<=subclone.cell){
+                spare<-data.frame(chr,position,Cellularity, subclone.genotype,Alt,Depth,j,N.sub)
+                colnames(spare)<-c('Chr','Start','Cellularity','Genotype',"Alt","Depth","NC","NCh")
+                result<-rbind(result,spare)
+            }
+        }
+    }
+    
+    result<-data.frame(result)
+    colnames(result)<-c('Chr','Start','Cellularity','Genotype',"Alt","Depth","NC","NCh")
+    return(result)
 }
 
 #'String count
@@ -666,8 +666,8 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
 #' @keywords Text handling
 
 strcount <- function(x, pattern='', split=''){
-  
-  unlist(lapply(strsplit(x, split),function(z) na.omit(length(grep(pattern, z)))))
+    
+    unlist(lapply(strsplit(x, split),function(z) na.omit(length(grep(pattern, z)))))
 }
 #' Cellularity clustering
 #'
@@ -698,107 +698,107 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
                                  contamination, clone_priors,prior_weight,nclone_range,Initializations,preclustering=TRUE,
                                  epsilon=5*(10**(-3)),ncores = 2,output_directory=NULL,
                                  model.selection = "BIC",optim = "default", keep.all.models = FALSE){
-  preclustering_success<-FALSE
-  preclustering_FLASH<-FALSE
-  ##### PRECLUSTERING
-  ###################
-  if(!is.null(preclustering)){
-    if(preclustering=="kmedoid"){
-      for(i in 1:length(Cell)){
-        if(i==1){
-          select<-Cell[[1]][,"Genotype"]=='A'| Cell[[1]][,"Genotype"]=='AB'
-          Spare<-Cell[[1]][,'Cellularity']
-        }
-        else{
-          select<- select & (Cell[[i]][,"Genotype"]=='A'| Cell[[i]][,"Genotype"]=='AB')
-          Spare<-cbind(Spare,Cell[[i]][,'Cellularity'])
-        }
-      }
-      if(length(Cell)==1){
-        Spare<-Spare[select]
-        if(length(Spare)==0){
-          warning("No A and AB sites to do preclustering")
-          p_clone<-clone_priors
-          p_weight<-prior_weight
-        }
-      }
-      else{
-        Spare<-Spare[select,] ##restriction to A AB sites
-      }
-      if(is.null(dim(Spare))){
-        warning("No A and AB sites to do preclustering")
-        p_clone<-clone_priors
-        p_weight<-prior_weight
-      }
-      else{
-        if(nrow(Spare)<=max(nclone_range)){
-          warning("Too few mutations to cluster. Will use priors / random initial conditions")
-          p_clone<-clone_priors
-          p_weight<-prior_weight
-        }
-        else{
-          Spare[Spare>1]<-1
-          kmeans<-fpc::pamk(Spare,krange = nclone_range,usepam = F)
-          p_clone<-list()
-          p_weight<-numeric()
-          create_prior_weight<- nrow(Spare)>=50
-          for(j in 1:(ncol(kmeans$pamobject$medoids))){
-            p_clone[[j]]<-as.numeric(kmeans$pamobject$medoids[,j])
-            if(create_prior_weight){
-              p_weight[j]<-sum(kmeans$pamobject$clustering==j)/length(kmeans$pamobject$clustering)
+    preclustering_success<-FALSE
+    preclustering_FLASH<-FALSE
+    ##### PRECLUSTERING
+    ###################
+    if(!is.null(preclustering)){
+        if(preclustering=="kmedoid"){
+            for(i in 1:length(Cell)){
+                if(i==1){
+                    select<-Cell[[1]][,"Genotype"]=='A'| Cell[[1]][,"Genotype"]=='AB'
+                    Spare<-Cell[[1]][,'Cellularity']
+                }
+                else{
+                    select<- select & (Cell[[i]][,"Genotype"]=='A'| Cell[[i]][,"Genotype"]=='AB')
+                    Spare<-cbind(Spare,Cell[[i]][,'Cellularity'])
+                }
             }
-          }
-          if(!create_prior_weight){
-            p_weight<-prior_weight
-          }
-          preclustering_success<-T
+            if(length(Cell)==1){
+                Spare<-Spare[select]
+                if(length(Spare)==0){
+                    warning("No A and AB sites to do preclustering")
+                    p_clone<-clone_priors
+                    p_weight<-prior_weight
+                }
+            }
+            else{
+                Spare<-Spare[select,] ##restriction to A AB sites
+            }
+            if(is.null(dim(Spare))){
+                warning("No A and AB sites to do preclustering")
+                p_clone<-clone_priors
+                p_weight<-prior_weight
+            }
+            else{
+                if(nrow(Spare)<=max(nclone_range)){
+                    warning("Too few mutations to cluster. Will use priors / random initial conditions")
+                    p_clone<-clone_priors
+                    p_weight<-prior_weight
+                }
+                else{
+                    Spare[Spare>1]<-1
+                    kmeans<-fpc::pamk(Spare,krange = nclone_range,usepam = F)
+                    p_clone<-list()
+                    p_weight<-numeric()
+                    create_prior_weight<- nrow(Spare)>=50
+                    for(j in 1:(ncol(kmeans$pamobject$medoids))){
+                        p_clone[[j]]<-as.numeric(kmeans$pamobject$medoids[,j])
+                        if(create_prior_weight){
+                            p_weight[j]<-sum(kmeans$pamobject$clustering==j)/length(kmeans$pamobject$clustering)
+                        }
+                    }
+                    if(!create_prior_weight){
+                        p_weight<-prior_weight
+                    }
+                    preclustering_success<-T
+                }
+            }
         }
-      }
-    }
-    else{ ### "FLASH" preclustering
-      preclustering_FLASH<-TRUE
-      result<-EM_clustering(Schrod = Cell,contamination = contamination,
-                            epsilon = epsilon,
-                            Initializations = Initializations,
-                            nclone_range = nclone_range,
-                            ncores = ncores,
-                            model.selection = model.selection,
-                            optim = optim, 
-                            keep.all.models = keep.all.models,
-                            FLASH = TRUE)
-    }
-  }
-  else{
-    p_clone<-clone_priors
-    p_weight<-prior_weight
-  }
-  #################
-  ### Clustering with EM
-  #################
-  if(!preclustering_FLASH){
-    if(preclustering_success){
-      result<-EM_clustering(Schrod = Cell,contamination = contamination,epsilon = epsilon,
-                            prior_weight = p_weight,clone_priors = p_clone,Initializations = Initializations,
-                            nclone_range = nclone_range,ncores = ncores,
-                            model.selection = model.selection,optim = optim, 
-                            keep.all.models = keep.all.models)
+        else{ ### "FLASH" preclustering
+            preclustering_FLASH<-TRUE
+            result<-EM_clustering(Schrod = Cell,contamination = contamination,
+                                  epsilon = epsilon,
+                                  Initializations = Initializations,
+                                  nclone_range = nclone_range,
+                                  ncores = ncores,
+                                  model.selection = model.selection,
+                                  optim = optim, 
+                                  keep.all.models = keep.all.models,
+                                  FLASH = TRUE)
+        }
     }
     else{
-      result<-EM_clustering(Schrod = Cell,contamination = contamination,epsilon = epsilon,
-                            prior_weight = p_weight,clone_priors = p_clone,Initializations = Initializations,
-                            nclone_range = nclone_range,ncores = ncores,
-                            model.selection = model.selection,optim = optim,keep.all.models = keep.all.models)
+        p_clone<-clone_priors
+        p_weight<-prior_weight
     }
-  }
-  
-  #### Plots possibilities
-  
-  if(save_plot && length(Cell)>1){
-    plot_cell_from_Return_out(result$filtered.data,
-                              Sample_names = Sample_names,
-                              output_dir=output_directory)
-  }
-  return(result)
+    #################
+    ### Clustering with EM
+    #################
+    if(!preclustering_FLASH){
+        if(preclustering_success){
+            result<-EM_clustering(Schrod = Cell,contamination = contamination,epsilon = epsilon,
+                                  prior_weight = p_weight,clone_priors = p_clone,Initializations = Initializations,
+                                  nclone_range = nclone_range,ncores = ncores,
+                                  model.selection = model.selection,optim = optim, 
+                                  keep.all.models = keep.all.models)
+        }
+        else{
+            result<-EM_clustering(Schrod = Cell,contamination = contamination,epsilon = epsilon,
+                                  prior_weight = p_weight,clone_priors = p_clone,Initializations = Initializations,
+                                  nclone_range = nclone_range,ncores = ncores,
+                                  model.selection = model.selection,optim = optim,keep.all.models = keep.all.models)
+        }
+    }
+    
+    #### Plots possibilities
+    
+    if(save_plot && length(Cell)>1){
+        plot_cell_from_Return_out(result$filtered.data,
+                                  Sample_names = Sample_names,
+                                  output_dir=output_directory)
+    }
+    return(result)
 }
 
 #' Probability
@@ -823,56 +823,56 @@ Probability.to.belong.to.clone<-function(SNV_list,
                                          clone_prevalence,
                                          contamination,
                                          clone_weights=NULL){
-  if(is.null(clone_weights)){
-    clone_weights<-rep(1/(length(clone_prevalence[[1]])),times = length(clone_prevalence[[1]]))
-  }
-  if(is.null(SNV_list[[1]]$NC)){ ### The output has not been through clustering
-    Schrod<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided = TRUE,
-                                              contamination = contamination)
-    
-    result<- eval.fik(Schrod = Schrod,
-                      centers = clone_prevalence,
-                      weights= clone_weights,keep.all.poss = TRUE,
-                      adj.factor = Compute.adj.fact(Schrod = Schrod)
-    )
-    filtered<-filter_on_fik(Schrod = Schrod,fik = result)
-    filtered_prob<-Probability.to.belong.to.clone(SNV_list = filtered,clone_prevalence = clone_prevalence,
-                                                  contamination = contamination,clone_weights = clone_weights)$filtered_prob
-    
-  }
-  else{### The output has  been through clustering
-    Schrod<-SNV_list
-    adj.fact<-Compute.adj.fact(SNV_list)
-    result<-eval.fik(Schrod = SNV_list,
-                     centers = clone_prevalence,
-                     weights =clone_weights,
-                     keep.all.poss = TRUE,
-                     adj.factor = adj.fact
-    )
-    filtered_prob<-result
-    filtered <-SNV_list
-  }
-  clustering<-apply(X = filtered_prob,MARGIN = 1,FUN = function(z) {
-    if(sum(z==max(z))>1){ ### Look for the multiple clones, and attribute with probability proportional to the weight
-      if(max(z)>0){
-        pos<-which(z==max(z))
-        prob<-clone_weights[pos]/(sum(clone_weights[pos]))
-        #sample(x = pos, size = 1, prob = prob))
-        return(pos[which.max(prob)])
-      }
-      else{ ### all possibilities have 0 probability, so choose one randomly
-        return(sample(1:length(z),size = z))
-      }
+    if(is.null(clone_weights)){
+        clone_weights<-rep(1/(length(clone_prevalence[[1]])),times = length(clone_prevalence[[1]]))
     }
-    else{ # only one clone has maximal probability
-      return(which.max(z))
+    if(is.null(SNV_list[[1]]$NC)){ ### The output has not been through clustering
+        Schrod<-Patient_schrodinger_cellularities(SNV_list = SNV_list,Genotype_provided = TRUE,
+                                                  contamination = contamination)
+        
+        result<- eval.fik(Schrod = Schrod,
+                          centers = clone_prevalence,
+                          weights= clone_weights,keep.all.poss = TRUE,
+                          adj.factor = Compute.adj.fact(Schrod = Schrod)
+        )
+        filtered<-filter_on_fik(Schrod = Schrod,fik = result)
+        filtered_prob<-Probability.to.belong.to.clone(SNV_list = filtered,clone_prevalence = clone_prevalence,
+                                                      contamination = contamination,clone_weights = clone_weights)$filtered_prob
+        
     }
-  })
-  
-  return(list(unfiltered_prob = result,
-              unfiltered_data = Schrod,
-              filtered_prob =filtered_prob,
-              filtered_data = filtered,
-              cluster = clustering)
-  )
+    else{### The output has  been through clustering
+        Schrod<-SNV_list
+        adj.fact<-Compute.adj.fact(SNV_list)
+        result<-eval.fik(Schrod = SNV_list,
+                         centers = clone_prevalence,
+                         weights =clone_weights,
+                         keep.all.poss = TRUE,
+                         adj.factor = adj.fact
+        )
+        filtered_prob<-result
+        filtered <-SNV_list
+    }
+    clustering<-apply(X = filtered_prob,MARGIN = 1,FUN = function(z) {
+        if(sum(z==max(z))>1){ ### Look for the multiple clones, and attribute with probability proportional to the weight
+            if(max(z)>0){
+                pos<-which(z==max(z))
+                prob<-clone_weights[pos]/(sum(clone_weights[pos]))
+                #sample(x = pos, size = 1, prob = prob))
+                return(pos[which.max(prob)])
+            }
+            else{ ### all possibilities have 0 probability, so choose one randomly
+                return(sample(1:length(z),size = z))
+            }
+        }
+        else{ # only one clone has maximal probability
+            return(which.max(z))
+        }
+    })
+    
+    return(list(unfiltered_prob = result,
+                unfiltered_data = Schrod,
+                filtered_prob =filtered_prob,
+                filtered_data = filtered,
+                cluster = clustering)
+    )
 }

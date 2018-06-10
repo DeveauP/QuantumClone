@@ -12,6 +12,11 @@ vignette: >
   
 ---
 
+<h3> Release of 10/6/2018, v1.0.0.7 </h3>
+<ul>
+<li>Corrected FREEC genotype import
+</ul>
+
 <h3> Release of 3/10/2017, v1.0.0.6 </h3>
 <ul>
 <li> Corrected formula for transition of cellular prevalence to VAF;
