@@ -478,6 +478,7 @@ Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_pr
     for(i in 1:nrow(SNV_list[[1]])){ ##Exploring all possibilities for each mutation
         Cell<-list()
         test<-TRUE
+        #print(SNV_list[[1]][i,'Chr'])
         for(k in 1:length(SNV_list)){
             if(test){ ## Do not look at position if it is invalid in another sample previously explored
                 if(!is.null(SNV_list[[k]]$subclone.genotype)){
@@ -504,9 +505,11 @@ Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_pr
                 else{
                     if(chr[i]!=chr_ante){
                         #subset on working chr
+                        #print(ChrCol)
+                        #print(FREEC_list[[1]][,1] == chr[i])
                         CHR_FREEC<-lapply(FREEC_list,
                                           function(z){
-                                              z[as.character(z[,ChrCol])==as.character(chr[i])]
+                                              z[as.character(z[,ChrCol])==as.character(chr[i]),]
                                                                                          
                                           } )
                         chr_ante<-chr[i]
