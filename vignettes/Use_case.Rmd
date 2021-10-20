@@ -145,7 +145,7 @@ QuantumClone::evolution_plot(QuantumClone::QC_output,Sample_names = c("Timepoint
 
 
 #### Recreate phylogenetic tree (when possible)
-`````{r Tree, echo = TRUE, warning = FALSE,eval=TRUE}
+````{r Tree, echo = TRUE, warning = FALSE,eval=TRUE}
 Cellularities<-cbind(QuantumClone::QC_output$EM.output$centers[[1]],QuantumClone::QC_output$EM.output$centers[[2]])
 Tree<-QuantumClone::Tree_generation(Cellularities)
 
