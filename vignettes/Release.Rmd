@@ -11,15 +11,23 @@ vignette: >
   %\VignetteEncoding{UTF-8}
   
 ---
+<h3> Release of 23/10/2021, v1.0.0.9 </h3>
+<ul>
+<li>Updated JSS DOI
+</li>
+<li>Fixed vignettes syntax
+</li
+</ul>
+
 
 <h3> Release of 10/6/2018, v1.0.0.7 </h3>
 <ul>
-<li>Corrected FREEC genotype import
+<li>Corrected FREEC genotype import</li>
 </ul>
 
 <h3> Release of 3/10/2017, v1.0.0.6 </h3>
 <ul>
-<li> Corrected formula for transition of cellular prevalence to VAF;
+<li> Corrected formula for transition of cellular prevalence to VAF;</li>
 <li> Corrected syntax for clustering function call in example vignette.</li>
 </ul>
 
@@ -104,7 +112,7 @@ vignette: >
 <h3>Release of 12/9/2016 </h3>
 <ul>
 <li>Changes in weight computation: normalization by sum of weights; </li>
-<li>Added <a href=https://www.jstatsoft.org/article/view/v040i06>DEoptim </a> solver for EM;</li>
+<li>Added DEoptim solver for EM ( \doi{10.18637/jss.v040.i06});</li>
 <li>Flash QuantumClone handles polyploid regions;</li>
 <li>Flash QuantumClone handles BIC, AIC or numeric correction of BIC for cluster selection.</li>
 

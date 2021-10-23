@@ -20,7 +20,7 @@ knitr::opts_chunk$set(collapse = TRUE, fig.width = 7, fig.height = 7,
 
 R package available on [CRAN](https://cran.r-project.org/package=QuantumClone) or on [github](https://github.com/DeveauP/QuantumClone)
 
-Maintainer: Paul Deveau (paul.deveau at curie.fr)
+Maintainers: quantumclone.package [at] gmail.com
 
 ## Clonal Reconstruction from High-Throughput Sequencing data
 
@@ -136,10 +136,10 @@ If more than one sample (here we reuse sample 1 in the plot, to illustrate plot 
 
 For time series, using evolution_plot() is recommanded. It enables the plot of the cellularity of each clone in a single plot, with the width of a line being proportional to the fraction of mutations in the clone.
 
-> evolution_plot(QC_output,Sample_names = c("Timepoint_1","Timepoint_2"))
+> evolution_plot(QC_output,c("Timepoint_1","Timepoint_2"))
 
-`````{r evol, echo = FALSE, warning = FALSE}
-QuantumClone::evolution_plot(QuantumClone::QC_output,Sample_names = c("Timepoint_1","Timepoint_2"))
+````{r evol, echo = FALSE, warning = FALSE}
+QuantumClone::evolution_plot(QuantumClone::QC_output,c("Timepoint_1","Timepoint_2"))
 
 ````
 
@@ -159,7 +159,7 @@ Each row (i) corresponds to a clone. The last two columns are the cellularity of
 For the other columns (j) there is a 1 if clone j is a progeny of clone (i)
 
 #### Plot all possible phylogenetic trees:
-`````{r TreePlot, echo = TRUE, warning = FALSE,eval=TRUE}
+````{r TreePlot, echo = TRUE, warning = FALSE,eval=TRUE}
 QuantumClone::multiplot_trees(Tree,d = 4)
 
 ````
