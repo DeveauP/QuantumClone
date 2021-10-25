@@ -4,12 +4,26 @@
 \alias{One_step_clustering}
 \title{Cellularity clustering}
 \usage{
-One_step_clustering(SNV_list, FREEC_list = NULL, contamination,
-  nclone_range = 2:5, clone_priors = NULL, prior_weight = NULL,
-  Initializations = 1, preclustering = "FLASH", simulated = FALSE,
-  epsilon = NULL, save_plot = TRUE, ncores = 1, restrict.to.AB = FALSE,
-  output_directory = NULL, model.selection = "BIC", optim = "default",
-  keep.all.models = FALSE, force.single.copy = FALSE)
+One_step_clustering(
+  SNV_list,
+  FREEC_list = NULL,
+  contamination,
+  nclone_range = 2:5,
+  clone_priors = NULL,
+  prior_weight = NULL,
+  Initializations = 1,
+  preclustering = "FLASH",
+  simulated = FALSE,
+  epsilon = NULL,
+  save_plot = TRUE,
+  ncores = 1,
+  restrict.to.AB = FALSE,
+  output_directory = NULL,
+  model.selection = "BIC",
+  optim = "default",
+  keep.all.models = FALSE,
+  force.single.copy = FALSE
+)
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
@@ -78,7 +92,7 @@ Clustering_output<-One_step_clustering(SNV_list = Mutations,
 FREEC_list = NULL,contamination = c(0,0),nclone_range = 3:4,
 clone_priors = NULL,prior_weight = NULL ,
 Initializations = 1,preclustering = "FLASH", simulated = TRUE,
-save_plot = TRUE,ncores=1,output_directory="Example")
+save_plot = FALSE,ncores=1,output_directory=NULL)
 print("The data can be accessed by Clustering_output$filtered_data")
 print("All plots are now saved in the working directory")
 

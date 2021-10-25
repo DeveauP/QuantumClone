@@ -1,10 +1,15 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.*.yml
+QuantumClone*.Rproj
 .travis.yml
 appveyor.yml
 codecov.yml
+.Rhistory
+.gitignore
+.gitattributes
+.git
 Images/
 GUI_windows.R
-^\reproducible_testing
 Readme.md
+tests/reproducible_testing/

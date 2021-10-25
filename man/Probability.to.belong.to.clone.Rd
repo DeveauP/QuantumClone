@@ -4,8 +4,12 @@
 \alias{Probability.to.belong.to.clone}
 \title{Probability}
 \usage{
-Probability.to.belong.to.clone(SNV_list, clone_prevalence, contamination,
-  clone_weights = NULL)
+Probability.to.belong.to.clone(
+  SNV_list,
+  clone_prevalence,
+  contamination,
+  clone_weights = NULL
+)
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),

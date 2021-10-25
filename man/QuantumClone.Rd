@@ -4,12 +4,26 @@
 \alias{QuantumClone}
 \title{One step analysis function}
 \usage{
-QuantumClone(SNV_list, FREEC_list = NULL, contamination, nclone_range = 2:5,
-  clone_priors = NULL, prior_weight = NULL, simulated = FALSE,
-  save_plot = TRUE, epsilon = NULL, Initializations = 2,
-  preclustering = "FLASH", timepoints = NULL, ncores = 1,
-  output_directory = NULL, model.selection = "BIC", optim = "default",
-  keep.all.models = FALSE, force.single.copy = FALSE)
+QuantumClone(
+  SNV_list,
+  FREEC_list = NULL,
+  contamination,
+  nclone_range = 2:5,
+  clone_priors = NULL,
+  prior_weight = NULL,
+  simulated = FALSE,
+  save_plot = TRUE,
+  epsilon = NULL,
+  Initializations = 2,
+  preclustering = "FLASH",
+  timepoints = NULL,
+  ncores = 1,
+  output_directory = NULL,
+  model.selection = "BIC",
+  optim = "default",
+  keep.all.models = FALSE,
+  force.single.copy = FALSE
+)
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
@@ -81,7 +95,8 @@ Clustering_output<-QuantumClone(SNV_list = Mutations,
 FREEC_list = NULL,contamination = c(0,0),nclone_range = 3:4,
 clone_priors = NULL,prior_weight = NULL ,
 Initializations = 1,preclustering = "FLASH", simulated = TRUE,
-save_plot = TRUE,ncores=1,output_directory="Example")
+save_plot = FALSE,ncores=1,output_directory=NULL)
+# Set save_plot to true and provide output_directory path to save 
 print("The data can be accessed by Clustering_output$filtered_data")
 print("All plots are now saved in the working directory")
 

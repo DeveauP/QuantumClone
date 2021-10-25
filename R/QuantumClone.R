@@ -56,7 +56,8 @@
 #' FREEC_list = NULL,contamination = c(0,0),nclone_range = 3:4,
 #' clone_priors = NULL,prior_weight = NULL ,
 #' Initializations = 1,preclustering = "FLASH", simulated = TRUE,
-#' save_plot = TRUE,ncores=1,output_directory="Example")
+#' save_plot = FALSE,ncores=1,output_directory=NULL)
+#' # Set save_plot to true and provide output_directory path to save 
 #' print("The data can be accessed by Clustering_output$filtered_data")
 #' print("All plots are now saved in the working directory")
 #'
@@ -140,7 +141,7 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
 #' FREEC_list = NULL,contamination = c(0,0),nclone_range = 3:4,
 #' clone_priors = NULL,prior_weight = NULL ,
 #' Initializations = 1,preclustering = "FLASH", simulated = TRUE,
-#' save_plot = TRUE,ncores=1,output_directory="Example")
+#' save_plot = FALSE,ncores=1,output_directory=NULL)
 #' print("The data can be accessed by Clustering_output$filtered_data")
 #' print("All plots are now saved in the working directory")
 #'

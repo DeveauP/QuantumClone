@@ -4,8 +4,12 @@
 \alias{plot_QC_out}
 \title{Plot QC_output}
 \usage{
-plot_QC_out(QClone_Output, Sample_names = NULL, simulated = FALSE,
-  sample_selected = 1:2)
+plot_QC_out(
+  QClone_Output,
+  Sample_names = NULL,
+  simulated = FALSE,
+  sample_selected = 1:2
+)
 }
 \arguments{
 \item{QClone_Output}{Output from QuantumClone algorithm}

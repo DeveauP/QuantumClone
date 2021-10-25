@@ -4,11 +4,24 @@
 \alias{Cluster_plot_from_cell}
 \title{Cellularity clustering}
 \usage{
-Cluster_plot_from_cell(Cell, Sample_names, simulated, save_plot = TRUE,
-  contamination, clone_priors, prior_weight, nclone_range, Initializations,
-  preclustering = TRUE, epsilon = 5 * (10^(-3)), ncores = 2,
-  output_directory = NULL, model.selection = "BIC", optim = "default",
-  keep.all.models = FALSE)
+Cluster_plot_from_cell(
+  Cell,
+  Sample_names,
+  simulated,
+  save_plot = TRUE,
+  contamination,
+  clone_priors,
+  prior_weight,
+  nclone_range,
+  Initializations,
+  preclustering = TRUE,
+  epsilon = 5 * (10^(-3)),
+  ncores = 2,
+  output_directory = NULL,
+  model.selection = "BIC",
+  optim = "default",
+  keep.all.models = FALSE
+)
 }
 \arguments{
 \item{Cell}{Output from Return_one_cell_by_mut, list of cellularities (one list-element per sample)}

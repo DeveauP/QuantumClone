@@ -4,8 +4,15 @@
 \alias{m.step}
 \title{Maximization step}
 \usage{
-m.step(fik, Schrod, previous.weights, previous.centers, contamination,
-  adj.factor, optim = "default")
+m.step(
+  fik,
+  Schrod,
+  previous.weights,
+  previous.centers,
+  contamination,
+  adj.factor,
+  optim = "default"
+)
 }
 \arguments{
 \item{fik}{Matrix giving the probability of each mutation to belong to a specific clone}

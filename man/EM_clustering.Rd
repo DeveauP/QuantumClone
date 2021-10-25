@@ -4,10 +4,20 @@
 \alias{EM_clustering}
 \title{Expectation Maximization}
 \usage{
-EM_clustering(Schrod, contamination, prior_weight = NULL,
-  clone_priors = NULL, Initializations = 1, nclone_range = 2:5,
-  epsilon = 0.01, ncores = 2, model.selection = "BIC",
-  optim = "default", keep.all.models = FALSE, FLASH = FALSE)
+EM_clustering(
+  Schrod,
+  contamination,
+  prior_weight = NULL,
+  clone_priors = NULL,
+  Initializations = 1,
+  nclone_range = 2:5,
+  epsilon = 0.01,
+  ncores = 2,
+  model.selection = "BIC",
+  optim = "default",
+  keep.all.models = FALSE,
+  FLASH = FALSE
+)
 }
 \arguments{
 \item{Schrod}{List of dataframes, output of the Schrodinger function or the EM algorithm}

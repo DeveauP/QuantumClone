@@ -4,9 +4,19 @@
 \alias{CellularitiesFromFreq}
 \title{Cellularities from allele frequency}
 \usage{
-CellularitiesFromFreq(chr, position, Alt, Depth, Freec_ratio = NULL,
-  Genotype = NULL, subclone.genotype = NULL, subclone.cell = NULL,
-  contamination, restrict.to.AB = FALSE, force.single.copy = FALSE)
+CellularitiesFromFreq(
+  chr,
+  position,
+  Alt,
+  Depth,
+  Freec_ratio = NULL,
+  Genotype = NULL,
+  subclone.genotype = NULL,
+  subclone.cell = NULL,
+  contamination,
+  restrict.to.AB = FALSE,
+  force.single.copy = FALSE
+)
 }
 \arguments{
 \item{chr}{The chromosome on which is the position (numeric value, not chr1 as in BED files)}

@@ -4,8 +4,14 @@
 \alias{FLASH_main}
 \title{Flash core}
 \usage{
-FLASH_main(Schrod_cells, model.selection, conta, Nclus, tree = NULL,
-  dissimMatrix = NULL)
+FLASH_main(
+  Schrod_cells,
+  model.selection,
+  conta,
+  Nclus,
+  tree = NULL,
+  dissimMatrix = NULL
+)
 }
 \arguments{
 \item{Schrod_cells}{Output from Schrodinger cellularities}

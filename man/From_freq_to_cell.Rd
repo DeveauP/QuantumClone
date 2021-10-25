@@ -4,10 +4,18 @@
 \alias{From_freq_to_cell}
 \title{Wrap-up function}
 \usage{
-From_freq_to_cell(SNV_list, FREEC_list = NULL, Sample_names,
-  Genotype_provided = FALSE, save_plot = TRUE, contamination, ncores = 4,
-  restrict.to.AB = FALSE, output_directory = NULL,
-  force.single.copy = FALSE)
+From_freq_to_cell(
+  SNV_list,
+  FREEC_list = NULL,
+  Sample_names,
+  Genotype_provided = FALSE,
+  save_plot = TRUE,
+  contamination,
+  ncores = 4,
+  restrict.to.AB = FALSE,
+  output_directory = NULL,
+  force.single.copy = FALSE
+)
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),

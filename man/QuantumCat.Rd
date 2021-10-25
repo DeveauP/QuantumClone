@@ -4,9 +4,16 @@
 \alias{QuantumCat}
 \title{Data generation}
 \usage{
-QuantumCat(number_of_clones, number_of_mutations, ploidy = 2, depth = 100,
-  number_of_samples = 2, Random_clones = F, contamination = NULL,
-  Subclonal.CNA.fraction = NULL)
+QuantumCat(
+  number_of_clones,
+  number_of_mutations,
+  ploidy = 2,
+  depth = 100,
+  number_of_samples = 2,
+  Random_clones = F,
+  contamination = NULL,
+  Subclonal.CNA.fraction = NULL
+)
 }
 \arguments{
 \item{number_of_clones}{The wanted number of observable clones (meaning bearing at least 1 mutation)}

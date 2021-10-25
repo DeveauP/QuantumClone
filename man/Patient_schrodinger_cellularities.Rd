@@ -4,9 +4,14 @@
 \alias{Patient_schrodinger_cellularities}
 \title{Patient Schrodinger Cellularities}
 \usage{
-Patient_schrodinger_cellularities(SNV_list, FREEC_list = NULL,
-  Genotype_provided = FALSE, contamination, restrict.to.AB = FALSE,
-  force.single.copy = FALSE)
+Patient_schrodinger_cellularities(
+  SNV_list,
+  FREEC_list = NULL,
+  Genotype_provided = FALSE,
+  contamination,
+  restrict.to.AB = FALSE,
+  force.single.copy = FALSE
+)
 }
 \arguments{
 \item{SNV_list}{A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),

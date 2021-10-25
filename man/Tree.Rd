@@ -4,12 +4,14 @@
 \name{Tree}
 \alias{Tree}
 \title{Example of output by Tree_generation}
-\format{list of lists
+\format{
+list of lists
 \describe{
  \item{Top level}{List of all possibilities}
  \item{dataframe}{Table of hierarchical relations}
  \item{numeric}{probability of this tree}
-}}
+}
+}
 \usage{
 Tree
 }
