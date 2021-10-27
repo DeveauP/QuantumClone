@@ -11,6 +11,9 @@ evolution_plot(QC_out, Sample_names = NULL)
 
 \item{Sample_names}{: character vector of the names of each sample (in the same order as the data)}
 }
+\value{
+ggplot object
+}
 \description{
 Plots evolution in time of clones
 }

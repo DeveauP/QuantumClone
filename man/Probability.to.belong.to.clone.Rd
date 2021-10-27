@@ -23,6 +23,9 @@ This should be stored in `QC_output$EM.output$centers`}
 
 \item{clone_weights}{Numeric vector giving the proportion of mutations in each clone}
 }
+\value{
+list of items allowing to attribute variant to a cluster
+}
 \description{
 Returns dataframe with all informations about mutation (Number of copies, Cellularity, etc.) and probability to belong to a clone
 }

@@ -12,7 +12,7 @@ zscore(Depth, Alt)
 \item{Alt}{a numeric vector of the number of reads supporting each variant}
 }
 \value{
-returns a square numeric matrix
+square numeric matrix
 }
 \description{
 Computes the z-score of mutations being from the same distribution

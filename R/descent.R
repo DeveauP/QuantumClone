@@ -1,15 +1,14 @@
 ### Store functions that are used for gradient descent:
 ### peak, grx, eval.fik, eval.fik.m, list.prod
 
-#'List product
-#'
-#' Returns the product of all elements in a list, e.g. a vector if the elements of the list are vectors, etc.
-#' @param L list used
-#' @param col If it is a list of matrices, and only one column should be used, name of the column.
-#' @keywords List handling
-#' @examples 
-#' list_prod(list(matrix(1:4,nrow = 2),matrix(1:4,nrow = 2)))
-#' @export
+#List product
+#
+# Returns the product of all elements in a list, e.g. a vector if the elements of the list are vectors, etc.
+# @param L list used
+# @param col If it is a list of matrices, and only one column should be used, name of the column.
+# @keywords List handling
+# @examples 
+# QuantumClone:::list_prod(list(matrix(1:4,nrow = 2),matrix(1:4,nrow = 2)))
 list_prod<-function(L,col=NULL){
   if(is.null(col)){
     if(length(L)>1){
@@ -78,15 +77,15 @@ eval.fik<-function(Schrod,centers,weights,keep.all.poss=TRUE,adj.factor,log = FA
   al
 }
 
-#' Eval probability for M step
-#' Computes the log directly as log density is faster to compute
-#' 
-#' @param Schrod The shcrodinger list of matrices
-#' @param centers centers of the clusters
-#' @param weights weight of each cluster
-#' @param adj.factor The adjusting factor, taking into account contamination, copy number, number of copies
-#' @param log Should it compute the log distribution (TRUE) or probability (FALSE)
-#' between two optimization steps. If NULL, will take 1/(median depth).
+# Eval probability for M step
+# Computes the log directly as log density is faster to compute
+# 
+# @param Schrod The shcrodinger list of matrices
+# @param centers centers of the clusters
+# @param weights weight of each cluster
+# @param adj.factor The adjusting factor, taking into account contamination, copy number, number of copies
+# @param log Should it compute the log distribution (TRUE) or probability (FALSE)
+# between two optimization steps. If NULL, will take 1/(median depth).
 eval.fik.m<-function(Schrod,centers,weights,adj.factor,log = TRUE){
   spare<-eval.fik(Schrod = Schrod,
                   centers=centers,
@@ -100,14 +99,13 @@ eval.fik.m<-function(Schrod,centers,weights,adj.factor,log = TRUE){
   spare
 }
 
-#' Gradient 0
-#' 
-#' Return center values for max if adj.factor has a single value for all variants/possibilities in each samples
-#' @param fik matrix with probability of each possibility to belong to clone k
-#' @param adj.factor matrix with coefficient making transition between cellularity and frequency
-#' @param Alt matrix with samples in columns and number of alternative reads in rows
-#' @param Depth matrix with samples in coluns and depth of coverage in rows
-#' @export
+# Gradient 0
+# 
+# Return center values for max if adj.factor has a single value for all variants/possibilities in each samples
+# @param fik matrix with probability of each possibility to belong to clone k
+# @param adj.factor matrix with coefficient making transition between cellularity and frequency
+# @param Alt matrix with samples in columns and number of alternative reads in rows
+# @param Depth matrix with samples in coluns and depth of coverage in rows
 grzero<-function(fik,adj.factor,Alt,Depth){
   #adj.factor has samples in cols
   #fik has clusters in cols
@@ -134,21 +132,20 @@ grzero<-function(fik,adj.factor,Alt,Depth){
   centers
 }
 
-#' Computes gradient of function
-#'
-#' @param fik Evaluation of fik for previous iteration
-#' @param adj.factor Factor to compute the probability: makes transition between the cellularity of the clone and the frequency observed
-#' @param centers vector with cellularity of each clone (numeric vector, ordered by samples)
-#' @param Alt Matrix with number of draws in rows for a mutation/possibility, and samples in columns
-#' @param Depth Matrix with number of not draws (Depth - Alt) in rows for a mutation/possibility, and samples in columns
-#' @examples 
-#' fik<-matrix(c(1,0,0,1),nrow = 2)
-#' adj.factor<-matrix(1/2,nrow =2 ,ncol =1)
-#' centers<-c(0.25,0.75)
-#' Alt<-c(125,375)
-#' Depth<-c(1000,1000)
-#' grbase(fik,adj.factor,centers,Alt,Depth)
-#' @export
+# Computes gradient of function
+#
+# @param fik Evaluation of fik for previous iteration
+# @param adj.factor Factor to compute the probability: makes transition between the cellularity of the clone and the frequency observed
+# @param centers vector with cellularity of each clone (numeric vector, ordered by samples)
+# @param Alt Matrix with number of draws in rows for a mutation/possibility, and samples in columns
+# @param Depth Matrix with number of not draws (Depth - Alt) in rows for a mutation/possibility, and samples in columns
+# @examples 
+# fik<-matrix(c(1,0,0,1),nrow = 2)
+# adj.factor<-matrix(1/2,nrow =2 ,ncol =1)
+# centers<-c(0.25,0.75)
+# Alt<-c(125,375)
+# Depth<-c(1000,1000)
+# QuantumClone:::grbase(fik,adj.factor,centers,Alt,Depth)
 grbase<-compiler::cmpfun(function(fik,adj.factor,centers,Alt,Depth){
   result<-numeric(length = length(centers))
   ## fik has the Schrod possibilities in rows and clones in cols

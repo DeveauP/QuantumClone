@@ -4,12 +4,13 @@
 #' Assumption is made the different clones are on different lines of the matrix
 #' @param Clone_cellularities A dataframe with cellularities (ranging from 0 to 1) of each clone (rows) in each sample (columns)
 #' @param timepoints A numeric vector giving the spatial and/or temporal distribution of the samples
-#' @export
 #' @keywords Clonal inference phylogeny
-# Clone_cell<-cbind(QuantumClone::QC_output$EM.output$centers[[1]],QuantumClone::QC_output$EM.output$centers[[2]])
-# print("Using clone cellularities:")
-# print(Clone_cell)
-# Tree_generation(Clone_cell)
+#' Clone_cell<-cbind(QuantumClone::QC_output$EM.output$centers[[1]],QuantumClone::QC_output$EM.output$centers[[2]])
+#' print("Using clone cellularities:")
+#' print(Clone_cell)
+#' Tree_generation(Clone_cell)
+#' @return list of putative phylogenetic trees
+#' @export
 Tree_generation<-function(Clone_cellularities,timepoints=NULL){
   if(is.data.frame(Clone_cellularities)){
     Clone_cellularities<-as.matrix(Clone_cellularities)
@@ -91,15 +92,15 @@ Tree_generation<-function(Clone_cellularities,timepoints=NULL){
   return(connexion_list)
 }
 
-#' Phylogenetic tree leaf
-#'
-#' Adds a leaf to an already built tree. Output is a list of all possibilities.
-#' @param leaf A vector of cellularities (ranging from 0 to 1)
-#' @param connexion_list List containing 1. An interaction matrix concatenated with the cellularity of each cluster (one line per cluster)
-#' @param timepoints A numeric vector giving the spatial and/or temporal distribution of the samples
-#' @param d The initial number of clusters
-#' @param selector_position The row of the studied leaf in the data frame.
-#' @keywords Clonal inference phylogeny
+# Phylogenetic tree leaf
+#
+# Adds a leaf to an already built tree. Output is a list of all possibilities.
+# @param leaf A vector of cellularities (ranging from 0 to 1)
+# @param connexion_list List containing 1. An interaction matrix concatenated with the cellularity of each cluster (one line per cluster)
+# @param timepoints A numeric vector giving the spatial and/or temporal distribution of the samples
+# @param d The initial number of clusters
+# @param selector_position The row of the studied leaf in the data frame.
+# @keywords Clonal inference phylogeny
 
 add_leaf_list<-function(leaf,connexion_list,timepoints,d,selector_position){
   
@@ -148,12 +149,12 @@ add_leaf_list<-function(leaf,connexion_list,timepoints,d,selector_position){
   return(result)
 }
 
-#' Length
-#'
-#' Computes the length from the clone on the n-th row of the matrix, to the most ancestral clone
-#' @param matrix The interaction matrix of the tree (1 on the i-th row j-th column means "clone j is the progeny of clone i")
-#' @param n Index of the clone in the matrix
-#' @keywords Clonal inference phylogeny
+# Length
+#
+# Computes the length from the clone on the n-th row of the matrix, to the most ancestral clone
+# @param matrix The interaction matrix of the tree (1 on the i-th row j-th column means "clone j is the progeny of clone i")
+# @param n Index of the clone in the matrix
+# @keywords Clonal inference phylogeny
 
 longueur<-function(matrix,n){
   if(sum(matrix[,n])==0){
@@ -166,13 +167,13 @@ longueur<-function(matrix,n){
 
 
 
-#' Graphic position
-#'
-#' Computes the position of a node on the graph, based on the interaction matrix.
-#' @param matrix The interaction matrix of the tree (1 on the i-th row j-th column means "clone j is the progeny of clone i")
-#' @param d Initial number of clones
-#' @param n Index of the clone of interest in the matrix
-#' @keywords Clonal inference phylogeny
+# Graphic position
+#
+# Computes the position of a node on the graph, based on the interaction matrix.
+# @param matrix The interaction matrix of the tree (1 on the i-th row j-th column means "clone j is the progeny of clone i")
+# @param d Initial number of clones
+# @param n Index of the clone of interest in the matrix
+# @keywords Clonal inference phylogeny
 
 find_x_position<-function(matrix,n,d){
   if(sum(matrix[,n])==0){
@@ -186,12 +187,12 @@ find_x_position<-function(matrix,n,d){
   }
 }
 
-#' Group theory
-#'
-#' Clone2 is included in Clone1 if all values of Clone2 are lower or equal to the ones in Clone1 at the same position. Returns TRUE is Clone2 is included in Clone1.
-#' @param Clone1 Numeric vector, representing the cellularity of Clone1 in different samples
-#' @param Clone2 Numeric vector, representing the cellularity of Clone2 in different samples
-#' @keywords Clonal inference phylogeny
+# Group theory
+#
+# Clone2 is included in Clone1 if all values of Clone2 are lower or equal to the ones in Clone1 at the same position. Returns TRUE is Clone2 is included in Clone1.
+# @param Clone1 Numeric vector, representing the cellularity of Clone1 in different samples
+# @param Clone2 Numeric vector, representing the cellularity of Clone2 in different samples
+# @keywords Clonal inference phylogeny
 
 is_included<-function(Clone1,Clone2){#Returns True if Clone2 is included in Clone1
   for(i in 1:length(Clone1)){

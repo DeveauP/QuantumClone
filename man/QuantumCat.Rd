@@ -10,7 +10,7 @@ QuantumCat(
   ploidy = 2,
   depth = 100,
   number_of_samples = 2,
-  Random_clones = F,
+  Random_clones = FALSE,
   contamination = NULL,
   Subclonal.CNA.fraction = NULL
 )
@@ -32,8 +32,11 @@ QuantumCat(
 
 \item{Subclonal.CNA.fraction}{Cell fraction of the subclone that has subclonal CNA}
 }
+\value{
+list of dataframes containing observations of a tumor (1 dataframe / sample)
+}
 \description{
-Creates plausible data as would be oserved by genome sequencing
+Creates plausible data as would be observed by genome sequencing
 }
 \examples{
 print("Generate small set of mutations from 2 differents clones...")

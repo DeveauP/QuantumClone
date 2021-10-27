@@ -9,6 +9,9 @@ plot_with_margins_densities(QClone_Output)
 \arguments{
 \item{QClone_Output}{Output from QuantumClone algorithm}
 }
+\value{
+gridarrange object from gridExtra library
+}
 \description{
 Adapted from http://stackoverflow.com/questions/11883844/inserting-a-table-under-the-legend-in-a-ggplot2-histogram
 Uses gridExtra package

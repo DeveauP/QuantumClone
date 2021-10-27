@@ -1,12 +1,12 @@
 # Cluster selection: With BIC, AIC, modified BIC or with variance
 
-#' Bayesian Information Criterion
-#'
-#' Computes BIC from a list of outputs of EM algorithm, then returns the position with minimal BIC
-#' @param EM_out_list list of outputs from EM.algo or FullEM
-#' @param model.selection The function to minimize for the model selection: can be "AIC", 
-#' "BIC", or numeric. In numeric, the BIC function is modified. If variance: returns max(abs(1 - Var(cluster)/expected(Var)))
-#' @keywords EM clustering number
+# Bayesian Information Criterion
+#
+# Computes BIC from a list of outputs of EM algorithm, then returns the position with minimal BIC
+# @param EM_out_list list of outputs from EM.algo or FullEM
+# @param model.selection The function to minimize for the model selection: can be "AIC", 
+# "BIC", or numeric. In numeric, the BIC function is modified. If variance: returns max(abs(1 - Var(cluster)/expected(Var)))
+# @keywords EM clustering number
 BIC_criterion<-function(EM_out_list,model.selection){
   ### Criterion should be minimized
   # Here we assimilate EM.output$val to -ln(L) where L is the likelihood of the model
@@ -62,11 +62,11 @@ BIC_criterion<-function(EM_out_list,model.selection){
 
 }
 
-#' Hard clustering based on EM output
-#'
-#' Attributes a mutation to its most likely clone based on the output of the EM algorithm
-#' @param EM_out Output from EM.algo or FullEM
-#' @keywords EM Hard clustering
+# Hard clustering based on EM output
+#
+# Attributes a mutation to its most likely clone based on the output of the EM algorithm
+# @param EM_out Output from EM.algo or FullEM
+# @keywords EM Hard clustering
 hard.clustering<-function(EM_out){
   clust<-apply(X = EM_out$fik,MARGIN = 1,FUN = function(z) {
     if(sum(z==max(z))>1){ ### Look for the multiple clones, and attribute with probability proportional to the weight

@@ -60,7 +60,12 @@
 #' # Set save_plot to true and provide output_directory path to save 
 #' print("The data can be accessed by Clustering_output$filtered_data")
 #' print("All plots are now saved in the working directory")
-#'
+#' @return list of lists 
+#' \describe{
+#'  \item{Top level}{List of all possibilities}
+#'  \item{dataframe}{Table of hierarchical relations}
+#'  \item{numeric}{probability of this tree}
+#'}
 
 QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
                        nclone_range=2:5,clone_priors=NULL,prior_weight=NULL,
@@ -145,7 +150,12 @@ QuantumClone<-function(SNV_list,FREEC_list=NULL,contamination,
 #' print("The data can be accessed by Clustering_output$filtered_data")
 #' print("All plots are now saved in the working directory")
 #'
-#'
+#' @return list of lists 
+#' \describe{
+#'  \item{Top level}{List of all possibilities}
+#'  \item{dataframe}{Table of hierarchical relations}
+#'  \item{numeric}{probability of this tree}
+#'}
 One_step_clustering<-function(SNV_list,FREEC_list=NULL,
                               contamination,nclone_range=2:5,
                               clone_priors=NULL,prior_weight=NULL,Initializations=1,preclustering="FLASH",
@@ -352,13 +362,13 @@ One_step_clustering<-function(SNV_list,FREEC_list=NULL,
     r
 }
 
-#' Tidying output from EM
-#' 
-#' Tidying input by Chr Start
-#' @param r output from Cluster_plot_from_cell
-#' @param Genotype_provided If the FREEC_list is provided, then should be FALSE (default), otherwise TRUE
-#' @param SNV_list A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
-#' 
+# Tidying output from EM
+# 
+# Tidying input by Chr Start
+# @param r output from Cluster_plot_from_cell
+# @param Genotype_provided If the FREEC_list is provided, then should be FALSE (default), otherwise TRUE
+# @param SNV_list A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
+# 
 Tidy_output<-function(r, Genotype_provided,SNV_list){
     Work_input<-SNV_list[[1]]
     Work_output<-r$filtered.data[[1]]
@@ -403,24 +413,24 @@ Tidy_output<-function(r, Genotype_provided,SNV_list){
     return(result)
 }
 
-#' Wrap-up function
-#'
-#' Function that computes the most likely position for each mutation based on the genotype
-#' @param SNV_list A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
-#' the chromosome "Chr",the position of the mutation "Start", the number of reads supporting the mutation "Alt", the depth of coverage at this locus "Depth",
-#' and if the output from FREEC for the samples are not associated, the genotype "Genotype".
-#' @param FREEC_list list of dataframes from FREEC for each samples (usually named Sample_ratio.txt), in the same order as SNV_list
-#' @param Genotype_provided If the FREEC_list is provided, then should be FALSE (default), otherwise TRUE
-#' @param save_plot Should the plots be saved? Default is TRUE
-#' @param Sample_names Name of the samples
-#' @param contamination Numeric vector describind the contamination in all samples (ranging from 0 to 1). Default is 0. 
-#' No longer used for clustering.
-#' @param ncores Number of cores to be used during EM algorithm
-#' @param restrict.to.AB Should the analysis keep only sites located in A and AB sites in all samples?
-#' @param output_directory Directory in which to save results
-#' @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
-#' @keywords Clonal inference
-#'
+# Wrap-up function
+#
+# Function that computes the most likely position for each mutation based on the genotype
+# @param SNV_list A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
+# the chromosome "Chr",the position of the mutation "Start", the number of reads supporting the mutation "Alt", the depth of coverage at this locus "Depth",
+# and if the output from FREEC for the samples are not associated, the genotype "Genotype".
+# @param FREEC_list list of dataframes from FREEC for each samples (usually named Sample_ratio.txt), in the same order as SNV_list
+# @param Genotype_provided If the FREEC_list is provided, then should be FALSE (default), otherwise TRUE
+# @param save_plot Should the plots be saved? Default is TRUE
+# @param Sample_names Name of the samples
+# @param contamination Numeric vector describind the contamination in all samples (ranging from 0 to 1). Default is 0. 
+# No longer used for clustering.
+# @param ncores Number of cores to be used during EM algorithm
+# @param restrict.to.AB Should the analysis keep only sites located in A and AB sites in all samples?
+# @param output_directory Directory in which to save results
+# @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
+# @keywords Clonal inference
+#
 From_freq_to_cell<-function(SNV_list,FREEC_list=NULL,Sample_names,Genotype_provided=FALSE,save_plot=TRUE,
                             contamination,ncores = 4, restrict.to.AB = FALSE,output_directory=NULL,
                             force.single.copy = FALSE){
@@ -450,19 +460,19 @@ From_freq_to_cell<-function(SNV_list,FREEC_list=NULL,Sample_names,Genotype_provi
     return(Schrod_out)
 }
 
-#' Patient Schrodinger Cellularities
-#'
-#' Computes all possible cellularities for all mutations across all samples. Calls CellularitiesFromFreq on all mutations to evaluate all possibilities
-#' @param SNV_list A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
-#' the chromosome "Chr",the position of the mutation "Start", the number of reads supporting the mutation "Alt", the depth of coverage at this locus "Depth",
-#' and if the output from FREEC for the samples are not associated, the genotype "Genotype".
-#' @param FREEC_list list of dataframes from FREEC for each samples (usually named Sample_ratio.txt), in the same order as SNV_list
-#' @param Genotype_provided If the FREEC_list is provided, then should be FALSE (default), otherwise TRUE
-#' @param contamination Numeric vector describind the contamination in all samples (ranging from 0 to 1). Default is 0. 
-#' No longer used for clustering.
-#' @param restrict.to.AB Should the analysis keep only sites located in A and AB sites in all samples?
-#' @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
-#' @keywords Clonal inference
+# Patient Schrodinger Cellularities
+#
+# Computes all possible cellularities for all mutations across all samples. Calls CellularitiesFromFreq on all mutations to evaluate all possibilities
+# @param SNV_list A list of dataframes (one for each sample), with as columns : (for the first column of the first sample the name of the sample),
+# the chromosome "Chr",the position of the mutation "Start", the number of reads supporting the mutation "Alt", the depth of coverage at this locus "Depth",
+# and if the output from FREEC for the samples are not associated, the genotype "Genotype".
+# @param FREEC_list list of dataframes from FREEC for each samples (usually named Sample_ratio.txt), in the same order as SNV_list
+# @param Genotype_provided If the FREEC_list is provided, then should be FALSE (default), otherwise TRUE
+# @param contamination Numeric vector describind the contamination in all samples (ranging from 0 to 1). Default is 0. 
+# No longer used for clustering.
+# @param restrict.to.AB Should the analysis keep only sites located in A and AB sites in all samples?
+# @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
+# @keywords Clonal inference
 
 Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_provided=FALSE,
                                             contamination, restrict.to.AB = FALSE,
@@ -555,22 +565,22 @@ Patient_schrodinger_cellularities<-function(SNV_list,FREEC_list=NULL,Genotype_pr
     return(result)
 }
 
-#' Cellularities from allele frequency
-#'
-#' Creates all possibilities for one mutation in one sample (given a genotype), then computes
-#' the cellularity associated with each possibility and finally the probability of each possibility
-#' @param chr The chromosome on which is the position (numeric value, not chr1 as in BED files)
-#' @param position The genomic position of the mutation
-#' @param Freec_ratio The FREEC output associated with the sample of interest
-#' @param Genotype If the FREEC output is not given, the genotype associated with the locus (for example AAB)
-#' @param Alt Number of reads supporting the variation
-#' @param Depth Number of reads mapped at the position
-#' @param subclone.genotype If existing, the genotype of the subclone. Else NULL
-#' @param subclone.cell The cellular prevalence of the subclone which has a different Copy Number at this site
-#' @param contamination The fraction of normal cells in the sample
-#' @param restrict.to.AB Should the analysis keep only sites located in A and AB sites in all samples?
-#' @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
-#' @keywords Clonal inference
+# Cellularities from allele frequency
+#
+# Creates all possibilities for one mutation in one sample (given a genotype), then computes
+# the cellularity associated with each possibility and finally the probability of each possibility
+# @param chr The chromosome on which is the position (numeric value, not chr1 as in BED files)
+# @param position The genomic position of the mutation
+# @param Freec_ratio The FREEC output associated with the sample of interest
+# @param Genotype If the FREEC output is not given, the genotype associated with the locus (for example AAB)
+# @param Alt Number of reads supporting the variation
+# @param Depth Number of reads mapped at the position
+# @param subclone.genotype If existing, the genotype of the subclone. Else NULL
+# @param subclone.cell The cellular prevalence of the subclone which has a different Copy Number at this site
+# @param contamination The fraction of normal cells in the sample
+# @param restrict.to.AB Should the analysis keep only sites located in A and AB sites in all samples?
+# @param force.single.copy Should all mutations in overdiploid regions set to single copy? Default is FALSE
+# @keywords Clonal inference
 
 CellularitiesFromFreq<-function(chr, position,Alt,Depth,
                                 Freec_ratio=NULL, Genotype=NULL,subclone.genotype=NULL,
@@ -663,44 +673,44 @@ CellularitiesFromFreq<-function(chr, position,Alt,Depth,
     return(result)
 }
 
-#'String count
-#'
-#' Counting the number of characters for each element of a vector
-#'
-#' @param x The vector from which elements should be counted
-#' @param pattern Pattern to be recognized. Default is ''
-#' @param split Pattern used to split elements of the vector. Default is ''
-#' @keywords Text handling
+#String count
+#
+# Counting the number of characters for each element of a vector
+#
+# @param x The vector from which elements should be counted
+# @param pattern Pattern to be recognized. Default is ''
+# @param split Pattern used to split elements of the vector. Default is ''
+# @keywords Text handling
 
 strcount <- function(x, pattern='', split=''){
     
     unlist(lapply(strsplit(x, split),function(z) na.omit(length(grep(pattern, z)))))
 }
-#' Cellularity clustering
-#'
-#' Clustering cellularities based on  the most likely presence of a clone, using the pamk algorithm (fpc package). Clustering can be guided by toggling manual_clustering on and/or giving a range of number of clusters.
-#' @param Cell Output from Return_one_cell_by_mut, list of cellularities (one list-element per sample)
-#' @param Sample_names  Name of the sample
-#' @param simulated Was the data generated by QuantumCat?
-#' @param save_plot Should the clustering plots be saved? Default is True
-#' @param contamination The fraction of normal cells in the samples
-#' @param clone_priors If known a list of priors (cell prevalence) to be used in the clustering
-#' @param prior_weight If known a list of priors (fraction of mutations in a clone) to be used in the clustering
-#' @param nclone_range Number of clusters to look for
-#' @param Initializations Maximal number of independant initial condition tests to be tried
-#' @param preclustering The type of preclustering used for priors: "Flash","kmedoid" or NULL. NULL will generate
-#'  centers using uniform distribution.
-#' @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights between two optimization steps.
-#' @param ncores Number of CPUs to be used
-#' @param output_directory Directory in which to save results
-#' @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")
-#' @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
-#' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
-#'uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
+# Cellularity clustering
+#
+# Clustering cellularities based on  the most likely presence of a clone, using the pamk algorithm (fpc package). Clustering can be guided by toggling manual_clustering on and/or giving a range of number of clusters.
+# @param Cell Output from Return_one_cell_by_mut, list of cellularities (one list-element per sample)
+# @param Sample_names  Name of the sample
+# @param simulated Was the data generated by QuantumCat?
+# @param save_plot Should the clustering plots be saved? Default is True
+# @param contamination The fraction of normal cells in the samples
+# @param clone_priors If known a list of priors (cell prevalence) to be used in the clustering
+# @param prior_weight If known a list of priors (fraction of mutations in a clone) to be used in the clustering
+# @param nclone_range Number of clusters to look for
+# @param Initializations Maximal number of independant initial condition tests to be tried
+# @param preclustering The type of preclustering used for priors: "Flash","kmedoid" or NULL. NULL will generate
+#  centers using uniform distribution.
+# @param epsilon Stop value: maximal admitted value of the difference in cluster position and weights between two optimization steps.
+# @param ncores Number of CPUs to be used
+# @param output_directory Directory in which to save results
+# @param optim use L-BFS-G optimization from R ("default"), or from optimx ("optimx"), or Differential Evolution ("DEoptim")
+# @param keep.all.models Should the function output the best model (default; FALSE), or all models tested (if set to true)
+# @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
+#uses a variant of the BIC by multiplication of the k*ln(n) factor. If >1, it will select models with lower complexity.
 #' @importFrom fpc pamk
 #' @importFrom ggplot2 ggsave
-#' @keywords Clonal inference
-#'
+# @keywords Clonal inference
+#
 Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
                                  contamination, clone_priors,prior_weight,nclone_range,Initializations,preclustering=TRUE,
                                  epsilon=5*(10**(-3)),ncores = 2,output_directory=NULL,
@@ -825,7 +835,7 @@ Cluster_plot_from_cell<-function(Cell,Sample_names,simulated,save_plot=TRUE,
 #' SNVs<-QuantumCat(number_of_clones = 2,number_of_mutations = 50,number_of_samples = 1,ploidy = "AB")
 #' Probability.to.belong.to.clone(SNV_list=SNVs,
 #' clone_prevalence=list(c(0.5,1),c(0.5,1)),contamination=c(0,0))
-
+#' @return list of items allowing to attribute variant to a cluster
 Probability.to.belong.to.clone<-function(SNV_list,
                                          clone_prevalence,
                                          contamination,

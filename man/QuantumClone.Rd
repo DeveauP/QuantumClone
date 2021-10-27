@@ -73,6 +73,14 @@ Note that DEoptim is the only one that does not use EM algorithm}
 
 \item{force.single.copy}{Should all mutations in overdiploid regions set to single copy? Default is FALSE}
 }
+\value{
+list of lists 
+\describe{
+ \item{Top level}{List of all possibilities}
+ \item{dataframe}{Table of hierarchical relations}
+ \item{numeric}{probability of this tree}
+}
+}
 \description{
 Sequentially calls a function to test all accessible cellularities for all mutations in the samples,then cluster them, and finally draws
 phylogenetic trees based on the uncovered cellularities
@@ -99,7 +107,6 @@ save_plot = FALSE,ncores=1,output_directory=NULL)
 # Set save_plot to true and provide output_directory path to save 
 print("The data can be accessed by Clustering_output$filtered_data")
 print("All plots are now saved in the working directory")
-
 }
 \keyword{Cancer}
 \keyword{Clonal}

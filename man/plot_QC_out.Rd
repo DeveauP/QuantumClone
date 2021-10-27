@@ -20,6 +20,9 @@ plot_QC_out(
 
 \item{sample_selected}{: number of the sample to be considered for plot (can be 1 or 2 samples)}
 }
+\value{
+ggplot object
+}
 \description{
 This function was implemented to re-plot easily the diagrams of clonality for changes/enhancement.
 Returns a ggplot object

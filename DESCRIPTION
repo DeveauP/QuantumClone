@@ -7,8 +7,9 @@ Description: Using HTS data, clusters mutations in order to recreate putative
     clones from the data provided. It requires genotype at the location of the
     variant as well as the depth of coverage and number of reads supporting the
     mutation. Additional information may be provided, such as the contamination
-    in the tumor sample. This package also provides a function QuantumCat() which
-    simulates data obtained from tumor sequencing.
+    in the tumor sample. This package also provides a function QuantumCat which
+    simulates data obtained from tumor sequencing.See for details: Deveau et al 
+    (2018) <doi:10.1093/bioinformatics/bty016>.
 URL:
     https://github.com/DeveauP/QuantumClone
 BugReports:

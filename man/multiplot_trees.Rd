@@ -13,6 +13,9 @@ multiplot_trees(result_list, d, cex = 0.8)
 
 \item{cex}{Coefficient of expansion for the texts in phylogenetic tree plots. Default is 0.8}
 }
+\value{
+No return value
+}
 \description{
 Plots all trees created by the function Tree_generation. The red line means that mutations occured.
 }

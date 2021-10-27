@@ -71,6 +71,14 @@ If >1, it will select models with lower complexity.}
 
 \item{force.single.copy}{Should all mutations in overdiploid regions set to single copy? Default is FALSE}
 }
+\value{
+list of lists 
+\describe{
+ \item{Top level}{List of all possibilities}
+ \item{dataframe}{Table of hierarchical relations}
+ \item{numeric}{probability of this tree}
+}
+}
 \description{
 Wrap up function that clusters cellularities. This is based on the most likely possibility for each mutation, give ints frequency and genotype.
 }
@@ -95,7 +103,6 @@ Initializations = 1,preclustering = "FLASH", simulated = TRUE,
 save_plot = FALSE,ncores=1,output_directory=NULL)
 print("The data can be accessed by Clustering_output$filtered_data")
 print("All plots are now saved in the working directory")
-
 
 }
 \keyword{Clonal}

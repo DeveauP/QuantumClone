@@ -14,7 +14,7 @@
 #'  \item{tree}{The tree obtained by hierachical clustering of the dissimilarity matrix using "ward.D2" method}
 #'  }
 #'  
-#'@importFrom stats hclust as.dist cutree hclust
+#' @importFrom stats hclust as.dist cutree hclust
 Cellular_preclustering<-function(Schrod_cells){
   for(i in 1:length(Schrod_cells)){
     Schrod_cells[[i]]$Norm_Alt<-round(
@@ -116,7 +116,7 @@ ProbDistMatrix<-function(Schrod_cells){
 #' Computes the z-score of mutations being from the same distribution 
 #' @param Depth a numeric vector of depth of sequencing for each variant
 #' @param Alt a numeric vector of the number of reads supporting each variant
-#' @return returns a square numeric matrix
+#' @return square numeric matrix
 zscore<-function(Depth,Alt){
   n<-length(Depth)
   result<-matrix(ncol = n,nrow = n)
@@ -135,11 +135,11 @@ zscore<-function(Depth,Alt){
 }
 
 
-#' Majority vote
-#' 
-#' Extract majority vote from multiple indices
-#' @param index vector with number of clusters selected by indices
-#' @return Numeric value of the number of clusters to chose
+# Majority vote
+# 
+# Extract majority vote from multiple indices
+# @param index vector with number of clusters selected by indices
+# @return Numeric value of the number of clusters to chose
 MajorityVote<-function(index){
   tab<-table(index)
   test<-tab==max(tab)
@@ -193,6 +193,13 @@ MajorityVote<-function(index){
 #' # Show clustering quality:
 #' NMI_cutree( FQC$cluster,chr = In[[1]]$Chr)
 #' @export
+#' @return returns a list with:
+#' \describe{
+#'  \item{similarityMatrix}{ The matrix of probabilities}
+#'  \item{distance}{The dissimilarity matrix}
+#'  \item{tree}{The tree obtained by hierachical clustering of the dissimilarity matrix using "ward.D2" method}
+#'  \item{cluster}{attributed cluster for each variant}
+#'  }
 #' @importFrom NbClust NbClust
 #' @seealso QuantumClone
 FlashQC<-function(Cells,conta,Nclus,model.selection = "tree"){
@@ -289,13 +296,13 @@ FlashQC<-function(Cells,conta,Nclus,model.selection = "tree"){
   result 
 }
 
-#' Compute value of objective function
-#' 
-#' Compute the value of clustering based on same principles as QuantumClone EM
-#' @param tree Tree from hierarchical clustering
-#' @param nclus Number of clusters used for cutting (numeric of length 1)
-#' @param Schrod Output from Schrodinger cellularities
-#' @param conta Numeric value of contamination fraction in each sample
+# Compute value of objective function
+# 
+# Compute the value of clustering based on same principles as QuantumClone EM
+# @param tree Tree from hierarchical clustering
+# @param nclus Number of clusters used for cutting (numeric of length 1)
+# @param Schrod Output from Schrodinger cellularities
+# @param conta Numeric value of contamination fraction in each sample
 Compute_objective<-function(tree,nclus,Schrod,conta){
   priors<-Create_prior_cutTree(tree = tree,Schrod_cells = Schrod,NClus = nclus)
 
@@ -318,15 +325,15 @@ Compute_objective<-function(tree,nclus,Schrod,conta){
   
 }
 
-#' Compute criterion FLASH
-#' 
-#' Computes BIC from a list of outputs of EM algorithm, then returns the position with minimal BIC
-#' @param Obj Numeric vector with objective function values
-#' @param Mut_num Number of mutations to cluster
-#' @param k the number of clusters (in the same order as Obj)
-#' @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
-#' @param s Number of samples
-#' @keywords EM clustering number
+# Compute criterion FLASH
+# 
+# Computes BIC from a list of outputs of EM algorithm, then returns the position with minimal BIC
+# @param Obj Numeric vector with objective function values
+# @param Mut_num Number of mutations to cluster
+# @param k the number of clusters (in the same order as Obj)
+# @param model.selection The function to minimize for the model selection: can be "AIC", "BIC", or numeric. In numeric, the function
+# @param s Number of samples
+# @keywords EM clustering number
 BIC_criterion_FLASH<-function(Obj,Mut_num,k ,model.selection,s){
   ### Criterion should be minimized
   # Here we assimilate EM.output$val to -ln(L) where L is the likelihood of the model
@@ -361,16 +368,16 @@ BIC_criterion_FLASH<-function(Obj,Mut_num,k ,model.selection,s){
   }
 }
 
-#' Flash core
-#' 
-#' Returns number of clusters based on model selection
-#' @param Schrod_cells Output from Schrodinger cellularities
-#' @param conta vector with contamination fraction in each sample
-#' @param Nclus vector with the number of clusters to test (alternatively only min and max values)
-#' @param model.selection One of "tree", "AIC", "BIC" or numeric. "tree" will use "ccc","ch" and "gap" methods from NbClust 
-#' to determine the number of clusters. "BIC","AIC" or numeric values will use methods from QuantumClone.
-#' @param tree Hierarchical tree from hclust
-#' @param dissimMatrix Dissimilarity matrix, required if model selection is "tree"
+# Flash core
+# 
+# Returns number of clusters based on model selection
+# @param Schrod_cells Output from Schrodinger cellularities
+# @param conta vector with contamination fraction in each sample
+# @param Nclus vector with the number of clusters to test (alternatively only min and max values)
+# @param model.selection One of "tree", "AIC", "BIC" or numeric. "tree" will use "ccc","ch" and "gap" methods from NbClust 
+# to determine the number of clusters. "BIC","AIC" or numeric values will use methods from QuantumClone.
+# @param tree Hierarchical tree from hclust
+# @param dissimMatrix Dissimilarity matrix, required if model selection is "tree"
 FLASH_main<-function(Schrod_cells,model.selection,conta,Nclus,tree = NULL,dissimMatrix=NULL){
   if(grepl(x = "tree",pattern =  model.selection)){
     ### Using NbClust

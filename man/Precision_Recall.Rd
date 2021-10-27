@@ -23,6 +23,8 @@ Precision_Recall(hx, Truth)
  \item{RI}{Rand Index, defined by \eqn{RI = \frac{TP+TN}{TP+TN+FP+FN}}}
  \item{validat}{Is positives + negatives equal to total number of links - returns absolute difference if false }
  }
+
+list with relevant metrics to evaluate clustering
 }
 \description{
 Computes the precision based on the clustering

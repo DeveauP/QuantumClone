@@ -1,7 +1,7 @@
 
 #' Data generation
 #'
-#' Creates plausible data as would be oserved by genome sequencing
+#' Creates plausible data as would be observed by genome sequencing
 #' @param number_of_clones The wanted number of observable clones (meaning bearing at least 1 mutation)
 #' @param number_of_mutations The total observed number of mutations (across all clones)
 #' @param number_of_samples The number of samples on which the data should be simulated. Default is 2.
@@ -12,12 +12,13 @@
 #' @param Subclonal.CNA.fraction Cell fraction of the subclone that has subclonal CNA
 #' @keywords Data generation phylogeny
 #' @export
+#' @return list of dataframes containing observations of a tumor (1 dataframe / sample)
 #' @examples
 #' print("Generate small set of mutations from 2 differents clones...")
 #' print("...in 1 sample, contaminated at 10% by normal cells")
 #'  
 #' QuantumCat(number_of_clones=2,number_of_mutations=50,number_of_samples=1,contamination=0.1)
-QuantumCat<-function(number_of_clones,number_of_mutations,ploidy=2,depth=100,number_of_samples=2,Random_clones=F,contamination=NULL,
+QuantumCat<-function(number_of_clones,number_of_mutations,ploidy=2,depth=100,number_of_samples=2,Random_clones=FALSE,contamination=NULL,
                      Subclonal.CNA.fraction=NULL){
   if(Random_clones){
     number_of_clones<-sample(1:10)

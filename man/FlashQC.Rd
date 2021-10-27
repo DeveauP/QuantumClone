@@ -16,6 +16,15 @@ FlashQC(Cells, conta, Nclus, model.selection = "tree")
 \item{model.selection}{One of "tree", "AIC", "BIC" or numeric. "tree" will use "ccc","ch" and "gap" methods from NbClust 
 to determine the number of clusters. "BIC","AIC" or numeric values will use methods from QuantumClone.}
 }
+\value{
+returns a list with:
+\describe{
+ \item{similarityMatrix}{ The matrix of probabilities}
+ \item{distance}{The dissimilarity matrix}
+ \item{tree}{The tree obtained by hierachical clustering of the dissimilarity matrix using "ward.D2" method}
+ \item{cluster}{attributed cluster for each variant}
+ }
+}
 \description{
 Fast method to find clones without filtering for multiple states
 }

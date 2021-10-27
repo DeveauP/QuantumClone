@@ -15,6 +15,9 @@ manual_plot_trees(connexion_list, d, cex = 0.8, p)
 
 \item{p}{Probability of a tree}
 }
+\value{
+No return value
+}
 \description{
 Creates a visual output for the phylogeny created by Tree_generation()
 }

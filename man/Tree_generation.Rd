@@ -11,10 +11,19 @@ Tree_generation(Clone_cellularities, timepoints = NULL)
 
 \item{timepoints}{A numeric vector giving the spatial and/or temporal distribution of the samples}
 }
+\value{
+list of putative phylogenetic trees
+}
 \description{
 Generates a list of possible trees based on the cellularity of each clone, and the spatial and temporal distribution of the samples.
 Assumption is made the different clones are on different lines of the matrix
 }
 \keyword{Clonal}
+\keyword{Clone_cell<-cbind(QuantumClone::QC_output$EM.output$centers[[1]],QuantumClone::QC_output$EM.output$centers[[2]])}
+\keyword{Tree_generation(Clone_cell)}
+\keyword{cellularities:")}
+\keyword{clone}
 \keyword{inference}
 \keyword{phylogeny}
+\keyword{print("Using}
+\keyword{print(Clone_cell)}

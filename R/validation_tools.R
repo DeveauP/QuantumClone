@@ -4,6 +4,7 @@
 #' @param  QC_out output from QuantumClone clustering 
 #' @examples 
 #' Compute_NMI(QC_output)
+#' @return float
 #' @export
 Compute_NMI<-function(QC_out){
   # Probabilities
@@ -100,6 +101,7 @@ NMI_cutree<-function(cut_tree,chr){
 #'          rep(1,2),rep(3,3))
 #' Precision_Recall(cluster,truth)
 #' @export
+#' @return list with relevant metrics to evaluate clustering
 Precision_Recall<-function(hx,Truth){
   tot<-choose(n=length(hx),k=2) ### Total number of edges
   

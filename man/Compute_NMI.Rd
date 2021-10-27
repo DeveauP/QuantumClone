@@ -9,6 +9,9 @@ Compute_NMI(QC_out)
 \arguments{
 \item{QC_out}{output from QuantumClone clustering}
 }
+\value{
+float
+}
 \description{
 Compute the normalized mutual information to assess clustering quality
 }

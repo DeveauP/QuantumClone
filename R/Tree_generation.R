@@ -1,16 +1,16 @@
-#' Data generation
-#'
-#' Creates a phylogenetic tree on simple assumptions:
-#' 1. There is a common ancestor to all clones
-#' 2. Each clone creates a partition of the space. One node will carry mutations, the other will not. 
-#' A node that is not mutated can be partitioned.
-#' 3. Nodes that have less than 2% difference in all samples to another existing clone will be discarded or
-#' less than 1% cellularity in all samples.
-#' 4. Nodes that have less than 10% cellularity in ALL samples cannot be split further.
-#' WARNING: Tree_generation recreates a tree from data while phylo_tree_generation randomly creates a phylogeny
-#' @param number_of_clones The wanted number of observable clones (meaning bearing at least 1 mutation)
-#' @param number_of_samples The number of samples on which the data should be simulated
-#' @keywords Data creation phylogeny
+# Data generation
+#
+# Creates a phylogenetic tree on simple assumptions:
+# 1. There is a common ancestor to all clones
+# 2. Each clone creates a partition of the space. One node will carry mutations, the other will not. 
+# A node that is not mutated can be partitioned.
+# 3. Nodes that have less than 2% difference in all samples to another existing clone will be discarded or
+# less than 1% cellularity in all samples.
+# 4. Nodes that have less than 10% cellularity in ALL samples cannot be split further.
+# WARNING: Tree_generation recreates a tree from data while phylo_tree_generation randomly creates a phylogeny
+# @param number_of_clones The wanted number of observable clones (meaning bearing at least 1 mutation)
+# @param number_of_samples The number of samples on which the data should be simulated
+# @keywords Data creation phylogeny
 phylo_tree_generation<-function(number_of_clones,number_of_samples){
   
   if(number_of_clones<2){
@@ -82,12 +82,12 @@ phylo_tree_generation<-function(number_of_clones,number_of_samples){
   
 }
 
-#' Check created leaf
-#' 
-#' Checks that created leaf has cellularity >1% in at least a sample, that it has at least 2% difference with another
-#' existing clone in at least one sample, and that cellularities in all samples are greater than or equal to 0.
-#' @param new_leaf A numeric vector to be added
-#' @param Proportions_mutated Matrix with samples in columns, clones (carrying mutations) in rows.
+# Check created leaf
+# 
+# Checks that created leaf has cellularity >1% in at least a sample, that it has at least 2% difference with another
+# existing clone in at least one sample, and that cellularities in all samples are greater than or equal to 0.
+# @param new_leaf A numeric vector to be added
+# @param Proportions_mutated Matrix with samples in columns, clones (carrying mutations) in rows.
 check_leaf<-function(new_leaf,Proportions_mutated){
   if(sum(new_leaf<=1)==length(new_leaf) | sum(new_leaf<0)>0 ){ 
     # The cellularity of a clone is less than 1% in ALL samples
@@ -111,10 +111,10 @@ check_leaf<-function(new_leaf,Proportions_mutated){
   TRUE
 }
 
-#' Check 
-#' 
-#' Check if node can be split further, i.e. cellularity > 10% in at least 1 sample
-#' @param leaf Numeric vector
+# Check 
+# 
+# Check if node can be split further, i.e. cellularity > 10% in at least 1 sample
+# @param leaf Numeric vector
 check_split<-function(leaf){
   ### Check that you still have room for splitting (at least on sample with more than 10% cellularity)
   if(max(leaf)<10){
@@ -123,11 +123,11 @@ check_split<-function(leaf){
   return(TRUE)
 }
 
-#' Update proportions
-#' 
-#' Creates vector with probability to be sampled
-#' @param Proportions numeric matrix
-#' @param can_split logical vector
+# Update proportions
+# 
+# Creates vector with probability to be sampled
+# @param Proportions numeric matrix
+# @param can_split logical vector
 update_probs<-function(Proportions,can_split){
   w<-which(can_split)
   probs<-numeric(length(w))
